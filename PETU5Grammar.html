@@ -1,0 +1,338 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Interactive Grammar Worksheet</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700;800&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f5f3ff; /* violet-50 */
+        }
+        .correct {
+            border-color: #4ade80 !important; /* green-400 */
+            background-color: #f0fdf4 !important; /* green-50 */
+            box-shadow: 0 0 0 3px rgba(74, 222, 128, 0.4);
+        }
+        .incorrect {
+            border-color: #f87171 !important; /* red-400 */
+            background-color: #fef2f2 !important; /* red-50 */
+            box-shadow: 0 0 0 3px rgba(248, 113, 113, 0.4);
+        }
+        select, input[type="text"] {
+            transition: all 0.2s ease-in-out;
+        }
+        .card {
+            background-color: white;
+            border-radius: 24px;
+            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.05), 0 8px 10px -6px rgba(0, 0, 0, 0.05);
+            border: 1px solid #e5e7eb;
+            overflow: hidden;
+        }
+        .card-header {
+            padding: 1.5rem;
+            border-bottom: 1px solid #e5e7eb;
+            background-color: #f9fafb;
+        }
+        .card-content {
+            padding: 1.5rem;
+        }
+        .learn-box {
+            background-color: #f5f3ff;
+            border: 2px solid #ddd6fe;
+            border-radius: 12px;
+            padding: 1.5rem;
+        }
+        .example-group {
+            margin-top: 1rem;
+        }
+        .example-category {
+            font-weight: 600;
+            color: #5b21b6;
+            margin-bottom: 0.25rem;
+        }
+        .example-text {
+            color: #3730a3;
+            font-weight: 500;
+            padding-left: 1rem;
+            position: relative;
+        }
+        .example-text::before {
+            content: '›';
+            position: absolute;
+            left: 0;
+            color: #a78bfa;
+        }
+        .progress-bar-container {
+            width: 100%;
+            background-color: #e5e7eb;
+            border-radius: 9999px;
+            overflow: hidden;
+            height: 16px;
+        }
+        .progress-bar {
+            height: 100%;
+            width: 0;
+            background: linear-gradient(90deg, #8b5cf6, #a78bfa);
+            border-radius: 9999px;
+            transition: width 0.5s ease-in-out;
+        }
+    </style>
+</head>
+<body class="text-slate-800">
+
+    <div id="main-content" class="container mx-auto p-4 sm:p-6 md:p-8 max-w-4xl">
+        <header class="text-center mb-10">
+            <h1 class="text-4xl sm:text-5xl font-extrabold text-slate-900 tracking-tight">Grammar Gym 💪</h1>
+            <p class="mt-3 text-lg text-slate-600">Let's practice Modal Verbs and Adjectives!</p>
+        </header>
+        
+        <div class="card mb-8">
+            <div class="card-content">
+                <h2 class="text-lg font-bold mb-2 text-slate-700">Your Progress</h2>
+                <div class="progress-bar-container"><div id="progress-bar" class="progress-bar"></div></div>
+            </div>
+        </div>
+
+        <div class="space-y-8">
+            <!-- Section 1: Ability & Possibility -->
+            <div class="card">
+                <div class="card-header"><h2 class="text-xl font-bold text-slate-800 flex items-center gap-3">🤸‍♀️ Modal Verbs: Ability & Possibility</h2></div>
+                <div class="card-content space-y-6">
+                    <div class="learn-box">
+                        <h3 class="font-bold text-lg text-slate-700">Learn from Examples</h3>
+                        <div class="example-group">
+                            <p class="example-category">Present Ability</p>
+                            <p class="example-text">Anna <strong class="text-violet-600">can</strong> speak French, but she <strong class="text-violet-600">can't</strong> speak Chinese.</p>
+                        </div>
+                        <div class="example-group">
+                            <p class="example-category">Past Ability</p>
+                            <p class="example-text">Max <strong class="text-violet-600">could</strong> walk when he was one, but he <strong class="text-violet-600">couldn't</strong> talk.</p>
+                        </div>
+                        <div class="example-group">
+                            <p class="example-category">Present & Future Possibility</p>
+                            <p class="example-text">It <strong class="text-violet-600">might</strong> be very hot tomorrow.</p>
+                            <p class="example-text">We <strong class="text-violet-600">may</strong> go swimming this afternoon.</p>
+                            <p class="example-text">There <strong class="text-violet-600">could</strong> be a storm later this evening.</p>
+                        </div>
+                         <div class="example-group">
+                            <p class="example-category">Negative Possibility</p>
+                            <p class="example-text">Laura is not feeling well, so she <strong class="text-violet-600">may not</strong> go to school.</p>
+                             <p class="example-text">You <strong class="text-violet-600">might not</strong> win the lottery.</p>
+                        </div>
+                    </div>
+                    
+                    <h3 class="font-bold text-lg text-slate-700 pt-4">Practice 1: Fill in the blanks.</h3>
+                    <div class="space-y-4 interactive-group">
+                        <p>1. I've looked for my phone, but I <select id="q1-1" class="p-1 border rounded-md"><option value="">...</option><option value="can't">can't</option><option value="couldn't">couldn't</option></select> find it.</p>
+                        <p>2. My brother <select id="q1-2" class="p-1 border rounded-md"><option value="">...</option><option value="can">can</option><option value="could">could</option></select> swim when he was four.</p>
+                        <p>3. I'm not sure what to do tomorrow. I <select id="q1-3" class="p-1 border rounded-md"><option value="">...</option><option value="may">may</option><option value="might">might</option></select> go to Jo's party.</p>
+                        <p>4. She isn't looking well. I think she <select id="q1-4" class="p-1 border rounded-md"><option value="">...</option><option value="may">may</option><option value="might">might</option></select> have flu.</p>
+                        <p>5. I <select id="q1-5" class="p-1 border rounded-md"><option value="">...</option><option value="can">can</option><option value="could">could</option></select> play the piano but I don't play very often.</p>
+                        <p>6. Kieran <select id="q1-6" class="p-1 border rounded-md"><option value="">...</option><option value="can't">can't</option><option value="couldn't">couldn't</option></select> ride a bike until he was nearly 12.</p>
+                    </div>
+
+                    <h3 class="font-bold text-lg text-slate-700 pt-4">Practice 2: Match and choose.</h3>
+                    <div class="space-y-4 interactive-group">
+                        <p>1. I don't know where Luis is. He <select id="q2-1-verb" class="p-1 border rounded-md"><option value="">...</option><option value="may">may</option><option value="can">can</option></select> <select id="q2-1-match" class="p-1 border rounded-md"><option value="">...</option><option value="a">a</option><option value="b">b</option><option value="c">c</option><option value="d">d</option><option value="e">e</option></select></p>
+                        <p>2. I have some free time, so I <select id="q2-2-verb" class="p-1 border rounded-md"><option value="">...</option><option value="can">can</option><option value="might">might</option></select> <select id="q2-2-match" class="p-1 border rounded-md"><option value="">...</option><option value="a">a</option><option value="b">b</option><option value="c">c</option><option value="d">d</option><option value="e">e</option></select></p>
+                        <p>3. There's someone at the door. It <select id="q2-3-verb" class="p-1 border rounded-md"><option value="">...</option><option value="may">may</option><option value="can">can</option></select> <select id="q2-3-match" class="p-1 border rounded-md"><option value="">...</option><option value="a">a</option><option value="b">b</option><option value="c">c</option><option value="d">d</option><option value="e">e</option></select></p>
+                        <p>4. We need to tidy up. Our friends <select id="q2-4-verb" class="p-1 border rounded-md"><option value="">...</option><option value="can">can</option><option value="could">could</option></select> <select id="q2-4-match" class="p-1 border rounded-md"><option value="">...</option><option value="a">a</option><option value="b">b</option><option value="c">c</option><option value="d">d</option><option value="e">e</option></select></p>
+                        <p>5. Working too hard <select id="q2-5-verb" class="p-1 border rounded-md"><option value="">...</option><option value="can">can</option><option value="could">could</option></select> <select id="q2-5-match" class="p-1 border rounded-md"><option value="">...</option><option value="a">a</option><option value="b">b</option><option value="c">c</option><option value="d">d</option><option value="e">e</option></select></p>
+                    </div>
+                     <div class="p-4 bg-slate-50 rounded-lg text-sm text-slate-600">
+                        <strong>Endings:</strong> a) be one of my friends. b) make you stressed. c) see her. d) still be at school. e) arrive at any minute.
+                    </div>
+                </div>
+            </div>
+
+            <!-- Section 2: Obligation & Prohibition -->
+            <div class="card">
+                <div class="card-header"><h2 class="text-xl font-bold text-slate-800 flex items-center gap-3">🚦 Modal Verbs: Obligation & Rules</h2></div>
+                <div class="card-content space-y-6">
+                    <div class="learn-box">
+                        <h3 class="font-bold text-lg text-slate-700">Learn from Examples</h3>
+                        <div class="example-group">
+                            <p class="example-category">Giving Advice</p>
+                            <p class="example-text">You <strong class="text-violet-600">should</strong> join a gym if you want to keep fit.</p>
+                            <p class="example-text">You <strong class="text-violet-600">shouldn't</strong> eat too much chocolate.</p>
+                        </div>
+                        <div class="example-group">
+                            <p class="example-category">Obligation / Rules</p>
+                            <p class="example-text">You <strong class="text-violet-600">must</strong> take your passport when you travel abroad.</p>
+                            <p class="example-text">I <strong class="text-violet-600">have to</strong> finish my homework tonight.</p>
+                        </div>
+                        <div class="example-group">
+                            <p class="example-category">No Obligation (Not Necessary)</p>
+                            <p class="example-text">We <strong class="text-violet-600">don't have to</strong> show our passports when we go to Scotland.</p>
+                        </div>
+                        <div class="example-group">
+                            <p class="example-category">Prohibition (Not Allowed)</p>
+                            <p class="example-text">You <strong class="text-violet-600">mustn't</strong> use your phone in the cinema.</p>
+                            <p class="example-text">You <strong class="text-violet-600">can't</strong> bring animals in here.</p>
+                        </div>
+                    </div>
+                    
+                    <h3 class="font-bold text-lg text-slate-700 pt-4">Practice 1: What do the signs say?</h3>
+                    <div class="space-y-6 interactive-group">
+                        <div class="flex items-center gap-4">
+                            <img src="https://i.postimg.cc/KjCxJZc9/u5grammar-1.png" alt="No dogs allowed sign" class="w-20 h-20 object-cover rounded-lg shadow-md flex-shrink-0">
+                            <p>1. We <input type="text" id="q3-1" class="p-1 border rounded-md w-40"> a dog in here.</p>
+                        </div>
+                        <div class="flex items-center gap-4">
+                            <img src="https://i.postimg.cc/NjqQXfzF/u5grammar-2.png" alt="Cash only sign" class="w-20 h-20 object-cover rounded-lg shadow-md flex-shrink-0">
+                            <p>2. We <input type="text" id="q3-2" class="p-1 border rounded-md w-40"> in cash. We can't pay by credit card.</p>
+                        </div>
+                        <div class="flex items-center gap-4">
+                            <img src="https://i.postimg.cc/2jg1HYtR/u5grammar-3.png" alt="Unlimited WiFi sign" class="w-20 h-20 object-cover rounded-lg shadow-md flex-shrink-0">
+                            <p>3. We <input type="text" id="q3-3" class="p-1 border rounded-md w-40"> wifi here.</p>
+                        </div>
+                        <div class="flex items-center gap-4">
+                            <img src="https://i.postimg.cc/nc7Cg58s/u5grammar-4.png" alt="Reserved sign" class="w-20 h-20 object-cover rounded-lg shadow-md flex-shrink-0">
+                            <p>4. We <input type="text" id="q3-4" class="p-1 border rounded-md w-40"> at this table. It's reserved.</p>
+                        </div>
+                        <div class="flex items-center gap-4">
+                            <img src="https://i.postimg.cc/mgyh2HgB/u5grammar-5.png" alt="No phones allowed sign" class="w-20 h-20 object-cover rounded-lg shadow-md flex-shrink-0">
+                            <p>5. We <input type="text" id="q3-5" class="p-1 border rounded-md w-40"> our phones here.</p>
+                        </div>
+                    </div>
+
+                    <h3 class="font-bold text-lg text-slate-700 pt-4">Practice 2: Choose the correct verbs.</h3>
+                    <div class="leading-relaxed interactive-group">
+                        When my grandfather was young, children (1) <select id="q4-1" class="p-1 border rounded-md"><option value="">...</option><option value="must not">must not</option><option value="didn't have to">didn't have to</option></select> stay at school until the age of 18. They (2) <select id="q4-2" class="p-1 border rounded-md"><option value="">...</option><option value="could">could</option><option value="couldn't">couldn't</option></select> leave when they were 14. My grandfather had no choice. He (3) <select id="q4-3" class="p-1 border rounded-md"><option value="">...</option><option value="had to">had to</option><option value="didn't have to">didn't have to</option></select> go out and earn money. At the end of every week he (4) <select id="q4-4" class="p-1 border rounded-md"><option value="">...</option><option value="could">could</option><option value="had to">had to</option></select> give his wages to his mother. She gave him a small amount of money which he (5) <select id="q4-5" class="p-1 border rounded-md"><option value="">...</option><option value="had to">had to</option><option value="could">could</option></select> spend as he liked. When he was 18, he wanted to join the army, but he failed the medical examination so he (6) <select id="q4-6" class="p-1 border rounded-md"><option value="">...</option><option value="had to">had to</option><option value="couldn't">couldn't</option></select> do military service.
+                    </div>
+                </div>
+            </div>
+
+            <!-- Section 3: -ed / -ing Adjectives -->
+            <div class="card">
+                <div class="card-header"><h2 class="text-xl font-bold text-slate-800 flex items-center gap-3">🤩 Adjectives: -ed vs -ing</h2></div>
+                <div class="card-content space-y-6">
+                    <div class="learn-box">
+                        <h3 class="font-bold text-lg text-slate-700">Learn from Examples</h3>
+                        <div class="example-group">
+                            <p class="example-category">-ed Adjectives (How a person feels)</p>
+                            <p class="example-text">I'm going to bed because I'm tir<strong class="text-violet-600">ed</strong>.</p>
+                            <p class="example-text">I was surpris<strong class="text-violet-600">ed</strong> by the news.</p>
+                            <p class="example-text">He is annoy<strong class="text-violet-600">ed</strong> with his brother.</p>
+                        </div>
+                        <div class="example-group">
+                            <p class="example-category">-ing Adjectives (The thing that causes the feeling)</p>
+                            <p class="example-text">I've had a tir<strong class="text-violet-600">ing</strong> day at work.</p>
+                            <p class="example-text">The news was surpris<strong class="text-violet-600">ing</strong>.</p>
+                            <p class="example-text">His brother is very annoy<strong class="text-violet-600">ing</strong>.</p>
+                        </div>
+                    </div>
+                    
+                    <h3 class="font-bold text-lg text-slate-700 pt-4">Practice: Choose the correct adjectives.</h3>
+                    <div class="space-y-4 interactive-group">
+                        <p>1. A: Did you see that <select id="q5-1a" class="p-1 border rounded-md"><option value="">...</option><option value="interested">interested</option><option value="interesting">interesting</option></select> programme about the moon?</p>
+                        <p>&nbsp;&nbsp;&nbsp;&nbsp;B: No, I'm not really <select id="q5-1b" class="p-1 border rounded-md"><option value="">...</option><option value="interested">interested</option><option value="interesting">interesting</option></select> in space.</p>
+                        
+                        <p>2. A: You look very <select id="q5-2a" class="p-1 border rounded-md"><option value="">...</option><option value="relaxed">relaxed</option><option value="relaxing">relaxing</option></select>. Did you have a good holiday?</p>
+                        <p>&nbsp;&nbsp;&nbsp;&nbsp;B: No, it wasn't <select id="q5-2b" class="p-1 border rounded-md"><option value="">...</option><option value="relaxed">relaxed</option><option value="relaxing">relaxing</option></select> at all! I was ill.</p>
+
+                        <p>3. A: What do you find most <select id="q5-3a" class="p-1 border rounded-md"><option value="">...</option><option value="annoyed">annoyed</option><option value="annoying">annoying</option></select> about your older brother?</p>
+                        <p>&nbsp;&nbsp;&nbsp;&nbsp;B: Everything he does makes me <select id="q5-3b" class="p-1 border rounded-md"><option value="">...</option><option value="annoyed">annoyed</option><option value="annoying">annoying</option></select>.</p>
+
+                        <p>4. A: What's happened? You look really <select id="q5-4a" class="p-1 border rounded-md"><option value="">...</option><option value="excited">excited</option><option value="exciting">exciting</option></select>.</p>
+                        <p>&nbsp;&nbsp;&nbsp;&nbsp;B: Yes, I've just heard that I've won first prize! It's so <select id="q5-4b" class="p-1 border rounded-md"><option value="">...</option><option value="excited">excited</option><option value="exciting">exciting</option></select>!</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Check Answers Section -->
+            <div class="card">
+                <div class="card-content text-center">
+                    <button id="check-answers" class="bg-violet-600 text-white font-bold py-4 px-10 rounded-xl hover:bg-violet-700 transition-all transform hover:scale-105 focus:outline-none focus:ring-4 focus:ring-violet-300 text-lg flex items-center gap-2 mx-auto">
+                        Check My Answers!
+                    </button>
+                    <div id="results" class="mt-6 text-center text-xl font-medium"></div>
+                    <button id="reset" class="text-sm text-slate-500 hover:text-slate-700 mt-4">Reset</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const answers = {
+                'q1-1': ["can't", "couldn't"], 'q1-2': ['could'], 'q1-3': ['may', 'might'], 'q1-4': ['may', 'might'], 'q1-5': ['can'], 'q1-6': ['couldn\'t'],
+                'q2-1-verb': 'may', 'q2-1-match': 'd',
+                'q2-2-verb': 'might', 'q2-2-match': 'c', // Note: can see her is also possible, but might is better for possibility
+                'q2-3-verb': 'may', 'q2-3-match': 'a',
+                'q2-4-verb': 'could', 'q2-4-match': 'e',
+                'q2-5-verb': 'can', 'q2-5-match': 'b',
+                'q3-1': ["can't bring", "mustn't bring"], 'q3-2': ['must pay'], 'q3-3': ['can use'], 'q3-4': ["can't sit", "mustn't sit"], 'q3-5': ["can't use", "mustn't use"],
+                'q4-1': "didn't have to", 'q4-2': 'could', 'q4-3': 'had to', 'q4-4': 'had to', 'q4-5': 'could', 'q4-6': "couldn't",
+                'q5-1a': 'interesting', 'q5-1b': 'interested', 'q5-2a': 'relaxed', 'q5-2b': 'relaxing', 'q5-3a': 'annoying', 'q5-3b': 'annoyed', 'q5-4a': 'excited', 'q5-4b': 'exciting'
+            };
+
+            const allInputs = document.querySelectorAll('.interactive-group select, .interactive-group input');
+            const progressBar = document.getElementById('progress-bar');
+
+            function updateProgress() {
+                const answered = Array.from(allInputs).filter(el => el.value.trim() !== '').length;
+                const percentage = allInputs.length > 0 ? (answered / allInputs.length) * 100 : 0;
+                progressBar.style.width = `${percentage}%`;
+            }
+
+            function checkAnswers() {
+                let score = 0;
+                let total = 0;
+
+                allInputs.forEach(input => {
+                    total++;
+                    const id = input.id;
+                    const value = input.value.trim().toLowerCase();
+                    const answer = answers[id];
+
+                    input.classList.remove('correct', 'incorrect');
+
+                    if (Array.isArray(answer)) {
+                        if (answer.includes(value)) {
+                            score++;
+                            input.classList.add('correct');
+                        } else {
+                            input.classList.add('incorrect');
+                        }
+                    } else {
+                        if (value === answer) {
+                            score++;
+                            input.classList.add('correct');
+                        } else {
+                            input.classList.add('incorrect');
+                        }
+                    }
+                });
+
+                const resultsDiv = document.getElementById('results');
+                resultsDiv.innerHTML = `You scored <span class="font-bold text-violet-600">${score}</span> out of <span class="font-bold">${total}</span>.`;
+            }
+
+            function reset() {
+                allInputs.forEach(input => {
+                    input.value = '';
+                    input.classList.remove('correct', 'incorrect');
+                });
+                document.getElementById('results').innerHTML = '';
+                updateProgress();
+            }
+
+            allInputs.forEach(input => {
+                input.addEventListener('change', updateProgress);
+                if(input.type === 'text') {
+                    input.addEventListener('input', updateProgress);
+                }
+            });
+
+            document.getElementById('check-answers').addEventListener('click', checkAnswers);
+            document.getElementById('reset').addEventListener('click', reset);
+            
+            updateProgress(); // Initial call
+        });
+    </script>
+</body>
+</html>
