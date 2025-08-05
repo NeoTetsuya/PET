@@ -270,95 +270,97 @@
         </div>
 
         <!-- Vocabulary Tab Content -->
-        <div id="vocabulary" class="tab-content space-y-8">
-             <div class="card">
-                 <h2 class="text-2xl font-bold mb-2 text-indigo-600 text-center">Films, Plays, or Concerts?</h2>
-                 <p class="text-slate-600 text-center mb-6">Drag and drop the words into the correct categories in the Venn diagram.</p>
-                 <div class="venn-diagram-container">
-                    <!-- Visual Circles -->
-                    <div class="venn-circle" style="width: 200px; height: 200px; top: 0; left: 0; background-color: #fef08a;"></div> <!-- Yellow for Films -->
-                    <div class="venn-circle" style="width: 200px; height: 200px; top: 0; right: 0; background-color: #a5b4fc;"></div> <!-- Indigo for Concerts -->
-                    <div class="venn-circle" style="width: 200px; height: 200px; bottom: 0; left: 50%; transform: translateX(-50%); background-color: #f9a8d4;"></div> <!-- Pink for Plays -->
-                    <!-- Drop Zones -->
-                    <div id="films_only" class="drop-zone" style="width: 80px; height: 80px; top: 30px; left: 30px;"></div>
-                    <div id="concerts_only" class="drop-zone" style="width: 80px; height: 80px; top: 30px; right: 30px;"></div>
-                    <div id="plays_only" class="drop-zone" style="width: 80px; height: 80px; bottom: 10px; left: 50%; transform: translateX(-50%);"></div>
-                    <div id="films_concerts" class="drop-zone" style="width: 60px; height: 60px; top: 70px; left: 50%; transform: translateX(-50%);"></div>
-                    <div id="films_plays" class="drop-zone" style="width: 60px; height: 60px; bottom: 70px; left: 90px;"></div>
-                    <div id="concerts_plays" class="drop-zone" style="width: 60px; height: 60px; bottom: 70px; right: 90px;"></div>
-                    <div id="all_three" class="drop-zone" style="width: 60px; height: 60px; top: 120px; left: 50%; transform: translateX(-50%);"></div>
-                 </div>
-                 <div id="word-bank" class="flex flex-wrap gap-3 justify-center p-4 bg-slate-100 rounded-lg mt-6"></div>
-            </div>
-             <div class="card">
-                <h2 class="text-2xl font-bold mb-6 text-indigo-600">Going Out: Vocabulary Quiz</h2>
-                <div id="quiz-container" class="space-y-4 text-slate-700"></div>
-                <button id="check-vocab-answers-btn" class="mt-6 bg-indigo-600 text-white font-semibold px-4 py-2 rounded-lg hover:bg-indigo-700 transition-colors">Check Answers</button>
-            </div>
-            <div class="card" id="example-sentences-card">
-                <h2 class="text-2xl font-bold mb-6 text-indigo-600">Example Sentences & Questions</h2>
-                <div class="space-y-6">
-                    <!-- Paul & Sophia -->
-                    <div class="bg-slate-50 p-4 rounded-lg">
-                        <p class="text-slate-700 leading-relaxed mb-4">Paul isn't at home, he's <b class="text-blue-600">gone</b> to a friend's home. His sister Sophia has just got home. She's <b class="text-blue-600">been</b> to the cinema.</p>
-                        <div class="space-y-3 text-sm">
-                            <div>
-                                <label for="es-q1" class="font-medium text-slate-800">1. Where's Paul now?</label>
-                                <input type="text" id="es-q1" class="mt-1 block w-full rounded-md border-slate-300 shadow-sm text-sm" placeholder="Type answer...">
-                                <p id="es-a1" class="answer-text">At his friend's home.</p>
-                            </div>
-                            <div>
-                                <label for="es-q2" class="font-medium text-slate-800">2. Where's Sophia now?</label>
-                                <input type="text" id="es-q2" class="mt-1 block w-full rounded-md border-slate-300 shadow-sm text-sm" placeholder="Type answer...">
-                                <p id="es-a2" class="answer-text">She is at home.</p>
-                            </div>
-                             <div>
-                                <label for="es-q3" class="font-medium text-slate-800">3. Which one means 'go and come back'? Which one means 'hasn't come back yet'?</label>
-                                <input type="text" id="es-q3" class="mt-1 block w-full rounded-md border-slate-300 shadow-sm text-sm" placeholder="Type answer...">
-                                <p id="es-a3" class="answer-text">'Been' means go and come back. 'Gone' means hasn't come back yet.</p>
-                            </div>
-                        </div>
-                    </div>
-                    <!-- Lucas & Nick -->
-                    <div class="bg-slate-50 p-4 rounded-lg">
-                        <p class="text-slate-700 leading-relaxed mb-4">Lucas has <b class="text-blue-600">known</b> his best friend Nick for years. They first <b class="text-blue-600">met</b> when they were at primary school. They <b class="text-blue-600">got to know</b> each other and they became good friends. Lucas often <b class="text-blue-600">meets</b> Nick on Saturday afternoons.</p>
-                        <div class="space-y-3 text-sm">
-                            <div>
-                                <label for="es-q4" class="font-medium text-slate-800">4. When and how did Lucas and Nick become friends?</label>
-                                <input type="text" id="es-q4" class="mt-1 block w-full rounded-md border-slate-300 shadow-sm text-sm" placeholder="Type answer...">
-                                 <p id="es-a4" class="answer-text">They met at primary school and got to know each other.</p>
-                            </div>
-                             <div>
-                                <label for="es-q5" class="font-medium text-slate-800">5. Do they still see each other? When?</label>
-                                <input type="text" id="es-q5" class="mt-1 block w-full rounded-md border-slate-300 shadow-sm text-sm" placeholder="Type answer...">
-                                 <p id="es-a5" class="answer-text">Yes, on Saturday afternoons.</p>
-                            </div>
-                        </div>
-                    </div>
-                    <!-- Scarlett -->
-                     <div class="bg-slate-50 p-4 rounded-lg">
-                        <p class="text-slate-700 leading-relaxed mb-4">Scarlett's parents were away and they didn't <b class="text-blue-600">know</b> about the party. The neighbours phoned Scarlett's parents because of the noise. When they <b class="text-blue-600">found out</b> about it, they were very angry.</p>
-                         <div class="space-y-3 text-sm">
-                             <div>
-                                <label for="es-q7" class="font-medium text-slate-800">7. Did Scarlett tell her parents about the party?</label>
-                                <input type="text" id="es-q7" class="mt-1 block w-full rounded-md border-slate-300 shadow-sm text-sm" placeholder="Type answer...">
-                                 <p id="es-a7" class="answer-text">No, she didn't.</p>
-                            </div>
-                            <div>
-                                <label for="es-q8" class="font-medium text-slate-800">8. Who told Scarlett's parents that she was having a party?</label>
-                                <input type="text" id="es-q8" class="mt-1 block w-full rounded-md border-slate-300 shadow-sm text-sm" placeholder="Type answer...">
-                                 <p id="es-a8" class="answer-text">The neighbours.</p>
-                            </div>
-                        </div>
-                    </div>
+        <div id="vocabulary" class="tab-content">
+            <div class="max-w-4xl mx-auto space-y-8">
+                 <div class="card">
+                     <h2 class="text-2xl font-bold mb-2 text-indigo-600 text-center">Films, Plays, or Concerts?</h2>
+                     <p class="text-slate-600 text-center mb-6">Drag and drop the words into the correct categories in the Venn diagram.</p>
+                     <div class="venn-diagram-container">
+                        <!-- Visual Circles -->
+                        <div class="venn-circle" style="width: 200px; height: 200px; top: 0; left: 0; background-color: #fef08a;"></div> <!-- Yellow for Films -->
+                        <div class="venn-circle" style="width: 200px; height: 200px; top: 0; right: 0; background-color: #a5b4fc;"></div> <!-- Indigo for Concerts -->
+                        <div class="venn-circle" style="width: 200px; height: 200px; bottom: 0; left: 50%; transform: translateX(-50%); background-color: #f9a8d4;"></div> <!-- Pink for Plays -->
+                        <!-- Drop Zones -->
+                        <div id="films_only" class="drop-zone" style="width: 80px; height: 80px; top: 30px; left: 30px;"></div>
+                        <div id="concerts_only" class="drop-zone" style="width: 80px; height: 80px; top: 30px; right: 30px;"></div>
+                        <div id="plays_only" class="drop-zone" style="width: 80px; height: 80px; bottom: 10px; left: 50%; transform: translateX(-50%);"></div>
+                        <div id="films_concerts" class="drop-zone" style="width: 60px; height: 60px; top: 70px; left: 50%; transform: translateX(-50%);"></div>
+                        <div id="films_plays" class="drop-zone" style="width: 60px; height: 60px; bottom: 70px; left: 90px;"></div>
+                        <div id="concerts_plays" class="drop-zone" style="width: 60px; height: 60px; bottom: 70px; right: 90px;"></div>
+                        <div id="all_three" class="drop-zone" style="width: 60px; height: 60px; top: 120px; left: 50%; transform: translateX(-50%);"></div>
+                     </div>
+                     <div id="word-bank" class="flex flex-wrap gap-3 justify-center p-4 bg-slate-100 rounded-lg mt-6"></div>
                 </div>
-                <button id="check-example-sentences-btn" class="mt-6 bg-indigo-600 text-white font-semibold px-4 py-2 rounded-lg hover:bg-indigo-700 transition-colors">Show Answers</button>
-            </div>
-            <div class="card" id="extra-vocab-card">
-                <h2 class="text-2xl font-bold mb-6 text-indigo-600">Been/Gone, Meet/Know, etc.</h2>
-                <p class="text-slate-600 mb-4">Choose the correct option for each sentence.</p>
-                <div id="extra-vocab-container" class="space-y-4 text-slate-700"></div>
-                <button id="check-extra-vocab-btn" class="mt-6 bg-indigo-600 text-white font-semibold px-4 py-2 rounded-lg hover:bg-indigo-700 transition-colors">Check Answers</button>
+                 <div class="card">
+                    <h2 class="text-2xl font-bold mb-6 text-indigo-600">Going Out: Vocabulary Quiz</h2>
+                    <div id="quiz-container" class="space-y-4 text-slate-700"></div>
+                    <button id="check-vocab-answers-btn" class="mt-6 bg-indigo-600 text-white font-semibold px-4 py-2 rounded-lg hover:bg-indigo-700 transition-colors">Check Answers</button>
+                </div>
+                <div class="card" id="example-sentences-card">
+                    <h2 class="text-2xl font-bold mb-6 text-indigo-600">Example Sentences & Questions</h2>
+                    <div class="space-y-6">
+                        <!-- Paul & Sophia -->
+                        <div class="bg-slate-50 p-4 rounded-lg">
+                            <p class="text-slate-700 leading-relaxed mb-4">Paul isn't at home, he's <b class="text-blue-600">gone</b> to a friend's home. His sister Sophia has just got home. She's <b class="text-blue-600">been</b> to the cinema.</p>
+                            <div class="space-y-3 text-sm">
+                                <div>
+                                    <label for="es-q1" class="font-medium text-slate-800">1. Where's Paul now?</label>
+                                    <input type="text" id="es-q1" class="mt-1 block w-full rounded-md border-slate-300 shadow-sm text-sm" placeholder="Type answer...">
+                                    <p id="es-a1" class="answer-text">At his friend's home.</p>
+                                </div>
+                                <div>
+                                    <label for="es-q2" class="font-medium text-slate-800">2. Where's Sophia now?</label>
+                                    <input type="text" id="es-q2" class="mt-1 block w-full rounded-md border-slate-300 shadow-sm text-sm" placeholder="Type answer...">
+                                    <p id="es-a2" class="answer-text">She is at home.</p>
+                                </div>
+                                 <div>
+                                    <label for="es-q3" class="font-medium text-slate-800">3. Which one means 'go and come back'? Which one means 'hasn't come back yet'?</label>
+                                    <input type="text" id="es-q3" class="mt-1 block w-full rounded-md border-slate-300 shadow-sm text-sm" placeholder="Type answer...">
+                                    <p id="es-a3" class="answer-text">'Been' means go and come back. 'Gone' means hasn't come back yet.</p>
+                                </div>
+                            </div>
+                        </div>
+                        <!-- Lucas & Nick -->
+                        <div class="bg-slate-50 p-4 rounded-lg">
+                            <p class="text-slate-700 leading-relaxed mb-4">Lucas has <b class="text-blue-600">known</b> his best friend Nick for years. They first <b class="text-blue-600">met</b> when they were at primary school. They <b class="text-blue-600">got to know</b> each other and they became good friends. Lucas often <b class="text-blue-600">meets</b> Nick on Saturday afternoons.</p>
+                            <div class="space-y-3 text-sm">
+                                <div>
+                                    <label for="es-q4" class="font-medium text-slate-800">4. When and how did Lucas and Nick become friends?</label>
+                                    <input type="text" id="es-q4" class="mt-1 block w-full rounded-md border-slate-300 shadow-sm text-sm" placeholder="Type answer...">
+                                     <p id="es-a4" class="answer-text">They met at primary school and got to know each other.</p>
+                                </div>
+                                 <div>
+                                    <label for="es-q5" class="font-medium text-slate-800">5. Do they still see each other? When?</label>
+                                    <input type="text" id="es-q5" class="mt-1 block w-full rounded-md border-slate-300 shadow-sm text-sm" placeholder="Type answer...">
+                                     <p id="es-a5" class="answer-text">Yes, on Saturday afternoons.</p>
+                                </div>
+                            </div>
+                        </div>
+                        <!-- Scarlett -->
+                         <div class="bg-slate-50 p-4 rounded-lg">
+                            <p class="text-slate-700 leading-relaxed mb-4">Scarlett's parents were away and they didn't <b class="text-blue-600">know</b> about the party. The neighbours phoned Scarlett's parents because of the noise. When they <b class="text-blue-600">found out</b> about it, they were very angry.</p>
+                             <div class="space-y-3 text-sm">
+                                 <div>
+                                    <label for="es-q7" class="font-medium text-slate-800">7. Did Scarlett tell her parents about the party?</label>
+                                    <input type="text" id="es-q7" class="mt-1 block w-full rounded-md border-slate-300 shadow-sm text-sm" placeholder="Type answer...">
+                                     <p id="es-a7" class="answer-text">No, she didn't.</p>
+                                </div>
+                                <div>
+                                    <label for="es-q8" class="font-medium text-slate-800">8. Who told Scarlett's parents that she was having a party?</label>
+                                    <input type="text" id="es-q8" class="mt-1 block w-full rounded-md border-slate-300 shadow-sm text-sm" placeholder="Type answer...">
+                                     <p id="es-a8" class="answer-text">The neighbours.</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <button id="check-example-sentences-btn" class="mt-6 bg-indigo-600 text-white font-semibold px-4 py-2 rounded-lg hover:bg-indigo-700 transition-colors">Show Answers</button>
+                </div>
+                <div class="card" id="extra-vocab-card">
+                    <h2 class="text-2xl font-bold mb-6 text-indigo-600">Been/Gone, Meet/Know, etc.</h2>
+                    <p class="text-slate-600 mb-4">Choose the correct option for each sentence.</p>
+                    <div id="extra-vocab-container" class="space-y-4 text-slate-700"></div>
+                    <button id="check-extra-vocab-btn" class="mt-6 bg-indigo-600 text-white font-semibold px-4 py-2 rounded-lg hover:bg-indigo-700 transition-colors">Check Answers</button>
+                </div>
             </div>
         </div>
     </div>
