@@ -1,0 +1,546 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Interactive Reading & Vocabulary Sheet</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f1f5f9; /* slate-100 */
+        }
+        .tab-content {
+            display: none;
+        }
+        .active-tab {
+            display: block;
+        }
+        .tab-btn.active {
+            border-color: #4f46e5; /* indigo-600 */
+            color: #4f46e5;
+            font-weight: 600;
+        }
+        .highlight-tool {
+            position: fixed;
+            left: 1rem;
+            top: 50%;
+            transform: translateY(-50%);
+            background-color: white;
+            border: 1px solid #e2e8f0; /* slate-200 */
+            border-radius: 9999px;
+            padding: 0.75rem 0.5rem;
+            box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+            z-index: 50;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 0.75rem;
+        }
+        .highlight {
+            cursor: pointer;
+            border-radius: 3px;
+            padding: 1px 2px;
+        }
+        .color-swatch {
+            transition: transform 0.1s ease-in-out;
+        }
+        .color-swatch:hover {
+            transform: scale(1.15);
+        }
+        .color-swatch.active {
+            border-color: #3b82f6; /* blue-500 */
+            box-shadow: 0 0 0 2px #bfdbfe; /* blue-200 */
+        }
+        .card {
+            background-color: white;
+            border-radius: 0.75rem; /* rounded-xl */
+            padding: 2rem;
+            box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.07), 0 2px 4px -2px rgb(0 0 0 / 0.07);
+        }
+        .venn-diagram-container {
+            position: relative;
+            width: 100%;
+            max-width: 450px;
+            height: 300px;
+            margin: 0 auto;
+        }
+        .venn-circle {
+            position: absolute;
+            border-radius: 50%;
+            mix-blend-mode: multiply;
+            opacity: 0.6;
+        }
+        .drop-zone {
+            position: absolute;
+            min-height: 50px;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 4px;
+            align-content: flex-start;
+            padding: 4px;
+            border-radius: 8px;
+            transition: background-color 0.2s;
+        }
+        .drop-zone.drag-over {
+            background-color: rgba(0,0,0,0.1);
+        }
+        .word-tag {
+             background-color: white;
+             padding: 4px 8px;
+             border-radius: 12px;
+             box-shadow: 0 1px 3px 0 rgb(0 0 0 / 0.1), 0 1px 2px -1px rgb(0 0 0 / 0.1);
+             cursor: move;
+             font-size: 0.875rem;
+             transition: background-color 0.2s;
+        }
+        .word-tag:hover {
+            background-color: #f3f4f6; /* gray-100 */
+        }
+        .vocab-choice {
+            cursor: pointer;
+            padding: 2px 6px;
+            border-radius: 6px;
+            border: 1px solid #cbd5e1; /* slate-300 */
+            transition: background-color 0.2s;
+        }
+        .vocab-choice:hover {
+            background-color: #f1f5f9; /* slate-100 */
+        }
+        .vocab-choice.selected {
+            background-color: #e0e7ff; /* indigo-200 */
+            border-color: #a5b4fc; /* indigo-300 */
+        }
+        .vocab-choice.correct {
+            background-color: #dcfce7 !important; /* green-100 */
+            border-color: #86efac !important; /* green-300 */
+            color: #15803d; /* green-700 */
+        }
+        .vocab-choice.incorrect {
+            background-color: #fee2e2 !important; /* red-100 */
+            border-color: #fca5a5 !important; /* red-300 */
+            color: #b91c1c; /* red-700 */
+        }
+        .answer-text {
+             display: none;
+             margin-top: 0.25rem;
+             font-size: 0.875rem;
+             color: #15803d; /* green-700 */
+        }
+        .event-answer {
+            display: none;
+            font-weight: 700;
+            color: #16a34a; /* green-600 */
+            margin-left: 0.5rem;
+        }
+    </style>
+</head>
+<body class="text-slate-800">
+
+    <!-- Highlight Tool -->
+    <div class="highlight-tool">
+        <div id="color-picker" class="flex flex-col items-center gap-3"></div>
+        <button id="clearHighlights" title="Clear all highlights" class="flex items-center justify-center bg-slate-200 text-slate-700 p-2 rounded-full hover:bg-slate-300 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-colors">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+            </svg>
+        </button>
+    </div>
+
+    <div class="container mx-auto p-4 sm:p-6 lg:p-8">
+        <h1 class="text-4xl font-bold text-slate-900 mb-8 text-center">Reading, Writing & Vocabulary</h1>
+
+        <!-- Tabs -->
+        <div class="mb-8 border-b border-slate-200">
+            <nav class="flex space-x-4" aria-label="Tabs">
+                <button onclick="changeTab('reading')" id="reading-tab-btn" class="tab-btn active text-lg py-3 px-4 border-b-2 font-medium text-slate-500 hover:text-slate-700 hover:border-slate-300 focus:outline-none">
+                    📖 Reading
+                </button>
+                 <button onclick="changeTab('writing')" id="writing-tab-btn" class="tab-btn text-lg py-3 px-4 border-b-2 font-medium text-slate-500 hover:text-slate-700 hover:border-slate-300 focus:outline-none">
+                    ✍️ Writing
+                </button>
+                <button onclick="changeTab('vocabulary')" id="vocabulary-tab-btn" class="tab-btn text-lg py-3 px-4 border-b-2 font-medium text-slate-500 hover:text-slate-700 hover:border-slate-300 focus:outline-none">
+                    🧠 Vocabulary
+                </button>
+            </nav>
+        </div>
+
+        <!-- Reading Tab Content -->
+        <div id="reading" class="tab-content active-tab">
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                <div class="card space-y-8" id="reading-exercises">
+                    <div>
+                        <h2 class="text-2xl font-bold mb-3 text-indigo-600">Exercise 1: Underline Key Words</h2>
+                        <p class="text-slate-600 mb-4">Read about what Tom and Ian like and dislike. Use the highlight tool to <span class="font-semibold">underline</span> the key words.</p>
+                        <div class="bg-slate-50 p-4 rounded-lg text-slate-700 leading-relaxed">
+                            <p><strong>Tom and Ian</strong> have a free afternoon but neither of them like crowds. They're interested in theatre and exhibitions for young people, but they don't have much money.</p>
+                        </div>
+                    </div>
+
+                    <div class="border-t border-slate-200 pt-8">
+                        <h2 class="text-2xl font-bold mb-3 text-indigo-600">Exercise 2: Find the Best Event</h2>
+                        <p class="text-slate-600 mb-4">Read the Entertainment Guide and decide which event is the most suitable for Tom and Ian. Then answer the questions below.</p>
+                        <div class="space-y-4">
+                            <div>
+                                <label for="ex2-q1" class="block text-base font-medium text-slate-700">1. Tom and Ian are interested in theatres and exhibitions. Why isn't D suitable?</label>
+                                <input type="text" id="ex2-q1" class="mt-1 block w-full rounded-md border-slate-300 shadow-sm focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50" placeholder="Type your answer here...">
+                                <p id="ex2-a1" class="answer-text">Because it's expensive (from €50) and they don't have much money.</p>
+                            </div>
+                            <div>
+                                <label for="ex2-q2" class="block text-base font-medium text-slate-700">2. Neither of them like crowds. Why isn't G suitable?</label>
+                                <input type="text" id="ex2-q2" class="mt-1 block w-full rounded-md border-slate-300 shadow-sm focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50" placeholder="Type your answer here...">
+                                <p id="ex2-a2" class="answer-text">Because you can expect long queues for everything, which suggests it's crowded.</p>
+                            </div>
+                        </div>
+                        <button id="check-reading-answers-btn" class="mt-4 bg-indigo-600 text-white font-semibold px-4 py-2 rounded-lg hover:bg-indigo-700 transition-colors text-sm">Show Answers</button>
+                    </div>
+
+                    <div class="border-t border-slate-200 pt-8">
+                        <h2 class="text-2xl font-bold mb-3 text-indigo-600">Exercise 3: Match People to Events</h2>
+                        <p class="text-slate-600 mb-4">Read the guide again. Decide which event (A-H) would be the most suitable for the people below. Use the highlight tool to find matching information.</p>
+                        <div id="event-matching-container" class="space-y-6 text-base leading-relaxed text-slate-700">
+                            <p><strong>Alice's parents</strong> want to take her to see something brand new and have a meal afterwards somewhere close by. They want to go by public transport but they don't want to walk too far.<span class="event-answer" data-answer="E">Answer: E</span></p>
+                            <p><strong>Jack</strong> is keen on cartoons. As he'll be alone, he would like to go somewhere where he can get to know people with similar interests and also add to his collection of old books and magazines.<span class="event-answer" data-answer="G">Answer: G</span></p>
+                            <p><strong>Patricia and Stef</strong>, two 14-year-old friends, would love to see a live performance in a foreign language. Whenever they go out together, they always buy something to eat during the interval.<span class="event-answer" data-answer="H">Answer: H</span></p>
+                            <p><strong>Su's mum</strong> has promised to take her to see a show with music for her birthday. Su would like to see something with an enjoyable story but her mum isn't fond of rock or pop.<span class="event-answer" data-answer="F">Answer: F</span></p>
+                        </div>
+                         <button id="check-event-answers-btn" class="mt-4 bg-indigo-600 text-white font-semibold px-4 py-2 rounded-lg hover:bg-indigo-700 transition-colors text-sm">Show Answers</button>
+                    </div>
+                </div>
+                <div class="card">
+                    <h2 class="text-2xl font-bold mb-6 text-indigo-600">Entertainment Guide</h2>
+                     <div id="passage-container" class="space-y-4 text-sm leading-relaxed text-slate-600">
+                        <div class="border-b border-slate-200 pb-4"><h3 class="font-bold text-lg text-slate-800">A. Beautiful Sunset</h3><p>This band returns once again to play songs from their latest album. Expect an amazing performance from these musicians who have sold over 80 million records. Tickets are on sale for €60, the price includes a free souvenir T-shirt. Enjoy a meal in our restaurant after the show. Public transport nearby. <span class="font-semibold italic">The Sports Palace</span></p></div>
+                        <div class="border-b border-slate-200 pb-4"><h3 class="font-bold text-lg text-slate-800">B. Our lives, their lives</h3><p>Now in its second year, this exhibition explores the lives of teenagers from all around the world through photographs and cartoons, music and interviews. Free entry to this popular museum, which is rarely busy after 3 pm. <span class="font-semibold italic">Jameson Museum</span></p></div>
+                        <div class="border-b border-slate-200 pb-4"><h3 class="font-bold text-lg text-slate-800">C. Captain Rob's Adventures in 4DX</h3><p>Not cheap but this animated version of a well-known film is an experience you definitely can't get at home. The 4D effects are amazing. Feel the wind and the waves, as you sail with Captain Rob. Choice of restaurants nearby. Public transport within easy walking distance. <span class="font-semibold italic">Filmworld 4DX</span></p></div>
+                        <div class="border-b border-slate-200 pb-4"><h3 class="font-bold text-lg text-slate-800">D. The Music Teacher</h3><p>Based on a film, this musical is now showing on stage. An out-of-work guitarist persuades some of his students to create a rock group. Afternoon and evening performances from €50. Refreshments available. <span class="font-semibold italic">Queens Theatre</span></p></div>
+                        <div class="border-b border-slate-200 pb-4"><h3 class="font-bold text-lg text-slate-800">E. Rubbish</h3><p>Young artists do gymnastics, dance and theatre using rubbish like wheels, furniture and boxes. First performances this week! Ask about family discounts at our restaurant. A two-minute walk from the underground. <span class="font-semibold italic">Opera House</span></p></div>
+                        <div class="border-b border-slate-200 pb-4"><h3 class="font-bold text-lg text-slate-800">F. Paris 1792</h3><p>A brand-new version of the Italian opera with amazing singing and real classical music! Audiences of all ages will be entertained. Food and drink not permitted in the theatre. <span class="font-semibold italic">Elizabeth Theatre</span></p></div>
+                        <div class="border-b border-slate-200 pb-4"><h3 class="font-bold text-lg text-slate-800">G. Big sight</h3><p>Held over three days, this comic market celebrates Japanese animation. Fans can meet other fans, buy rare comics, and dress up. No admission fee. Reasonably priced food, but expect long queues. <span class="font-semibold italic">The Conference Centre</span></p></div>
+                        <div><h3 class="font-bold text-lg text-slate-800">H. Traditional Future</h3><p>For less than €8, watch Anuang'a Fernando from Kenya as he uses traditional words from his own country, modern music and movement to perform. The theatre only holds 200 people. Snacks will be available. <span class="font-semibold italic">Drake Hall</span></p></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Writing Tab Content -->
+        <div id="writing" class="tab-content">
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                <div class="card space-y-8">
+                    <div>
+                        <h2 class="text-2xl font-bold mb-3 text-indigo-600">Writing Part 2: An Article</h2>
+                        <p class="text-slate-600 mb-4">Read the writing task and the example article. Use the exercises to help you plan and write your own article.</p>
+                    </div>
+                    <div class="border-t border-slate-200 pt-8">
+                        <h3 class="text-xl font-bold mb-3 text-slate-800">The Task</h3>
+                        <div class="bg-slate-50 p-4 rounded-lg text-slate-700 leading-relaxed">
+                             <p class="font-semibold text-lg mb-2">Let's celebrate!</p>
+                             <p>You see this announcement in an international English-language magazine for teenagers.</p>
+                             <ul class="list-disc list-inside my-2 space-y-1">
+                                 <li>Tell us about a celebration in your country.</li>
+                                 <li>What do people usually wear?</li>
+                                 <li>What do people do?</li>
+                                 <li>Why is it special?</li>
+                             </ul>
+                             <p>Write an article answering these questions and we will publish the most interesting articles in our magazine.</p>
+                        </div>
+                    </div>
+                     <div class="border-t border-slate-200 pt-8">
+                        <h3 class="text-xl font-bold mb-3 text-slate-800">Example Article & Checklist</h3>
+                         <div class="bg-slate-50 p-4 rounded-lg text-slate-700 leading-relaxed mb-4">
+                            <p class="font-semibold">My favourite celebration in my country is the Venice Carnival in February. The celebrations last for two weeks. There are dances, concerts and performances, but I love the masks and costumes best.</p>
+                            <p class="mt-2">My favourite mask is made of leather, it's painted by hand and it has a very long nose. We all wear traditional costumes so Venice looks like an 18th-century city. We go for walks in our special clothes, we watch actors perform in the street and we go to dances called balls. It's a very special celebration because there is nothing like it anywhere else in the world.</p>
+                        </div>
+                        <div class="space-y-2">
+                            <p><strong>Checklist:</strong></p>
+                            <p>1. Is it an article and not a story?</p>
+                            <p>2. Is the first paragraph interesting?</p>
+                            <p>3. Does the article include all the information?</p>
+                            <p>4. Is it about 100 words?</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="card">
+                    <h2 class="text-2xl font-bold mb-6 text-indigo-600">Write Your Article</h2>
+                    <p class="text-slate-600 mb-4">Use the space below to write your own article (about 100 words) based on the task.</p>
+                    <textarea class="w-full h-96 p-4 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-300 focus:border-indigo-400 transition" placeholder="Start writing your article here..."></textarea>
+                </div>
+            </div>
+        </div>
+
+        <!-- Vocabulary Tab Content -->
+        <div id="vocabulary" class="tab-content space-y-8">
+             <div class="card">
+                 <h2 class="text-2xl font-bold mb-2 text-indigo-600 text-center">Films, Plays, or Concerts?</h2>
+                 <p class="text-slate-600 text-center mb-6">Drag and drop the words into the correct categories in the Venn diagram.</p>
+                 <div class="venn-diagram-container">
+                    <!-- Visual Circles -->
+                    <div class="venn-circle" style="width: 200px; height: 200px; top: 0; left: 0; background-color: #fef08a;"></div> <!-- Yellow for Films -->
+                    <div class="venn-circle" style="width: 200px; height: 200px; top: 0; right: 0; background-color: #a5b4fc;"></div> <!-- Indigo for Concerts -->
+                    <div class="venn-circle" style="width: 200px; height: 200px; bottom: 0; left: 50%; transform: translateX(-50%); background-color: #f9a8d4;"></div> <!-- Pink for Plays -->
+                    <!-- Drop Zones -->
+                    <div id="films_only" class="drop-zone" style="width: 80px; height: 80px; top: 30px; left: 30px;"></div>
+                    <div id="concerts_only" class="drop-zone" style="width: 80px; height: 80px; top: 30px; right: 30px;"></div>
+                    <div id="plays_only" class="drop-zone" style="width: 80px; height: 80px; bottom: 10px; left: 50%; transform: translateX(-50%);"></div>
+                    <div id="films_concerts" class="drop-zone" style="width: 60px; height: 60px; top: 70px; left: 50%; transform: translateX(-50%);"></div>
+                    <div id="films_plays" class="drop-zone" style="width: 60px; height: 60px; bottom: 70px; left: 90px;"></div>
+                    <div id="concerts_plays" class="drop-zone" style="width: 60px; height: 60px; bottom: 70px; right: 90px;"></div>
+                    <div id="all_three" class="drop-zone" style="width: 60px; height: 60px; top: 120px; left: 50%; transform: translateX(-50%);"></div>
+                 </div>
+                 <div id="word-bank" class="flex flex-wrap gap-3 justify-center p-4 bg-slate-100 rounded-lg mt-6"></div>
+            </div>
+             <div class="card">
+                <h2 class="text-2xl font-bold mb-6 text-indigo-600">Going Out: Vocabulary Quiz</h2>
+                <div id="quiz-container" class="space-y-4 text-slate-700"></div>
+                <button id="check-vocab-answers-btn" class="mt-6 bg-indigo-600 text-white font-semibold px-4 py-2 rounded-lg hover:bg-indigo-700 transition-colors">Check Answers</button>
+            </div>
+            <div class="card" id="example-sentences-card">
+                <h2 class="text-2xl font-bold mb-6 text-indigo-600">Example Sentences & Questions</h2>
+                <div class="space-y-6">
+                    <!-- Paul & Sophia -->
+                    <div class="bg-slate-50 p-4 rounded-lg">
+                        <p class="text-slate-700 leading-relaxed mb-4">Paul isn't at home, he's <b class="text-blue-600">gone</b> to a friend's home. His sister Sophia has just got home. She's <b class="text-blue-600">been</b> to the cinema.</p>
+                        <div class="space-y-3 text-sm">
+                            <div>
+                                <label for="es-q1" class="font-medium text-slate-800">1. Where's Paul now?</label>
+                                <input type="text" id="es-q1" class="mt-1 block w-full rounded-md border-slate-300 shadow-sm text-sm" placeholder="Type answer...">
+                                <p id="es-a1" class="answer-text">At his friend's home.</p>
+                            </div>
+                            <div>
+                                <label for="es-q2" class="font-medium text-slate-800">2. Where's Sophia now?</label>
+                                <input type="text" id="es-q2" class="mt-1 block w-full rounded-md border-slate-300 shadow-sm text-sm" placeholder="Type answer...">
+                                <p id="es-a2" class="answer-text">She is at home.</p>
+                            </div>
+                             <div>
+                                <label for="es-q3" class="font-medium text-slate-800">3. Which one means 'go and come back'? Which one means 'hasn't come back yet'?</label>
+                                <input type="text" id="es-q3" class="mt-1 block w-full rounded-md border-slate-300 shadow-sm text-sm" placeholder="Type answer...">
+                                <p id="es-a3" class="answer-text">'Been' means go and come back. 'Gone' means hasn't come back yet.</p>
+                            </div>
+                        </div>
+                    </div>
+                    <!-- Lucas & Nick -->
+                    <div class="bg-slate-50 p-4 rounded-lg">
+                        <p class="text-slate-700 leading-relaxed mb-4">Lucas has <b class="text-blue-600">known</b> his best friend Nick for years. They first <b class="text-blue-600">met</b> when they were at primary school. They <b class="text-blue-600">got to know</b> each other and they became good friends. Lucas often <b class="text-blue-600">meets</b> Nick on Saturday afternoons.</p>
+                        <div class="space-y-3 text-sm">
+                            <div>
+                                <label for="es-q4" class="font-medium text-slate-800">4. When and how did Lucas and Nick become friends?</label>
+                                <input type="text" id="es-q4" class="mt-1 block w-full rounded-md border-slate-300 shadow-sm text-sm" placeholder="Type answer...">
+                                 <p id="es-a4" class="answer-text">They met at primary school and got to know each other.</p>
+                            </div>
+                             <div>
+                                <label for="es-q5" class="font-medium text-slate-800">5. Do they still see each other? When?</label>
+                                <input type="text" id="es-q5" class="mt-1 block w-full rounded-md border-slate-300 shadow-sm text-sm" placeholder="Type answer...">
+                                 <p id="es-a5" class="answer-text">Yes, on Saturday afternoons.</p>
+                            </div>
+                        </div>
+                    </div>
+                    <!-- Scarlett -->
+                     <div class="bg-slate-50 p-4 rounded-lg">
+                        <p class="text-slate-700 leading-relaxed mb-4">Scarlett's parents were away and they didn't <b class="text-blue-600">know</b> about the party. The neighbours phoned Scarlett's parents because of the noise. When they <b class="text-blue-600">found out</b> about it, they were very angry.</p>
+                         <div class="space-y-3 text-sm">
+                             <div>
+                                <label for="es-q7" class="font-medium text-slate-800">7. Did Scarlett tell her parents about the party?</label>
+                                <input type="text" id="es-q7" class="mt-1 block w-full rounded-md border-slate-300 shadow-sm text-sm" placeholder="Type answer...">
+                                 <p id="es-a7" class="answer-text">No, she didn't.</p>
+                            </div>
+                            <div>
+                                <label for="es-q8" class="font-medium text-slate-800">8. Who told Scarlett's parents that she was having a party?</label>
+                                <input type="text" id="es-q8" class="mt-1 block w-full rounded-md border-slate-300 shadow-sm text-sm" placeholder="Type answer...">
+                                 <p id="es-a8" class="answer-text">The neighbours.</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <button id="check-example-sentences-btn" class="mt-6 bg-indigo-600 text-white font-semibold px-4 py-2 rounded-lg hover:bg-indigo-700 transition-colors">Show Answers</button>
+            </div>
+            <div class="card" id="extra-vocab-card">
+                <h2 class="text-2xl font-bold mb-6 text-indigo-600">Been/Gone, Meet/Know, etc.</h2>
+                <p class="text-slate-600 mb-4">Choose the correct option for each sentence.</p>
+                <div id="extra-vocab-container" class="space-y-4 text-slate-700"></div>
+                <button id="check-extra-vocab-btn" class="mt-6 bg-indigo-600 text-white font-semibold px-4 py-2 rounded-lg hover:bg-indigo-700 transition-colors">Check Answers</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // --- Tab Functionality ---
+        function changeTab(tabName) {
+            document.querySelectorAll('.tab-content').forEach(tab => tab.style.display = 'none');
+            document.getElementById(tabName).style.display = 'block';
+            document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+            document.getElementById(tabName + '-tab-btn').classList.add('active');
+        }
+        document.addEventListener('DOMContentLoaded', () => changeTab('reading'));
+
+        // --- Highlighting Tool ---
+        const highlightColors = ['#fef9c3', '#dbeafe', '#dcfce7', '#fce7f3'];
+        let currentColor = highlightColors[0];
+        const colorPicker = document.getElementById('color-picker');
+        highlightColors.forEach((color, index) => {
+            const swatch = document.createElement('div');
+            swatch.className = 'color-swatch w-7 h-7 rounded-full cursor-pointer border-2 border-slate-300';
+            if (index === 0) swatch.classList.add('active');
+            swatch.style.backgroundColor = color;
+            swatch.addEventListener('click', () => {
+                currentColor = color;
+                document.querySelectorAll('.color-swatch').forEach(s => s.classList.remove('active'));
+                swatch.classList.add('active');
+            });
+            colorPicker.appendChild(swatch);
+        });
+
+        function highlightSelection() {
+            const selection = window.getSelection();
+            if (!selection.rangeCount || selection.isCollapsed) return;
+            const range = selection.getRangeAt(0);
+            const span = document.createElement('span');
+            span.className = 'highlight';
+            span.style.backgroundColor = currentColor;
+            span.onclick = () => {
+                const parent = span.parentNode;
+                while (span.firstChild) parent.insertBefore(span.firstChild, span);
+                parent.removeChild(span);
+                parent.normalize();
+            };
+            try {
+                range.surroundContents(span);
+            } catch (e) { console.warn("Selection could not be wrapped."); }
+            selection.removeAllRanges();
+        }
+        ['passage-container', 'reading-exercises', 'example-sentences-card', 'writing'].forEach(id => {
+            const el = document.getElementById(id);
+            if(el) el.addEventListener('mouseup', highlightSelection)
+        });
+        document.getElementById('clearHighlights').addEventListener('click', () => {
+            document.querySelectorAll('.highlight').forEach(span => {
+                const parent = span.parentNode;
+                while (span.firstChild) parent.insertBefore(span.firstChild, span);
+                parent.removeChild(span);
+                parent.normalize();
+            });
+        });
+        
+        // --- Reading Exercise Answers ---
+        document.getElementById('check-reading-answers-btn').addEventListener('click', () => {
+            document.getElementById('ex2-a1').style.display = 'block';
+            document.getElementById('ex2-a2').style.display = 'block';
+        });
+        document.getElementById('check-event-answers-btn').addEventListener('click', () => {
+            document.querySelectorAll('.event-answer').forEach(el => el.style.display = 'inline');
+        });
+
+        // --- Example Sentences Answers ---
+        document.getElementById('check-example-sentences-btn').addEventListener('click', () => {
+            for (let i = 1; i <= 8; i++) {
+                const answerEl = document.getElementById(`es-a${i}`);
+                if (answerEl) {
+                    answerEl.style.display = 'block';
+                }
+            }
+        });
+
+        // --- Vocabulary Drag and Drop ---
+        const words = {
+            'films_only': ['screen', 'subtitles'], 'plays_only': ['acting'], 'concerts_only': ['live music'], 'films_plays': ['reviews'], 'concerts_plays': ['stage', 'perform', 'interval'], 'all_three': ['admission', 'audience', 'book early', 'refreshments', 'ticket']
+        };
+        const wordBank = document.getElementById('word-bank');
+        const allWords = Object.values(words).flat();
+        allWords.sort(() => Math.random() - 0.5);
+        allWords.forEach(word => {
+            const wordEl = document.createElement('div');
+            wordEl.id = 'word-' + word.replace(' ', '-');
+            wordEl.draggable = true;
+            wordEl.textContent = word;
+            wordEl.className = 'word-tag';
+            wordEl.addEventListener('dragstart', e => e.dataTransfer.setData("text", e.target.id));
+            wordBank.appendChild(wordEl);
+        });
+
+        document.querySelectorAll('.drop-zone').forEach(zone => {
+            zone.addEventListener('dragover', e => { e.preventDefault(); zone.classList.add('drag-over'); });
+            zone.addEventListener('dragleave', e => zone.classList.remove('drag-over'));
+            zone.addEventListener('drop', e => {
+                e.preventDefault();
+                zone.classList.remove('drag-over');
+                const data = e.dataTransfer.getData("text");
+                const draggedElement = document.getElementById(data);
+                if (draggedElement) zone.appendChild(draggedElement);
+            });
+        });
+
+        // --- Vocabulary Quiz ---
+        const quizContainer = document.getElementById('quiz-container');
+        const quizQuestions = [
+            "Do you read ___ before you see a film?", "Do you ever watch films in English with ___?", "Did you have to ___ tickets or could you buy them on the door?", "How often do you buy ___ like popcorn at the cinema?", "Do you prefer to listen to music at home or to go out to see ___?", "How much is the ___ for the cinema in your town?", "Would you rather see your favourite actor on the screen or on ___?", "Some people are fantastic actors. Are you good at ___?"
+        ];
+        const quizAnswers = ['reviews', 'subtitles', 'book early', 'refreshments', 'live music', 'admission', 'stage', 'acting'];
+        
+        quizQuestions.forEach((q, i) => {
+            const qId = `q-${i}`;
+            quizContainer.innerHTML += `<div class="quiz-item"><label for="${qId}" class="block text-base font-medium text-slate-700">${i + 1}. ${q.replace('___', `<input type="text" id="${qId}" class="mx-1 rounded-md border-slate-300 shadow-sm focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50">`)}</label></div>`;
+        });
+
+        document.getElementById('check-vocab-answers-btn').addEventListener('click', () => {
+            quizAnswers.forEach((answer, i) => {
+                const input = document.getElementById(`q-${i}`);
+                input.value = answer;
+                input.classList.add('text-green-700', 'border-green-400');
+            });
+        });
+
+        // --- Extra Vocabulary Quiz ---
+        const extraVocabContainer = document.getElementById('extra-vocab-container');
+        const extraVocabQuestions = [
+            { q: "Have you ever ___ abroad? Where?", options: ["been", "gone"], answer: "been" },
+            { q: "Imagine all your friends have ___ on holiday and you are on your own. What do you do?", options: ["been", "gone"], answer: "gone" },
+            { q: "How long have you ___ them? How did you first ___ each other?", options: [["known", "met"], ["met", "known"]], answer: ["known", "met"] },
+            { q: "Do you usually ___ with your friends at the weekend?", options: ["meet", "stay"], answer: "meet" },
+            { q: "Do you enjoy ___ new people?", options: ["knowing", "getting to know"], answer: "getting to know" },
+            { q: "How often do you use the internet to ___ information?", options: ["find out", "know"], answer: "find out" }
+        ];
+
+        extraVocabQuestions.forEach((item, index) => {
+            let questionText = item.q;
+            if (Array.isArray(item.options[0])) {
+                questionText = questionText.replace('___', `<span class="inline-flex gap-2" data-question-index="${index}" data-blank="0">${item.options[0].map(o => `<span class="vocab-choice" data-answer="${o}">${o}</span>`).join(' / ')}</span>`);
+                questionText = questionText.replace('___', `<span class="inline-flex gap-2" data-question-index="${index}" data-blank="1">${item.options[1].map(o => `<span class="vocab-choice" data-answer="${o}">${o}</span>`).join(' / ')}</span>`);
+            } else {
+                 questionText = questionText.replace('___', `<span class="inline-flex gap-2" data-question-index="${index}">${item.options.map(o => `<span class="vocab-choice" data-answer="${o}">${o}</span>`).join(' / ')}</span>`);
+            }
+            extraVocabContainer.innerHTML += `<p>${index + 1}. ${questionText}</p>`;
+        });
+        
+        extraVocabContainer.addEventListener('click', e => {
+            if (e.target.classList.contains('vocab-choice')) {
+                const parentSpan = e.target.parentElement;
+                parentSpan.querySelectorAll('.vocab-choice').forEach(el => el.classList.remove('selected'));
+                e.target.classList.add('selected');
+            }
+        });
+
+        document.getElementById('check-extra-vocab-btn').addEventListener('click', () => {
+            extraVocabQuestions.forEach((item, index) => {
+                if (Array.isArray(item.answer)) {
+                    item.answer.forEach((ans, blankIndex) => {
+                        const choices = document.querySelectorAll(`[data-question-index="${index}"][data-blank="${blankIndex}"] .vocab-choice`);
+                        choices.forEach(choice => {
+                            if (choice.classList.contains('selected')) {
+                                choice.classList.add(choice.dataset.answer === ans ? 'correct' : 'incorrect');
+                            }
+                        });
+                    });
+                } else {
+                    const choices = document.querySelectorAll(`[data-question-index="${index}"] .vocab-choice`);
+                    choices.forEach(choice => {
+                        if (choice.classList.contains('selected')) {
+                            choice.classList.add(choice.dataset.answer === item.answer ? 'correct' : 'incorrect');
+                        }
+                    });
+                }
+            });
+        });
+
+    </script>
+</body>
+</html>
