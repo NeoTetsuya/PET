@@ -1,0 +1,969 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>B1 Preliminary Test Simulator - Test 3 Reading</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --app-font-size: 16px;
+        }
+        body {
+            font-family: 'Inter', sans-serif;
+            overscroll-behavior: none;
+            background-color: #f3f4f6;
+            margin: 0;
+            padding: 0;
+        }
+        .ielts-container {
+            display: grid;
+            grid-template-rows: auto auto 1fr; /* Header, Tabs, Content */
+            height: 100vh;
+        }
+        .header {
+            background-color: #1e3a8a;
+            color: white;
+            padding: 1rem 1.5rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            z-index: 20;
+        }
+        
+        /* Tabs Styles */
+        .tabs-nav {
+            display: flex;
+            background: #e2e8f0;
+            border-bottom: 1px solid #cbd5e1;
+            overflow-x: auto;
+        }
+        .tab-btn {
+            padding: 0.75rem 1.5rem;
+            font-weight: 600;
+            color: #475569;
+            background: transparent;
+            border: none;
+            cursor: pointer;
+            border-right: 1px solid #cbd5e1;
+            transition: all 0.2s;
+            white-space: nowrap;
+        }
+        .tab-btn:hover {
+            background: #f1f5f9;
+        }
+        .tab-btn.active {
+            background: #ffffff;
+            color: #1e3a8a;
+            box-shadow: inset 0 3px 0 0 #1e3a8a;
+        }
+        .tab-content {
+            display: none;
+        }
+        .tab-content.active {
+            display: block;
+            animation: fadeIn 0.3s;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        .content-panes {
+            display: grid;
+            grid-template-columns: 1fr 5px 1fr;
+            overflow: hidden;
+            background-color: #e5e7eb;
+        }
+        .pane {
+            overflow-y: auto;
+            padding: 2rem;
+            font-size: var(--app-font-size);
+            background-color: #ffffff;
+            line-height: 1.6;
+        }
+        .pane-left {
+            border-right: 1px solid #d1d5db;
+        }
+        .splitter {
+            background-color: #cbd5e1;
+            cursor: col-resize;
+            z-index: 10;
+            transition: background-color 0.2s;
+        }
+        .splitter:hover, .splitter:active {
+            background-color: #94a3b8;
+        }
+        
+        /* Typography & Styles */
+        h1, h2, h3 { color: #111827; font-weight: 600; }
+        .part-title { font-size: 1.25em; margin-bottom: 1rem; color: #1e3a8a; border-bottom: 2px solid #e5e7eb; padding-bottom: 0.5rem;}
+        .instruction { font-style: italic; color: #4b5563; margin-bottom: 1.5rem; }
+        
+        /* Reading Text Styles */
+        .reading-text { margin-bottom: 3rem; }
+        .text-box { background-color: #f8fafc; border: 1px solid #e2e8f0; padding: 1.5rem; border-radius: 0.5rem; margin-bottom: 1.5rem; }
+        .sign-box { border: 2px solid #111827; padding: 1rem; text-align: center; font-weight: bold; border-radius: 0.25rem; margin-bottom: 1rem; max-width: 300px; }
+        .email-box { border: 1px solid #94a3b8; padding: 1rem; border-radius: 0.25rem; margin-bottom: 1rem; background-color: #f1f5f9; font-family: monospace; font-size: 0.95em; }
+        
+        /* Question Styles */
+        .question-group { margin-bottom: 2.5rem; }
+        .q-number { font-weight: 600; background-color: #1e3a8a; color: white; padding: 0.1rem 0.5rem; border-radius: 4px; margin-right: 0.5rem; font-size: 0.9em; transition: background-color 0.3s; }
+        
+        /* Inputs */
+        .radio-custom {
+            display: flex; align-items: flex-start; margin-bottom: 0.75rem; cursor: pointer; padding: 0.5rem; border-radius: 0.25rem; transition: background-color 0.2s;
+        }
+        .radio-custom:hover { background-color: #f1f5f9; }
+        .radio-custom input[type="radio"] { margin-top: 0.3rem; margin-right: 0.75rem; accent-color: #1e3a8a; width: 1.1rem; height: 1.1rem; }
+        
+        .select-custom {
+            padding: 0.5rem; border: 1px solid #cbd5e1; border-radius: 0.25rem; font-size: 1em; background-color: white; outline: none; margin-left: 0.5rem;
+        }
+        .select-custom:focus { border-color: #1e3a8a; box-shadow: 0 0 0 2px rgba(30, 58, 138, 0.2); }
+        
+        .input-text {
+            border: 1px solid #cbd5e1; border-radius: 0.25rem; padding: 0.25rem 0.5rem; width: 150px; font-size: 1em; outline: none; transition: border-color 0.2s;
+        }
+        .input-text:focus { border-color: #1e3a8a; box-shadow: 0 0 0 2px rgba(30, 58, 138, 0.2); }
+        
+        /* Gap styles */
+        .gap { display: inline-block; font-weight: bold; margin: 0 0.25rem; color: #1e3a8a; border-bottom: 1px dashed #1e3a8a;}
+
+        /* Highlight Tooltip */
+        #highlightTooltip {
+            position: absolute; display: none; background-color: #111827; color: white; padding: 6px 12px; border-radius: 4px; font-size: 14px; cursor: pointer; z-index: 1000; box-shadow: 0 4px 6px rgba(0,0,0,0.1); border: none; font-family: inherit;
+        }
+        #highlightTooltip::after {
+            content: ''; position: absolute; top: 100%; left: 50%; margin-left: -5px; border-width: 5px; border-style: solid; border-color: #111827 transparent transparent transparent;
+        }
+        mark { background-color: #fef08a; color: inherit; padding: 0.1em 0; border-radius: 2px; }
+
+        /* Vocabulary Highlight */
+        .vocab-word {
+            background-color: #dcfce7;
+            border-bottom: 2px solid #22c55e;
+            cursor: help;
+            padding: 0 2px;
+            border-radius: 2px;
+            transition: background-color 0.2s;
+        }
+        .vocab-word:hover { background-color: #bbf7d0; }
+
+        /* Vocab Tooltip */
+        #vocabInfoTooltip {
+            position: absolute;
+            display: none;
+            background: white;
+            border: 1px solid #e2e8f0;
+            padding: 1rem;
+            border-radius: 0.5rem;
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+            z-index: 100;
+            width: 280px;
+        }
+
+        /* Explanation Box */
+        .explanation-box {
+            display: none;
+            background-color: #eff6ff;
+            border-left: 4px solid #3b82f6;
+            padding: 1rem;
+            margin-top: 1rem;
+            border-radius: 0 0.5rem 0.5rem 0;
+            font-size: 0.95em;
+            color: #1e40af;
+            line-height: 1.5;
+        }
+
+        /* Controls */
+        .controls { display: flex; gap: 1rem; align-items: center; }
+        .btn-icon { background: rgba(255,255,255,0.2); border: none; color: white; padding: 0.4rem 0.8rem; border-radius: 4px; cursor: pointer; font-weight: 500; transition: background 0.2s; }
+        .btn-icon:hover { background: rgba(255,255,255,0.3); }
+        
+        .btn-primary { background-color: #1e3a8a; color: white; border: none; padding: 0.75rem 1.5rem; border-radius: 0.375rem; font-weight: 600; cursor: pointer; transition: background-color 0.2s; }
+        .btn-primary:hover { background-color: #1e40af; }
+    </style>
+</head>
+<body>
+
+<div class="ielts-container">
+    <!-- Header -->
+    <header class="header">
+        <div>
+            <h1 class="text-xl m-0">B1 Preliminary Practice Test</h1>
+            <div class="text-sm opacity-80">Reading - Test 3</div>
+        </div>
+        <div class="controls">
+            <button class="btn-icon" id="btn-decrease-font">A-</button>
+            <button class="btn-icon" id="btn-increase-font">A+</button>
+        </div>
+    </header>
+
+    <!-- Tabs Navigation -->
+    <div class="tabs-nav" id="tabs-nav">
+        <button class="tab-btn active" data-target="1">Part 1</button>
+        <button class="tab-btn" data-target="2">Part 2</button>
+        <button class="tab-btn" data-target="3">Part 3</button>
+        <button class="tab-btn" data-target="4">Part 4</button>
+        <button class="tab-btn" data-target="5">Part 5</button>
+        <button class="tab-btn" data-target="6">Part 6</button>
+    </div>
+
+    <!-- Main Content -->
+    <div class="content-panes" id="panes-container">
+        
+        <!-- LEFT PANE: READING TEXTS -->
+        <div class="pane pane-left" id="left-pane">
+            
+            <div class="reading-text tab-content active" data-part="1">
+                <h2 class="part-title">Part 1</h2>
+                <p class="instruction">Questions 1-5<br>For each question, choose the correct answer.</p>
+                
+                <div class="text-box">
+                    <p><strong>1</strong></p>
+                    <div class="email-box">
+                        <strong>To:</strong> Tim<br>
+                        <strong>From:</strong> Mum<br><br>
+                        Tim, I need some help today. Could you do the dishes and walk Scooby? I'll be back in time for dinner. Love, Mum.
+                    </div>
+                </div>
+
+                <div class="text-box">
+                    <p><strong>2</strong></p>
+                    <div class="email-box">
+                        <strong>To:</strong> Maria<br>
+                        <strong>From:</strong> James<br><br>
+                        This week I'm going to visit Dover. It'll make a nice change from rainy Glasgow, right? I guess you still remember how awful the weather was the last time you visited me. Anyway, do you <span class="vocab-word" data-word="fancy">fancy</span> meeting?
+                    </div>
+                </div>
+
+                <div class="text-box">
+                    <p><strong>3</strong></p>
+                    <div class="sign-box">
+                        ATTENTION!<br><br>
+                        On Saturday 16th of October <span class="vocab-word" data-word="trials">trials</span> will take place for the 1st and 2nd football teams. All those who would like to take part should give their name and class to Mr. Johnson.
+                    </div>
+                </div>
+
+                <div class="text-box">
+                    <p><strong>4</strong></p>
+                    <div class="sign-box" style="border-color: #1e40af;">
+                        Take one pill three times a day, until there are no more left. If you feel ill and have headaches, stomach ache or you feel sick, stop taking your medicine and call your doctor immediately.
+                    </div>
+                </div>
+
+                <div class="text-box">
+                    <p><strong>5</strong></p>
+                    <div class="sign-box" style="border: 2px dashed #ef4444;">
+                        YOU ARE NOT ALLOWED TO DROP <span class="vocab-word" data-word="litter">LITTER</span> IN THE PARK.<br><br>
+                        Use the rubbish bins provided.<br>
+                        Anyone caught dropping litter can be <span class="vocab-word" data-word="fined">fined</span> up to £100.
+                    </div>
+                </div>
+            </div>
+
+            <div class="reading-text tab-content" data-part="2">
+                <h2 class="part-title">Part 2</h2>
+                <p class="instruction">Questions 6-10<br>Decide which hotel would be the most suitable for each person below.</p>
+                
+                <div class="text-box">
+                    <h3 class="font-bold text-lg mb-4">Accommodation Options</h3>
+                    <div class="mb-4">
+                        <p><strong>A. The Countryside Inn</strong><br>This tidy, traditional bed and breakfast hotel is located in the village of Minton, in the heart of the beautiful Chilton hills. Single and double rooms are available at low prices with breakfast included, perfect for those wanting to enjoy the local scenery.</p>
+                    </div>
+                    <div class="mb-4">
+                        <p><strong>B. The Corporate</strong><br>The new extremely comfortable Corporate Hotel is located halfway between Birmingham and London. It is only half a mile from the M40 motorway and allows you to reach whatever city in England. There are rooms with 'office features' such as Internet and two phone line connections.</p>
+                    </div>
+                    <div class="mb-4">
+                        <p><strong>C. The Drive-by</strong><br>For busy travellers arriving from Europe, this small hotel in the middle of the town of Dover, Southeast England, provides reasonably priced single and double rooms without the need to reserve. Ideal rest for sleepy travellers.</p>
+                    </div>
+                    <div class="mb-4">
+                        <p><strong>D. Peak Campsite</strong><br>Located next to the Lake District National Park with its spectacular mountains and lakes, this is a basic but also a well-managed campsite. There is a shower and toilet building, but you have to bring your own tent and equipment.</p>
+                    </div>
+                    <div class="mb-4">
+                        <p><strong>E. Hotel Amour</strong><br>Located on the South coast, with spectacular sunset views, the Hotel Amour is ideal for honeymoons or couples who want a break from everyday life. Each double room or honeymoon suite is expensively decorated for your comfort and includes a free bottle of champagne on your first night.</p>
+                    </div>
+                    <div class="mb-4">
+                        <p><strong>F. Buffalo Bill's Ranch</strong><br>Wild-west theme hotel in the Southwest countryside, ideal for a week away with the children. You can stay on a re-creation of a 19th century American farm, ride horses with real cowboys and be served by Native American Indians at dinner.</p>
+                    </div>
+                    <div class="mb-4">
+                        <p><strong>G. Travellers' Lodge</strong><br>Located in the middle of the country, just half a mile from the north-south M1 motorway. It is ideal for those making the long trip up or down the country. Simple rooms and low prices for single, or double rooms, with a fifty percent discount for kids and breakfast included.</p>
+                    </div>
+                    <div class="mb-4">
+                        <p><strong>H. Hotel Royal</strong><br>Luxury in the heart of the city, good enough for a King, and located near the lively West End theatre and shopping area. Each room has an en-suite sauna. Make sure you enjoy a weekend in style.</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="reading-text tab-content" data-part="3">
+                <h2 class="part-title">Part 3</h2>
+                <p class="instruction">Questions 11-15<br>For each question, choose the correct answer.</p>
+                
+                <div class="text-box">
+                    <h3 class="text-xl font-bold mb-4">Tom Cruise</h3>
+                    <p class="italic text-sm mb-4">by Sarah Holden</p>
+                    <p>When our teacher asked us to interview a person that we <span class="vocab-word" data-word="admire">admire</span>, I had never thought I could actually interview Tom Cruise. I had been thinking for some time who else I could talk to, but it seemed to me that anyone else would come a poor second.</p>
+                    
+                    <p>Then, one day, <span class="vocab-word" data-word="out of the blue">out of the blue</span>, as I was enjoying a hot cup of chocolate in our local coffee shop, I heard a man asking me if he could sit next to me. As I turned around and saw Tom Cruise smiling at me, I was at a loss for words. He was so pleasant and friendly that I felt confident and asked him for a mini interview. Much to my surprise, he happily agreed.</p>
+                    
+                    <p>Over the years, Tom Cruise has become one of the most popular and successful actors in the world. He has long been an international star, who gets paid millions of dollars for every film he makes. "I'm lucky," says Tom. "I'm doing what I love, and I'm having a great time. Lots of people would love to do this job, but they didn't get the chances that I did."</p>
+                    
+                    <p>For many of us, however, Tom is more than just lucky or good-looking, as great acting ability and <span class="vocab-word" data-word="determination">determination</span> were needed for him to become one of Hollywood's biggest names.</p>
+                    
+                    <p>Is Tom happy with his success so far? He has a different outlook on his career than one might expect. "I've always looked to the future," says Tom. "I feel I'm always developing as an actor. I'm looking for new things all the time. I want to challenge myself to be better and always try new things. I know I've made a lot of progress in my career, but I still have ambitions for the future."</p>
+                    
+                    <p>After interviewing him, I understood that Tom Cruise has a mind of his own and he's not at all like the characters in his movies. That's why, I believe, he has had so much success in his career; because of both his talent as an actor and his personal strength. Tom always knew what he wanted to do with his life and did his best to succeed.</p>
+                </div>
+            </div>
+
+            <div class="reading-text tab-content" data-part="4">
+                <h2 class="part-title">Part 4</h2>
+                <p class="instruction">Questions 16-20<br>Five sentences have been removed from the text below. For each question, choose the correct answer (A-H). There are three extra sentences.</p>
+                
+                <div class="text-box">
+                    <h3 class="text-xl font-bold mb-4">Identical Twins</h3>
+                    <p>I look in the mirror and I see my sister. Why? Because we look exactly alike. We have the same face, hair, height and build. The only difference is her eyes. <span class="gap">[ 16 ]</span> She has one green, one blue.</p>
+                    
+                    <p>Most people think that twins run in families. In fact, this is untrue. Although there are families who have more twins, this is not due to something 'special' in the family. It is complete chance, or just good luck. <span class="gap">[ 17 ]</span> Only thirty three out of a thousand births are twins. And identical twins are even less. Only three in a thousand!</p>
+                    
+                    <p>So what's it like being an <span class="vocab-word" data-word="identical">identical</span> twin? In other words, to look exactly the same as your brother or sister? Well, it can be great fun but it can be quite challenging, too. My sister and I are very close, to the point that we sometimes think exactly the same thing at the same time! But sometimes we are different, too. <span class="gap">[ 18 ]</span> However, when we were little we dressed in the same way, which was fun because we got lots of attention, and teachers couldn't tell us apart.</p>
+                    
+                    <p>Our main difference is in what we like eating and doing. Gina, my sister, loves sweet things, like cakes or honey. I, on the other hand, eat spicy food and mostly vegetables. Also, we are both sporty, but I'm a swimmer. <span class="gap">[ 19 ]</span> Nobody can explain this fear. She won't even walk near the sea on a beach. She is great at tennis though, and wants to be a tennis coach one day. <span class="gap">[ 20 ]</span> We are so similar and yet so different.</p>
+                </div>
+                
+                <div class="text-box bg-blue-50">
+                    <p><strong>A.</strong> Surprisingly, this is quite usual.</p>
+                    <p><strong>B.</strong> It's strange, don't you think?</p>
+                    <p><strong>C.</strong> We choose to always be identical in appearance.</p>
+                    <p><strong>D.</strong> Gina is <span class="vocab-word" data-word="terrified">terrified</span> of water.</p>
+                    <p><strong>E.</strong> We don't wear the same clothes most of the time, either.</p>
+                    <p><strong>F.</strong> And, of course, it is not that common.</p>
+                    <p><strong>G.</strong> I'm not afraid of being in deep water, even in the sea.</p>
+                    <p><strong>H.</strong> Mine are both the same colour.</p>
+                </div>
+            </div>
+
+            <div class="reading-text tab-content" data-part="5">
+                <h2 class="part-title">Part 5</h2>
+                <p class="instruction">Questions 21-26<br>For each question, choose the correct answer.</p>
+                
+                <div class="text-box">
+                    <h3 class="text-xl font-bold mb-4">Denmark</h3>
+                    <p>Denmark is the smallest and most <span class="vocab-word" data-word="southerly">southerly</span> of the countries of Scandinavia, which <span class="gap">(21)</span> ............... in northern Europe. It is probably best <span class="gap">(22)</span> ............... for being home to the powerful Vikings, over 1,000 years ago. Denmark is a small country, with limited natural resources. However, it has <span class="gap">(23)</span> ............... one of the richest countries in the world.</p>
+                    
+                    <p>Denmark has its own culture and traditions, and a tongue-twisting language, which includes several different dialects and takes years to <span class="vocab-word" data-word="master">master</span>. Although Denmark is a member of the European Union, at times it has refused to work more closely with the EU and give up some of its <span class="gap">(24)</span> ............... .</p>
+                    
+                    <p>Wealth in Denmark is shared out more evenly than in most countries, because people pay high taxes. Many workers pay more than 50 percent of their wages in tax. The <span class="gap">(25)</span> ............... is used to pay for a <span class="vocab-word" data-word="welfare">welfare</span> system, which <span class="gap">(26)</span> ............... health care, benefits for the unemployed and the elderly, and public services.</p>
+                </div>
+            </div>
+
+            <div class="reading-text tab-content" data-part="6">
+                <h2 class="part-title">Part 6</h2>
+                <p class="instruction">Questions 27-32<br>For each question, write the correct answer. Write <strong>one word</strong> for each gap.</p>
+                
+                <div class="text-box">
+                    <h3 class="text-xl font-bold mb-4">Sharks</h3>
+                    <p>The word shark usually creates fear, but in reality sharks have more reasons to be afraid of people <span class="gap">(27)</span> ............... people to be afraid of them. The fact is, about one hundred million sharks are killed by humans every year. That's mainly because people in a lot of countries, <span class="gap">(28)</span> ............... Japan and Australia, eat sharks.</p>
+                    
+                    <p>Sharks also get caught in the huge fishing nets that are used nowadays on factory ships, <span class="gap">(29)</span> ............... do many other sea animals. So in general, sharks are not such a danger to humans. They usually eat seals, sea lions and other sea mammals. But as sharks are <span class="vocab-word" data-word="attracted">attracted</span> by movement, <span class="gap">(30)</span> ............... they see a person swimming in the sea, they could accidentally attack him or her.</p>
+                    
+                    <p><span class="gap">(31)</span> ............... at the top of the food chain, however, sharks keep populations of other fish healthy and are <span class="vocab-word" data-word="essential">essential</span> for keeping our seas alive. This is <span class="gap">(32)</span> ............... we must act now as their time seems to be running out.</p>
+                </div>
+            </div>
+
+            <div style="height: 100px;"></div> <!-- Extra space for scrolling -->
+        </div>
+
+        <!-- SPLITTER -->
+        <div class="splitter" id="splitter"></div>
+
+        <!-- RIGHT PANE: QUESTIONS -->
+        <div class="pane pane-right" id="right-pane">
+            
+            <!-- Part 1 Questions -->
+            <div class="question-group tab-content active" data-part="1">
+                <h2 class="text-xl font-bold mb-4">Part 1 Questions</h2>
+                
+                <div class="mb-6 q-wrapper">
+                    <p class="mb-2"><span class="q-number">1</span> What must Tim do?</p>
+                    <label class="radio-custom"><input type="radio" name="q1" value="A"> A. Tim's mum has taken the dog for a walk.</label>
+                    <label class="radio-custom"><input type="radio" name="q1" value="B"> B. Tim must cook dinner before his mum returns from work.</label>
+                    <label class="radio-custom"><input type="radio" name="q1" value="C"> C. Tim must walk the dog and clean the plates.</label>
+                    <div class="explanation-box" id="exp-q1"></div>
+                </div>
+
+                <div class="mb-6 q-wrapper">
+                    <p class="mb-2"><span class="q-number">2</span> What does James want to know?</p>
+                    <label class="radio-custom"><input type="radio" name="q2" value="A"> A. what the weather will be like this time of the year in Dover</label>
+                    <label class="radio-custom"><input type="radio" name="q2" value="B"> B. whether Maria is interested in visiting him in Glasgow</label>
+                    <label class="radio-custom"><input type="radio" name="q2" value="C"> C. if Maria will be available at the time of his visit</label>
+                    <div class="explanation-box" id="exp-q2"></div>
+                </div>
+
+                <div class="mb-6 q-wrapper">
+                    <p class="mb-2"><span class="q-number">3</span> The notice tells students that...</p>
+                    <label class="radio-custom"><input type="radio" name="q3" value="A"> A. The first school football match will take place on Saturday.</label>
+                    <label class="radio-custom"><input type="radio" name="q3" value="B"> B. The football teams will be chosen depending on how well people play on Saturday.</label>
+                    <label class="radio-custom"><input type="radio" name="q3" value="C"> C. Mr Johnson will go to the football trials on Saturday the 16th.</label>
+                    <div class="explanation-box" id="exp-q3"></div>
+                </div>
+
+                <div class="mb-6 q-wrapper">
+                    <p class="mb-2"><span class="q-number">4</span> According to the medical notice:</p>
+                    <label class="radio-custom"><input type="radio" name="q4" value="A"> A. You must take all the pills unless they make you ill.</label>
+                    <label class="radio-custom"><input type="radio" name="q4" value="B"> B. You must take a pill every three days unless they make you ill.</label>
+                    <label class="radio-custom"><input type="radio" name="q4" value="C"> C. You should call your doctor when you finish the pills.</label>
+                    <div class="explanation-box" id="exp-q4"></div>
+                </div>
+
+                <div class="mb-6 q-wrapper">
+                    <p class="mb-2"><span class="q-number">5</span> The sign in the park says:</p>
+                    <label class="radio-custom"><input type="radio" name="q5" value="A"> A. You can only drop litter near the park bins.</label>
+                    <label class="radio-custom"><input type="radio" name="q5" value="B"> B. If you are caught dropping litter, you may have to pay a fine.</label>
+                    <label class="radio-custom"><input type="radio" name="q5" value="C"> C. If you cannot find a bin, you can drop litter in the park.</label>
+                    <div class="explanation-box" id="exp-q5"></div>
+                </div>
+
+                <div class="mt-8 pt-4 border-t border-gray-300 flex items-center gap-4">
+                    <button class="btn-primary btn-check" data-part="1">Check Answers</button>
+                    <span class="font-bold text-lg text-gray-700" id="score-part-1"></span>
+                </div>
+            </div>
+
+            <!-- Part 2 Questions -->
+            <div class="question-group tab-content" data-part="2">
+                <h2 class="text-xl font-bold mb-4">Part 2 Questions</h2>
+                <p class="mb-4 text-sm text-gray-600">Match the people to the most suitable hotel.</p>
+
+                <div class="mb-4 q-wrapper">
+                    <div class="flex items-center justify-between">
+                        <div style="flex: 1;"><span class="q-number">6</span> <strong>Anthony Bitters</strong> is a businessman who needs to be near major roads and transport centers. He needs to be in constant contact with his offices.</div>
+                        <select class="select-custom" name="q6">
+                            <option value="">Select</option>
+                            <option value="A">A</option><option value="B">B</option><option value="C">C</option><option value="D">D</option><option value="E">E</option><option value="F">F</option><option value="G">G</option><option value="H">H</option>
+                        </select>
+                    </div>
+                    <div class="explanation-box" id="exp-q6"></div>
+                </div>
+
+                <div class="mb-4 q-wrapper">
+                    <div class="flex items-center justify-between">
+                        <div style="flex: 1;"><span class="q-number">7</span> <strong>John and Alex</strong> like adventure weekends. They want to stay somewhere organized where they can sleep in their tents and be close to nature.</div>
+                        <select class="select-custom" name="q7">
+                            <option value="">Select</option>
+                            <option value="A">A</option><option value="B">B</option><option value="C">C</option><option value="D">D</option><option value="E">E</option><option value="F">F</option><option value="G">G</option><option value="H">H</option>
+                        </select>
+                    </div>
+                    <div class="explanation-box" id="exp-q7"></div>
+                </div>
+
+                <div class="mb-4 q-wrapper">
+                    <div class="flex items-center justify-between">
+                        <div style="flex: 1;"><span class="q-number">8</span> <strong>The Peterson family</strong> are traveling to Scotland with two children. They need a simple hotel near the motorway for just one night.</div>
+                        <select class="select-custom" name="q8">
+                            <option value="">Select</option>
+                            <option value="A">A</option><option value="B">B</option><option value="C">C</option><option value="D">D</option><option value="E">E</option><option value="F">F</option><option value="G">G</option><option value="H">H</option>
+                        </select>
+                    </div>
+                    <div class="explanation-box" id="exp-q8"></div>
+                </div>
+
+                <div class="mb-4 q-wrapper">
+                    <div class="flex items-center justify-between">
+                        <div style="flex: 1;"><span class="q-number">9</span> <strong>Stephanie and Sophie</strong> want to go walking and exploring the countryside. They need only a clean, simple place to sleep and do not like camping.</div>
+                        <select class="select-custom" name="q9">
+                            <option value="">Select</option>
+                            <option value="A">A</option><option value="B">B</option><option value="C">C</option><option value="D">D</option><option value="E">E</option><option value="F">F</option><option value="G">G</option><option value="H">H</option>
+                        </select>
+                    </div>
+                    <div class="explanation-box" id="exp-q9"></div>
+                </div>
+
+                <div class="mb-4 q-wrapper">
+                    <div class="flex items-center justify-between">
+                        <div style="flex: 1;"><span class="q-number">10</span> <strong>George and Maria</strong> want to spend a luxurious wedding anniversary weekend away from noise and stress to relax.</div>
+                        <select class="select-custom" name="q10">
+                            <option value="">Select</option>
+                            <option value="A">A</option><option value="B">B</option><option value="C">C</option><option value="D">D</option><option value="E">E</option><option value="F">F</option><option value="G">G</option><option value="H">H</option>
+                        </select>
+                    </div>
+                    <div class="explanation-box" id="exp-q10"></div>
+                </div>
+
+                <div class="mt-8 pt-4 border-t border-gray-300 flex items-center gap-4">
+                    <button class="btn-primary btn-check" data-part="2">Check Answers</button>
+                    <span class="font-bold text-lg text-gray-700" id="score-part-2"></span>
+                </div>
+            </div>
+
+            <!-- Part 3 Questions -->
+            <div class="question-group tab-content" data-part="3">
+                <h2 class="text-xl font-bold mb-4">Part 3 Questions</h2>
+                
+                <div class="mb-6 q-wrapper">
+                    <p class="mb-2"><span class="q-number">11</span> When Sarah was asked to interview a person she admired:</p>
+                    <label class="radio-custom"><input type="radio" name="q11" value="A"> A. she never thought that she was likely to talk to Tom Cruise.</label>
+                    <label class="radio-custom"><input type="radio" name="q11" value="B"> B. she was disappointed that her idol refused to talk to her.</label>
+                    <label class="radio-custom"><input type="radio" name="q11" value="C"> C. she could not make up her mind as to whom she admired the most.</label>
+                    <label class="radio-custom"><input type="radio" name="q11" value="D"> D. she was surprised to find out that she could write about a celebrity.</label>
+                    <div class="explanation-box" id="exp-q11"></div>
+                </div>
+
+                <div class="mb-6 q-wrapper">
+                    <p class="mb-2"><span class="q-number">12</span> Sarah says that Tom Cruise:</p>
+                    <label class="radio-custom"><input type="radio" name="q12" value="A"> A. is actually less friendly than he might seem.</label>
+                    <label class="radio-custom"><input type="radio" name="q12" value="B"> B. did not originally want to be interviewed.</label>
+                    <label class="radio-custom"><input type="radio" name="q12" value="C"> C. was uncomfortable talking about himself.</label>
+                    <label class="radio-custom"><input type="radio" name="q12" value="D"> D. is very likeable as a person.</label>
+                    <div class="explanation-box" id="exp-q12"></div>
+                </div>
+
+                <div class="mb-6 q-wrapper">
+                    <p class="mb-2"><span class="q-number">13</span> What does Tom say about other people who try to become actors?</p>
+                    <label class="radio-custom"><input type="radio" name="q13" value="A"> A. They are not as hard working as successful actors.</label>
+                    <label class="radio-custom"><input type="radio" name="q13" value="B"> B. He was more fortunate at certain points in his career.</label>
+                    <label class="radio-custom"><input type="radio" name="q13" value="C"> C. They did not love the job as much as he did.</label>
+                    <label class="radio-custom"><input type="radio" name="q13" value="D"> D. He took more risks than them to achieve success.</label>
+                    <div class="explanation-box" id="exp-q13"></div>
+                </div>
+
+                <div class="mb-6 q-wrapper">
+                    <p class="mb-2"><span class="q-number">14</span> How does Tom describe his attitude to his work?</p>
+                    <label class="radio-custom"><input type="radio" name="q14" value="A"> A. He is only interested in making millions of dollars.</label>
+                    <label class="radio-custom"><input type="radio" name="q14" value="B"> B. He is unlucky and has had many breaks in his career.</label>
+                    <label class="radio-custom"><input type="radio" name="q14" value="C"> C. He looks forward and wants to improve and develop.</label>
+                    <label class="radio-custom"><input type="radio" name="q14" value="D"> D. He is determined to become famous whatever the cost.</label>
+                    <div class="explanation-box" id="exp-q14"></div>
+                </div>
+
+                <div class="mb-6 q-wrapper">
+                    <p class="mb-2"><span class="q-number">15</span> What might Sarah say about Tom Cruise?</p>
+                    <label class="radio-custom"><input type="radio" name="q15" value="A"> A. "His success is more down to luck than anything else."</label>
+                    <label class="radio-custom"><input type="radio" name="q15" value="B"> B. "His success is such that almost anyone can achieve it easily."</label>
+                    <label class="radio-custom"><input type="radio" name="q15" value="C"> C. "He wouldn't be so successful if he didn't try and work so hard."</label>
+                    <label class="radio-custom"><input type="radio" name="q15" value="D"> D. "He has not been greatly successful as he has a lot more to do."</label>
+                    <div class="explanation-box" id="exp-q15"></div>
+                </div>
+
+                <div class="mt-8 pt-4 border-t border-gray-300 flex items-center gap-4">
+                    <button class="btn-primary btn-check" data-part="3">Check Answers</button>
+                    <span class="font-bold text-lg text-gray-700" id="score-part-3"></span>
+                </div>
+            </div>
+
+            <!-- Part 4 Questions -->
+            <div class="question-group tab-content" data-part="4">
+                <h2 class="text-xl font-bold mb-4">Part 4 Questions</h2>
+                <p class="mb-4 text-sm text-gray-600">Select the correct sentence (A-H) for each gap.</p>
+                
+                <div class="mb-3 q-wrapper"><span class="q-number">16</span> Gap 16: <select class="select-custom" name="q16"><option value="">Select</option><option value="A">A</option><option value="B">B</option><option value="C">C</option><option value="D">D</option><option value="E">E</option><option value="F">F</option><option value="G">G</option><option value="H">H</option></select><div class="explanation-box" id="exp-q16"></div></div>
+                <div class="mb-3 q-wrapper"><span class="q-number">17</span> Gap 17: <select class="select-custom" name="q17"><option value="">Select</option><option value="A">A</option><option value="B">B</option><option value="C">C</option><option value="D">D</option><option value="E">E</option><option value="F">F</option><option value="G">G</option><option value="H">H</option></select><div class="explanation-box" id="exp-q17"></div></div>
+                <div class="mb-3 q-wrapper"><span class="q-number">18</span> Gap 18: <select class="select-custom" name="q18"><option value="">Select</option><option value="A">A</option><option value="B">B</option><option value="C">C</option><option value="D">D</option><option value="E">E</option><option value="F">F</option><option value="G">G</option><option value="H">H</option></select><div class="explanation-box" id="exp-q18"></div></div>
+                <div class="mb-3 q-wrapper"><span class="q-number">19</span> Gap 19: <select class="select-custom" name="q19"><option value="">Select</option><option value="A">A</option><option value="B">B</option><option value="C">C</option><option value="D">D</option><option value="E">E</option><option value="F">F</option><option value="G">G</option><option value="H">H</option></select><div class="explanation-box" id="exp-q19"></div></div>
+                <div class="mb-3 q-wrapper"><span class="q-number">20</span> Gap 20: <select class="select-custom" name="q20"><option value="">Select</option><option value="A">A</option><option value="B">B</option><option value="C">C</option><option value="D">D</option><option value="E">E</option><option value="F">F</option><option value="G">G</option><option value="H">H</option></select><div class="explanation-box" id="exp-q20"></div></div>
+                
+                <div class="mt-8 pt-4 border-t border-gray-300 flex items-center gap-4">
+                    <button class="btn-primary btn-check" data-part="4">Check Answers</button>
+                    <span class="font-bold text-lg text-gray-700" id="score-part-4"></span>
+                </div>
+            </div>
+
+            <!-- Part 5 Questions -->
+            <div class="question-group tab-content" data-part="5">
+                <h2 class="text-xl font-bold mb-4">Part 5 Questions</h2>
+                <p class="mb-4 text-sm text-gray-600">Choose the correct word for each gap.</p>
+
+                <div class="mb-4 q-wrapper">
+                    <span class="q-number">21</span> 
+                    <select class="select-custom" name="q21" style="width:150px">
+                        <option value="">Select</option>
+                        <option value="A">A. lay</option>
+                        <option value="B">B. lie</option>
+                        <option value="C">C. locate</option>
+                        <option value="D">D. set</option>
+                    </select>
+                    <div class="explanation-box" id="exp-q21"></div>
+                </div>
+                <div class="mb-4 q-wrapper">
+                    <span class="q-number">22</span> 
+                    <select class="select-custom" name="q22" style="width:150px">
+                        <option value="">Select</option>
+                        <option value="A">A. felt</option>
+                        <option value="B">B. known</option>
+                        <option value="C">C. seen</option>
+                        <option value="D">D. heard</option>
+                    </select>
+                    <div class="explanation-box" id="exp-q22"></div>
+                </div>
+                <div class="mb-4 q-wrapper">
+                    <span class="q-number">23</span> 
+                    <select class="select-custom" name="q23" style="width:150px">
+                        <option value="">Select</option>
+                        <option value="A">A. bought</option>
+                        <option value="B">B. begun</option>
+                        <option value="C">C. brought</option>
+                        <option value="D">D. become</option>
+                    </select>
+                    <div class="explanation-box" id="exp-q23"></div>
+                </div>
+                <div class="mb-4 q-wrapper">
+                    <span class="q-number">24</span> 
+                    <select class="select-custom" name="q24" style="width:150px">
+                        <option value="">Select</option>
+                        <option value="A">A. activity</option>
+                        <option value="B">B. independence</option>
+                        <option value="C">C. relationship</option>
+                        <option value="D">D. opportunity</option>
+                    </select>
+                    <div class="explanation-box" id="exp-q24"></div>
+                </div>
+                <div class="mb-4 q-wrapper">
+                    <span class="q-number">25</span> 
+                    <select class="select-custom" name="q25" style="width:150px">
+                        <option value="">Select</option>
+                        <option value="A">A. world</option>
+                        <option value="B">B. country</option>
+                        <option value="C">C. money</option>
+                        <option value="D">D. work</option>
+                    </select>
+                    <div class="explanation-box" id="exp-q25"></div>
+                </div>
+                <div class="mb-4 q-wrapper">
+                    <span class="q-number">26</span> 
+                    <select class="select-custom" name="q26" style="width:150px">
+                        <option value="">Select</option>
+                        <option value="A">A. consists</option>
+                        <option value="B">B. adds</option>
+                        <option value="C">C. receives</option>
+                        <option value="D">D. includes</option>
+                    </select>
+                    <div class="explanation-box" id="exp-q26"></div>
+                </div>
+
+                <div class="mt-8 pt-4 border-t border-gray-300 flex items-center gap-4">
+                    <button class="btn-primary btn-check" data-part="5">Check Answers</button>
+                    <span class="font-bold text-lg text-gray-700" id="score-part-5"></span>
+                </div>
+            </div>
+
+            <!-- Part 6 Questions -->
+            <div class="question-group tab-content" data-part="6">
+                <h2 class="text-xl font-bold mb-4">Part 6 Questions</h2>
+                <p class="mb-4 text-sm text-gray-600">Type <strong>ONE</strong> word in each gap.</p>
+
+                <div class="mb-4 q-wrapper"><span class="q-number">27</span> <input type="text" class="input-text" name="q27" placeholder="Gap 27..."><div class="explanation-box" id="exp-q27"></div></div>
+                <div class="mb-4 q-wrapper"><span class="q-number">28</span> <input type="text" class="input-text" name="q28" placeholder="Gap 28..."><div class="explanation-box" id="exp-q28"></div></div>
+                <div class="mb-4 q-wrapper"><span class="q-number">29</span> <input type="text" class="input-text" name="q29" placeholder="Gap 29..."><div class="explanation-box" id="exp-q29"></div></div>
+                <div class="mb-4 q-wrapper"><span class="q-number">30</span> <input type="text" class="input-text" name="q30" placeholder="Gap 30..."><div class="explanation-box" id="exp-q30"></div></div>
+                <div class="mb-4 q-wrapper"><span class="q-number">31</span> <input type="text" class="input-text" name="q31" placeholder="Gap 31..."><div class="explanation-box" id="exp-q31"></div></div>
+                <div class="mb-4 q-wrapper"><span class="q-number">32</span> <input type="text" class="input-text" name="q32" placeholder="Gap 32..."><div class="explanation-box" id="exp-q32"></div></div>
+                
+                <div class="mt-8 pt-4 border-t border-gray-300 flex items-center gap-4">
+                    <button class="btn-primary btn-check" data-part="6">Check Answers</button>
+                    <span class="font-bold text-lg text-gray-700" id="score-part-6"></span>
+                </div>
+            </div>
+
+            <div style="height: 100px;"></div>
+        </div>
+    </div>
+
+    <!-- Highlight Tooltip Button -->
+    <button id="highlightTooltip">Highlight</button>
+    
+    <!-- Vocab Tooltip -->
+    <div id="vocabInfoTooltip">
+        <h4 id="v-word" class="font-bold text-blue-800 text-lg capitalize"></h4>
+        <p id="v-ipa" class="text-gray-500 italic mb-2"></p>
+        <p id="v-def" class="text-sm text-gray-700 mb-4"></p>
+        <button id="v-audio" class="w-full bg-blue-100 hover:bg-blue-200 text-blue-700 py-2 rounded text-sm font-semibold flex items-center justify-center gap-2">
+            <span>🔊</span> Listen
+        </button>
+    </div>
+</div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', () => {
+        // Detailed Answer Key and Explanations
+        const answerKey = {
+            q1: { ans: ['C'], exp: "Mum says 'Could you do the dishes (clean plates) and walk Scooby (the dog)'. A is wrong because Scooby hasn't been walked yet. B is wrong because she says she'll be back *in time* for dinner, not asking him to cook it." },
+            q2: { ans: ['C'], exp: "James asks 'do you fancy meeting?', which is a request to know if Maria is available during his visit." },
+            q3: { ans: ['B'], exp: "Trials are tests to select players. Giving names is how you participate in the selection process." },
+            q4: { ans: ['A'], exp: "It says to take them 'until there are no more left' (all of them) but to 'stop taking' if you feel ill." },
+            q5: { ans: ['B'], exp: "'Anyone caught dropping litter can be fined up to £100'." },
+            
+            q6: { ans: ['B'], exp: "The Corporate is near major roads (M40) and has 'office features' like Internet and phone lines." },
+            q7: { ans: ['D'], exp: "Peak Campsite allows staying in tents and is close to nature (Lake District)." },
+            q8: { ans: ['G'], exp: "Travellers' Lodge is near the motorway (M1) and offers discounts for kids." },
+            q9: { ans: ['A'], exp: "The Countryside Inn is a B&B (not camping) and is perfect for enjoying local scenery." },
+            q10: { ans: ['E'], exp: "Hotel Amour is ideal for couples and honeymoons, offering luxury and a 'break from everyday life'." },
+
+            q11: { ans: ['A'], exp: "She says 'I had never thought I could actually interview Tom Cruise'." },
+            q12: { ans: ['D'], exp: "She describes him as 'so pleasant and friendly'." },
+            q13: { ans: ['B'], exp: "Tom says 'they didn't get the chances (opportunities/luck) that I did'." },
+            q14: { ans: ['C'], exp: "Tom says 'I've always looked to the future' and 'want to challenge myself to be better'." },
+            q15: { ans: ['C'], exp: "Sarah notes that acting ability and 'determination' were needed, suggesting his success isn't just luck." },
+
+            q16: { ans: ['H'], exp: "The text mentions her eyes are different colours; H completes the contrast: 'Mine are both the same colour'." },
+            q17: { ans: ['F'], exp: "After explaining twins are chance, it notes statistics showing they are 'not that common'." },
+            q18: { ans: ['E'], exp: "It says 'sometimes we are different, too' followed by 'We don't wear the same clothes most of the time'." },
+            q19: { ans: ['D'], exp: "The text mentions the narrator is a swimmer but Gina 'won't even walk near the sea'. D introduces her fear." },
+            q20: { ans: ['B'], exp: "A rhetorical summary of the contrast between similarity and difference." },
+
+            q21: { ans: ['B'], exp: "'Scandinavia, which lie in northern Europe' (geographical position)." },
+            q22: { ans: ['B'], exp: "'Probably best known for...' (famous for)." },
+            q23: { ans: ['D'], exp: "'It has become one of the richest...' (state change)." },
+            q24: { ans: ['B'], exp: "'Give up some of its independence' (refusal to work too closely with EU power)." },
+            q25: { ans: ['C'], exp: "'The money (taxes) is used to pay for a welfare system'." },
+            q26: { ans: ['D'], exp: "'Which includes health care...' (the welfare system contains these items)." },
+
+            q27: { ans: ['than'], exp: "Used for comparison: 'more reasons... than'." },
+            q28: { ans: ['like', 'including', 'such as'], exp: "Providing examples of countries." },
+            q29: { ans: ['as'], exp: "'...as do many other sea animals' (comparison of action)." },
+            q30: { ans: ['if', 'when', 'whenever'], exp: "Conditional or temporal trigger." },
+            q31: { ans: ['being'], exp: "Gerund phrase: 'Being at the top... sharks keep...'." },
+            q32: { ans: ['why'], exp: "Explaining the reason: 'This is why we must act'." }
+        };
+
+        const vocabData = {
+            "fancy": { ipa: "/ˈfænsi/", def: "To feel like doing something or wanting something (British informal)." },
+            "trials": { ipa: "/ˈtraɪəlz/", def: "Tests to see how good a player or team is before selecting them." },
+            "litter": { ipa: "/ˈlɪtər/", def: "Rubbish or trash left in a public place." },
+            "fined": { ipa: "/faɪnd/", def: "Made to pay money as a punishment for breaking a law or rule." },
+            "admire": { ipa: "/ədˈmaɪər/", def: "To respect and approve of someone or their behavior." },
+            "out of the blue": { ipa: "/aʊt əv ðə bluː/", def: "Completely unexpected; without warning." },
+            "determination": { ipa: "/dɪˌtɜːmɪˈneɪʃn/", def: "The ability to continue trying to do something even if it is difficult." },
+            "identical": { ipa: "/aɪˈdentɪkl/", def: "Exactly the same; alike in every detail." },
+            "terrified": { ipa: "/ˈterɪfaɪd/", def: "Extremely frightened or scared." },
+            "southerly": { ipa: "/ˈsʌðərli/", def: "Moving toward or situated in the south." },
+            "master": { ipa: "/ˈmɑːstər/", def: "To learn how to do something well." },
+            "welfare": { ipa: "/ˈwelfeər/", def: "Help given by the government to people who need it." },
+            "attracted": { ipa: "/əˈtræktɪd/", def: "Feeling a pull toward something; having interest drawn to it." },
+            "essential": { ipa: "/ɪˈsenʃl/", def: "Absolutely necessary; extremely important." }
+        };
+
+        const app = {
+            fontSize: 16,
+            highlightTooltip: document.getElementById('highlightTooltip'),
+            vocabTooltip: document.getElementById('vocabInfoTooltip'),
+
+            init() {
+                this.initTabs();
+                this.initSplitter();
+                this.initFontResizer();
+                this.initHighlighter();
+                this.initCheckAnswers();
+                this.initVocabSystem();
+            },
+
+            initTabs() {
+                const tabs = document.querySelectorAll('.tab-btn');
+                tabs.forEach(tab => {
+                    tab.addEventListener('click', () => {
+                        tabs.forEach(t => t.classList.remove('active'));
+                        tab.classList.add('active');
+
+                        const targetPart = tab.getAttribute('data-target');
+                        document.querySelectorAll('.tab-content').forEach(content => {
+                            if (content.getAttribute('data-part') === targetPart) {
+                                content.classList.add('active');
+                            } else {
+                                content.classList.remove('active');
+                            }
+                        });
+                        
+                        document.getElementById('left-pane').scrollTop = 0;
+                        document.getElementById('right-pane').scrollTop = 0;
+                        this.vocabTooltip.style.display = 'none';
+                    });
+                });
+            },
+
+            initCheckAnswers() {
+                document.querySelectorAll('.btn-check').forEach(btn => {
+                    btn.addEventListener('click', (e) => {
+                        const part = e.target.getAttribute('data-part');
+                        this.checkAnswersForPart(part);
+                    });
+                });
+            },
+
+            checkAnswersForPart(part) {
+                const container = document.querySelector(`.question-group[data-part="${part}"]`);
+                if (!container) return;
+
+                const questionWrappers = container.querySelectorAll('.q-wrapper');
+                let score = 0;
+                let total = questionWrappers.length;
+
+                questionWrappers.forEach(wrapper => {
+                    const inputEl = wrapper.querySelector('input, select');
+                    if (!inputEl) return;
+
+                    const qName = inputEl.name;
+                    const correctData = answerKey[qName];
+                    const correctAnswers = correctData ? correctData.ans : [];
+                    
+                    let userAns = '';
+                    if (inputEl.type === 'radio') {
+                        const checked = wrapper.querySelector('input[type="radio"]:checked');
+                        if (checked) userAns = checked.value;
+                    } else if (inputEl.tagName === 'SELECT') {
+                        userAns = inputEl.value;
+                    } else if (inputEl.type === 'text') {
+                        userAns = inputEl.value.trim().toLowerCase();
+                    }
+
+                    const qNumBadge = wrapper.querySelector('.q-number');
+                    const expBox = wrapper.querySelector('.explanation-box');
+                    
+                    if (qNumBadge) {
+                        const isCorrect = correctAnswers.some(ans => ans.toLowerCase() === userAns.toLowerCase());
+
+                        if (userAns === '') {
+                            qNumBadge.style.backgroundColor = '#6b7280'; // Gray for empty
+                        } else if (isCorrect) {
+                            qNumBadge.style.backgroundColor = '#22c55e'; // Green
+                            score++;
+                        } else {
+                            qNumBadge.style.backgroundColor = '#ef4444'; // Red
+                        }
+
+                        // Show Correct Answer and Explanation
+                        if (expBox && correctData) {
+                            expBox.style.display = 'block';
+                            const formattedCorrectAns = inputEl.type === 'text' ? correctAnswers.join(' / ') : correctAnswers[0];
+                            expBox.innerHTML = `
+                                <div class="mb-2">
+                                    <span class="font-bold text-green-700">Correct Answer:</span> 
+                                    <span class="font-medium">${formattedCorrectAns}</span>
+                                </div>
+                                <div>
+                                    <span class="font-bold">Explanation:</span> ${correctData.exp}
+                                </div>
+                            `;
+                        }
+                    }
+                });
+
+                const scoreLabel = document.getElementById(`score-part-${part}`);
+                if (scoreLabel) {
+                    scoreLabel.textContent = `Score: ${score} / ${total}`;
+                    scoreLabel.style.color = score === total ? '#16a34a' : (score > 0 ? '#ca8a04' : '#ef4444');
+                }
+            },
+
+            initVocabSystem() {
+                document.querySelectorAll('.vocab-word').forEach(wordEl => {
+                    wordEl.addEventListener('click', (e) => {
+                        e.stopPropagation();
+                        const key = wordEl.getAttribute('data-word');
+                        const data = vocabData[key];
+                        if (!data) return;
+
+                        document.getElementById('v-word').textContent = key;
+                        document.getElementById('v-ipa').textContent = data.ipa;
+                        document.getElementById('v-def').textContent = data.def;
+
+                        this.vocabTooltip.style.display = 'block';
+                        this.vocabTooltip.style.left = `${e.pageX}px`;
+                        this.vocabTooltip.style.top = `${e.pageY + 10}px`;
+
+                        document.getElementById('v-audio').onclick = () => {
+                            const utterance = new SpeechSynthesisUtterance(key);
+                            utterance.lang = 'en-US';
+                            window.speechSynthesis.speak(utterance);
+                        };
+                    });
+                });
+
+                document.addEventListener('click', (e) => {
+                    if (!this.vocabTooltip.contains(e.target)) {
+                        this.vocabTooltip.style.display = 'none';
+                    }
+                });
+            },
+
+            initSplitter() {
+                const splitter = document.getElementById('splitter');
+                const panesContainer = document.getElementById('panes-container');
+                let isDragging = false;
+
+                splitter.addEventListener('mousedown', () => {
+                    isDragging = true;
+                    document.body.style.cursor = 'col-resize';
+                });
+
+                document.addEventListener('mousemove', (e) => {
+                    if (!isDragging) return;
+                    const containerRect = panesContainer.getBoundingClientRect();
+                    let newLeftWidth = e.clientX - containerRect.left;
+                    if (newLeftWidth < 200) newLeftWidth = 200;
+                    if (newLeftWidth > containerRect.width - 200) newLeftWidth = containerRect.width - 200;
+                    const percentage = (newLeftWidth / containerRect.width) * 100;
+                    panesContainer.style.gridTemplateColumns = `${percentage}% 5px 1fr`;
+                });
+
+                document.addEventListener('mouseup', () => {
+                    if (isDragging) {
+                        isDragging = false;
+                        document.body.style.cursor = 'default';
+                    }
+                });
+            },
+
+            initFontResizer() {
+                document.getElementById('btn-increase-font').addEventListener('click', () => {
+                    if (this.fontSize < 24) {
+                        this.fontSize += 2;
+                        document.documentElement.style.setProperty('--app-font-size', `${this.fontSize}px`);
+                    }
+                });
+                document.getElementById('btn-decrease-font').addEventListener('click', () => {
+                    if (this.fontSize > 12) {
+                        this.fontSize -= 2;
+                        document.documentElement.style.setProperty('--app-font-size', `${this.fontSize}px`);
+                    }
+                });
+            },
+
+            initHighlighter() {
+                const leftPane = document.getElementById('left-pane');
+                leftPane.addEventListener('mouseup', (e) => {
+                    const selection = window.getSelection();
+                    const text = selection.toString().trim();
+                    if (text.length > 0) {
+                        const range = selection.getRangeAt(0);
+                        const rect = range.getBoundingClientRect();
+                        this.highlightTooltip.style.display = 'block';
+                        this.highlightTooltip.style.left = `${rect.left + (rect.width / 2) - (this.highlightTooltip.offsetWidth / 2)}px`;
+                        this.highlightTooltip.style.top = `${rect.top - 40}px`;
+                        this.highlightTooltip.onclick = () => {
+                            const mark = document.createElement('mark');
+                            try {
+                                range.surroundContents(mark);
+                            } catch (ex) {} 
+                            selection.removeAllRanges();
+                            this.highlightTooltip.style.display = 'none';
+                        };
+                    } else {
+                        this.highlightTooltip.style.display = 'none';
+                    }
+                });
+                document.body.addEventListener('mousedown', (e) => {
+                   if (e.target !== this.highlightTooltip && window.getSelection().toString().length === 0) {
+                        this.highlightTooltip.style.display = 'none';
+                   }
+                });
+            }
+        };
+
+        app.init();
+    });
+</script>
+
+</body>
+</html>
