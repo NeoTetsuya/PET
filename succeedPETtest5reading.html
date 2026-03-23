@@ -3,730 +3,1510 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Vocabulary Review Games</title>
+    <title>B1 Preliminary Test Simulator - Test 5 Reading</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800&display=swap');
-        
+        :root {
+            --app-font-size: 16px;
+            --primary: #1e40af;
+            --primary-hover: #1e3a8a;
+            --bg-main: #f1f5f9;
+            --text-main: #334155;
+            --text-dark: #0f172a;
+        }
         body {
-            font-family: 'Nunito', sans-serif;
-            background-color: #f0fdf4;
-            color: #1f2937;
+            font-family: 'Inter', sans-serif;
+            overscroll-behavior: none;
+            background-color: var(--bg-main);
+            color: var(--text-main);
+            margin: 0;
+            padding: 0;
         }
-
-        .tab-btn.active {
-            background-color: #22c55e;
-            color: white;
-            border-color: #22c55e;
-        }
-
-        /* Game 1 & 2 Interactions */
-        .word-pill {
-            cursor: pointer;
-            transition: all 0.2s ease;
-            user-select: none;
+        .ielts-container {
+            display: grid;
+            grid-template-rows: auto auto 1fr;
+            height: 100vh;
         }
         
-        .word-pill:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
-        }
-
-        .word-pill.selected {
-            ring: 4px;
-            ring-color: #3b82f6;
-            background-color: #eff6ff;
-            border-color: #3b82f6;
-            transform: scale(1.05);
-        }
-
-        .drop-slot {
-            display: inline-flex;
-            min-width: 120px;
-            height: 36px;
-            border: 2px dashed #9ca3af;
-            border-radius: 9999px;
+        /* Header */
+        .header {
+            background: linear-gradient(135deg, #1e3a8a 0%, #3b82f6 100%);
+            color: white;
+            padding: 1rem 2rem;
+            display: flex;
+            justify-content: space-between;
             align-items: center;
-            justify-content: center;
+            box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1);
+            z-index: 20;
+        }
+        .header h1 { color: white; font-weight: 700; letter-spacing: -0.025em; }
+        
+        /* Tabs Styles */
+        .tabs-nav {
+            display: flex;
+            background: #ffffff;
+            border-bottom: 1px solid #e2e8f0;
+            overflow-x: auto;
+            padding: 0 1rem;
+        }
+        .tab-btn {
+            padding: 1rem 1.5rem;
+            font-weight: 600;
+            font-size: 0.95rem;
+            color: #64748b;
+            background: transparent;
+            border: none;
             cursor: pointer;
-            vertical-align: middle;
-            margin: 0 4px;
-            transition: all 0.2s;
-            background-color: white;
+            border-bottom: 3px solid transparent;
+            transition: all 0.2s ease;
+            white-space: nowrap;
         }
-
-        .drop-slot.filled {
-            border: 2px solid #3b82f6;
-            background-color: #eff6ff;
-            color: #1d4ed8;
-            font-weight: 600;
+        .tab-btn:hover {
+            color: var(--primary);
+            background: #f8fafc;
         }
-
-        .drop-slot.correct {
-            border-color: #22c55e;
-            background-color: #dcfce3;
-            color: #15803d;
+        .tab-btn.active {
+            color: var(--primary);
+            border-bottom-color: var(--primary);
         }
+        .tab-content { display: none; }
+        .tab-content.active { display: block; animation: fadeIn 0.4s ease; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
 
-        .drop-slot.incorrect {
-            border-color: #ef4444;
-            background-color: #fee2e2;
-            color: #b91c1c;
-            animation: shake 0.5s;
+        /* Panes & Splitter */
+        .content-panes {
+            display: grid;
+            grid-template-columns: 1fr 6px 1fr;
+            overflow: hidden;
+            background-color: var(--bg-main);
         }
-
-        .drop-slot.revealed {
-            border-color: #f59e0b;
-            background-color: #fef3c7;
-            color: #b45309;
-            font-weight: 600;
+        .pane {
+            overflow-y: auto;
+            padding: 2.5rem;
+            font-size: var(--app-font-size);
+            line-height: 1.75;
+            scroll-behavior: smooth;
         }
-
-        /* Game 3 Interactions */
-        .letter-tile {
-            width: 48px;
-            height: 48px;
+        .pane-left { padding-right: 2rem; }
+        .pane-right { padding-left: 2rem; }
+        
+        .splitter {
+            background-color: #cbd5e1;
+            cursor: col-resize;
+            z-index: 10;
+            transition: background-color 0.2s;
+            position: relative;
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 1.5rem;
-            font-weight: 700;
-            background: white;
-            border: 2px solid #e5e7eb;
-            border-radius: 0.5rem;
-            cursor: pointer;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
-            transition: all 0.2s;
-            text-transform: uppercase;
         }
-
-        .letter-tile:hover {
-            border-color: #a855f7;
-            color: #a855f7;
-            transform: translateY(-2px);
+        .splitter::after {
+            content: "⋮";
+            color: #64748b;
+            font-size: 1.2rem;
+            font-weight: bold;
         }
-
-        @keyframes shake {
-            0%, 100% { transform: translateX(0); }
-            25% { transform: translateX(-5px); }
-            50% { transform: translateX(5px); }
-            75% { transform: translateX(-5px); }
-        }
-
-        @keyframes pop {
-            0% { transform: scale(0.9); opacity: 0; }
-            50% { transform: scale(1.1); }
-            100% { transform: scale(1); opacity: 1; }
-        }
-
-        .animate-pop {
-            animation: pop 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+        .splitter:hover, .splitter:active { background-color: #94a3b8; }
+        
+        /* Typography & Reading Text Styles */
+        h2, h3 { color: var(--text-dark); font-weight: 700; margin-top: 0; }
+        .part-title { 
+            font-size: 1.5em; 
+            margin-bottom: 1.5rem; 
+            color: var(--primary); 
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
         }
         
-        /* Modal */
-        #message-modal {
-            backdrop-filter: blur(4px);
+        .instruction { 
+            background-color: #e0f2fe; 
+            color: #0369a1; 
+            padding: 1rem 1.25rem; 
+            border-radius: 0.5rem; 
+            border-left: 4px solid #0ea5e9;
+            font-weight: 500;
+            margin-bottom: 2rem;
+            font-size: 0.95em;
         }
+        
+        .text-box { 
+            background-color: #ffffff; 
+            border: 1px solid #e2e8f0; 
+            padding: 2rem; 
+            border-radius: 0.75rem; 
+            margin-bottom: 2rem; 
+            box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05), 0 2px 4px -1px rgba(0,0,0,0.03);
+        }
+        .text-box p { margin-bottom: 1.25em; }
+        .text-box p:last-child { margin-bottom: 0; }
+        
+        /* Specific Box Styles (Part 1) */
+        .sign-box { 
+            border: 3px solid #334155; 
+            padding: 1.5rem; 
+            text-align: center; 
+            font-weight: 700; 
+            border-radius: 0.5rem; 
+            margin: 1rem auto; 
+            max-width: 80%;
+            background-color: #f8fafc;
+            color: #0f172a;
+            font-size: 1.1em;
+        }
+        .email-box { 
+            border: 1px solid #cbd5e1; 
+            border-radius: 0.5rem; 
+            margin: 1rem 0; 
+            background-color: #ffffff; 
+            font-family: 'Courier New', Courier, monospace; 
+            font-size: 0.95em;
+            box-shadow: inset 0 2px 4px 0 rgba(0, 0, 0, 0.02);
+            overflow: hidden;
+        }
+        .email-header {
+            background-color: #f1f5f9;
+            padding: 0.75rem 1rem;
+            border-bottom: 1px solid #cbd5e1;
+        }
+        .email-body {
+            padding: 1.25rem 1rem;
+        }
+        
+        /* Question Styles */
+        .question-group { margin-bottom: 3rem; }
+        .q-wrapper {
+            background-color: #ffffff;
+            border: 1px solid #e2e8f0;
+            border-radius: 0.75rem;
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+            transition: box-shadow 0.2s ease, border-color 0.2s ease;
+        }
+        .q-wrapper:hover {
+            box-shadow: 0 10px 15px -3px rgba(0,0,0,0.05);
+            border-color: #cbd5e1;
+        }
+        
+        .q-number { 
+            font-weight: 700; 
+            background-color: #3b82f6; 
+            color: white; 
+            width: 28px;
+            height: 28px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 50%; 
+            margin-right: 0.75rem; 
+            font-size: 0.9em; 
+            transition: background-color 0.3s ease; 
+            flex-shrink: 0;
+        }
+        
+        /* Inputs */
+        .radio-custom {
+            display: flex; 
+            align-items: flex-start; 
+            margin-bottom: 0.5rem; 
+            cursor: pointer; 
+            padding: 0.75rem 1rem; 
+            border-radius: 0.5rem; 
+            border: 1px solid transparent;
+            transition: all 0.2s ease;
+        }
+        .radio-custom:hover { 
+            background-color: #f8fafc; 
+            border-color: #cbd5e1;
+        }
+        .radio-custom input[type="radio"] { 
+            margin-top: 0.35em; 
+            margin-right: 1rem; 
+            accent-color: var(--primary); 
+            width: 1.15em; 
+            height: 1.15em; 
+            cursor: pointer;
+        }
+        
+        .select-custom {
+            padding: 0.5rem 1rem; 
+            border: 1px solid #cbd5e1; 
+            border-radius: 0.5rem; 
+            font-size: 1em; 
+            background-color: #f8fafc; 
+            outline: none; 
+            margin-left: 0.5rem;
+            cursor: pointer;
+            transition: all 0.2s;
+            color: var(--text-dark);
+            font-weight: 500;
+        }
+        .select-custom:focus { border-color: var(--primary); box-shadow: 0 0 0 3px rgba(30, 64, 175, 0.1); background-color: white;}
+        
+        .input-text {
+            border: 1px solid #cbd5e1; 
+            border-radius: 0.5rem; 
+            padding: 0.5rem 1rem; 
+            width: 160px; 
+            font-size: 1em; 
+            outline: none; 
+            transition: all 0.2s;
+            background-color: #f8fafc;
+            color: var(--text-dark);
+            font-weight: 500;
+        }
+        .input-text:focus { border-color: var(--primary); box-shadow: 0 0 0 3px rgba(30, 64, 175, 0.1); background-color: white;}
+        
+        /* Drag and Drop Styles */
+        .drop-zone.in-text {
+            display: inline;
+            background-color: #f1f5f9;
+            border: 2px dashed #94a3b8;
+            border-radius: 0.25rem;
+            padding: 0 0.5rem;
+            cursor: pointer;
+            transition: all 0.2s;
+            margin: 0 0.25rem;
+        }
+        .drop-zone.in-text:empty {
+            display: inline-block;
+            min-width: 40px;
+            height: 1.5em;
+            vertical-align: middle;
+            text-align: center;
+            padding: 0;
+        }
+        .drop-zone.in-text:empty::before {
+            content: attr(data-label);
+            color: #64748b;
+            font-weight: 700;
+            font-size: 0.9em;
+            line-height: 1.5em;
+        }
+        .drop-zone.in-text.drag-over {
+            background-color: #dbeafe;
+            border-color: #3b82f6;
+        }
+        
+        .draggable-pool {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+        .draggable-pool .drag-item {
+            display: flex;
+            align-items: flex-start;
+            background-color: #ffffff;
+            border: 1px solid #e2e8f0;
+            padding: 0.75rem 1rem;
+            border-radius: 0.5rem;
+            cursor: grab;
+            transition: all 0.2s ease;
+            box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+            font-size: 0.95em;
+        }
+        .draggable-pool .drag-item:hover {
+            border-color: #3b82f6;
+            box-shadow: 0 4px 6px -1px rgba(59, 130, 246, 0.1);
+        }
+        .draggable-pool .drag-item .letter {
+            color: #2563eb;
+            margin-right: 0.75rem;
+            flex-shrink: 0;
+            font-weight: 700;
+        }
+        
+        .drop-zone.in-text .drag-item {
+            display: inline;
+            color: #1d4ed8;
+            font-weight: 600;
+            background: transparent;
+            border: none;
+            padding: 0;
+            margin: 0;
+            box-shadow: none;
+            cursor: grab;
+        }
+        .drop-zone.in-text .drag-item .letter {
+            display: none;
+        }
+        .drop-zone.in-text .drag-item .full-text {
+            display: inline;
+        }
+
+        .drop-zone.in-text.correct { border-color: #22c55e; background-color: #dcfce7; }
+        .drop-zone.in-text.correct .drag-item { color: #166534; }
+        .drop-zone.in-text.incorrect { border-color: #ef4444; background-color: #fee2e2; }
+        .drop-zone.in-text.incorrect .drag-item { color: #991b1b; }
+        
+        /* Gap styles */
+        .gap { 
+            display: inline-block; 
+            font-weight: 700; 
+            margin: 0 0.3em; 
+            color: var(--primary); 
+            border-bottom: 2px dashed #93c5fd;
+            padding: 0 0.2em;
+        }
+
+        /* Vocabulary Highlight */
+        .vocab-word {
+            background-color: #dcfce7;
+            border-bottom: 2px solid #22c55e;
+            color: #166534;
+            font-weight: 500;
+            cursor: help;
+            padding: 0.1em 0.3em;
+            border-radius: 4px;
+            transition: all 0.2s ease;
+        }
+        .vocab-word:hover { 
+            background-color: #bbf7d0; 
+            box-shadow: 0 2px 4px rgba(34, 197, 94, 0.2);
+        }
+
+        /* Vocab Tooltip */
+        #vocabInfoTooltip {
+            position: absolute;
+            display: none;
+            background: white;
+            border: 1px solid #e2e8f0;
+            padding: 1.25rem;
+            border-radius: 0.75rem;
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+            z-index: 100;
+            width: 300px;
+        }
+        
+        #highlightTooltip {
+            position: absolute; display: none; background-color: #1e293b; color: white; padding: 6px 12px; border-radius: 6px; font-size: 14px; font-weight: 500; cursor: pointer; z-index: 1000; box-shadow: 0 4px 6px rgba(0,0,0,0.1); border: none; font-family: inherit;
+        }
+        #highlightTooltip::after { content: ''; position: absolute; top: 100%; left: 50%; margin-left: -6px; border-width: 6px; border-style: solid; border-color: #1e293b transparent transparent transparent; }
+        mark { background-color: #fef08a; color: inherit; padding: 0.2em 0; border-radius: 4px; }
+
+        /* Explanation Box */
+        .explanation-box {
+            display: none;
+            background-color: #f0fdf4;
+            border: 1px solid #bbf7d0;
+            border-left: 4px solid #22c55e;
+            padding: 1.25rem;
+            margin-top: 1.25rem;
+            border-radius: 0.5rem;
+            font-size: 0.95em;
+            color: #166534;
+            line-height: 1.6;
+        }
+
+        /* Controls & Buttons */
+        .controls { display: flex; gap: 0.75rem; align-items: center; }
+        .btn-icon { 
+            background: rgba(255,255,255,0.15); 
+            border: 1px solid rgba(255,255,255,0.3); 
+            color: white; 
+            padding: 0.5rem 1rem; 
+            border-radius: 0.5rem; 
+            cursor: pointer; 
+            font-weight: 600; 
+            transition: all 0.2s; 
+        }
+        .btn-icon:hover { background: rgba(255,255,255,0.25); transform: translateY(-1px); }
+        .btn-icon:active { transform: translateY(0); }
+        
+        .btn-primary { 
+            background-color: var(--primary); 
+            color: white; 
+            border: none; 
+            padding: 0.75rem 2rem; 
+            border-radius: 0.5rem; 
+            font-weight: 600; 
+            font-size: 1em;
+            cursor: pointer; 
+            transition: all 0.2s ease; 
+            box-shadow: 0 4px 6px -1px rgba(30, 64, 175, 0.2);
+        }
+        .btn-primary:hover { background-color: var(--primary-hover); transform: translateY(-1px); box-shadow: 0 6px 8px -1px rgba(30, 64, 175, 0.3); }
+        .btn-primary:active { transform: translateY(0); }
+        
+        /* Layout utility for questions */
+        .flex-row-center { display: flex; align-items: center; gap: 1rem; }
     </style>
 </head>
-<body class="min-h-screen p-4 md:p-8">
+<body>
 
-    <div class="max-w-5xl mx-auto">
-        <!-- Header -->
-        <header class="text-center mb-8">
-            <h1 class="text-4xl md:text-5xl font-extrabold text-green-700 mb-2">PET Vocabulary Games</h1>
-            <p class="text-gray-600 text-lg">Master your vocabulary with these interactive challenges!</p>
-        </header>
-
-        <!-- Navigation Tabs -->
-        <div class="flex flex-wrap justify-center gap-2 mb-8" id="tabs">
-            <button onclick="switchTab('game1')" class="tab-btn active px-6 py-3 rounded-full border-2 border-green-500 text-green-700 font-bold transition-colors hover:bg-green-50">1. Story Filler</button>
-            <button onclick="switchTab('game2')" class="tab-btn px-6 py-3 rounded-full border-2 border-green-500 text-green-700 font-bold transition-colors hover:bg-green-50">2. Match Definitions</button>
-            <button onclick="switchTab('game3')" class="tab-btn px-6 py-3 rounded-full border-2 border-green-500 text-green-700 font-bold transition-colors hover:bg-green-50">3. Word Scramble</button>
+<div class="ielts-container">
+    <!-- Header -->
+    <header class="header">
+        <div>
+            <h1 class="text-xl m-0">B1 Preliminary Practice Test</h1>
+            <div class="text-sm opacity-90 mt-1 font-medium">Reading - Test 5</div>
         </div>
+        <div class="controls">
+            <button class="btn-icon" id="btn-decrease-font" title="Decrease Font Size">A-</button>
+            <button class="btn-icon" id="btn-increase-font" title="Increase Font Size">A+</button>
+        </div>
+    </header>
 
-        <!-- Main Content Area -->
-        <div class="bg-white rounded-2xl shadow-xl p-6 md:p-8 min-h-[500px] relative">
+    <!-- Tabs Navigation -->
+    <div class="tabs-nav" id="tabs-nav">
+        <button class="tab-btn active" data-target="1">Part 1</button>
+        <button class="tab-btn" data-target="2">Part 2</button>
+        <button class="tab-btn" data-target="3">Part 3</button>
+        <button class="tab-btn" data-target="4">Part 4</button>
+        <button class="tab-btn" data-target="5">Part 5</button>
+        <button class="tab-btn" data-target="6">Part 6</button>
+    </div>
+
+    <!-- Main Content -->
+    <div class="content-panes" id="panes-container">
+        
+        <!-- LEFT PANE: READING TEXTS -->
+        <div class="pane pane-left" id="left-pane">
             
-            <!-- GAME 1: Story Filler -->
-            <div id="game1" class="game-section">
-                <div class="flex justify-between items-center mb-6">
-                    <h2 class="text-2xl font-bold text-gray-800">Fill in the Blanks</h2>
-                    <button onclick="game1.reset()" class="text-gray-500 hover:text-red-500 font-semibold flex items-center gap-1">
-                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M4 2a1 1 0 011 1v2.101a7.002 7.002 0 0111.601 2.566 1 1 0 11-1.885.666A5.002 5.002 0 005.999 7H9a1 1 0 010 2H4a1 1 0 01-1-1V3a1 1 0 011-1zm.008 9.057a1 1 0 011.276.61A5.002 5.002 0 0014.001 13H11a1 1 0 110-2h5a1 1 0 011 1v5a1 1 0 11-2 0v-2.101a7.002 7.002 0 01-11.601-2.566 1 1 0 01.61-1.276z" clip-rule="evenodd" /></svg>
-                        Reset
-                    </button>
-                </div>
-                <p class="text-gray-600 mb-6 bg-blue-50 p-4 rounded-lg border border-blue-100">
-                    <strong>How to play:</strong> Click a word from the word bank to select it, then click an empty slot in the paragraph to place it. Watch out, there are extra words!
-                </p>
-
-                <!-- Word Bank -->
-                <div class="mb-8 border-b-2 border-gray-100 pb-6">
-                    <h3 class="text-sm uppercase font-bold text-gray-400 mb-3 tracking-wider">Word Bank</h3>
-                    <div id="g1-wordbank" class="flex flex-wrap gap-3">
-                        <!-- Words injected by JS -->
+            <div class="reading-text tab-content active" data-part="1">
+                <h2 class="part-title">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>
+                    Part 1
+                </h2>
+                <div class="instruction">Questions 1-5<br>For each question, choose the correct answer.</div>
+                
+                <div class="text-box">
+                    <div class="flex items-center gap-3 mb-4 text-gray-500 font-bold">
+                        <span class="q-number bg-gray-500">1</span> Text 1
+                    </div>
+                    <div class="sign-box" style="border-color: #3b82f6; background-color: #eff6ff; color: #1e3a8a;">
+                        Keep at room temperature.<br><br>
+                        <span class="font-medium text-[0.9em]">Put in fridge for half an hour before opening and serve with ice and a slice of lemon.</span>
                     </div>
                 </div>
 
-                <!-- Paragraph -->
-                <div class="text-lg leading-relaxed text-gray-700 bg-gray-50 p-6 rounded-xl border border-gray-200">
-                    Last summer, we took a <span class="drop-slot" data-answer="ferry" onclick="game1.handleSlotClick(this)"></span> 
-                    to a beautiful <span class="drop-slot" data-answer="peninsula" onclick="game1.handleSlotClick(this)"></span>. 
-                    We visited an <span class="drop-slot" data-answer="ancient" onclick="game1.handleSlotClick(this)"></span> 
-                    castle which was a famous <span class="drop-slot" data-answer="landmark" onclick="game1.handleSlotClick(this)"></span>. 
-                    The area was quite <span class="drop-slot" data-answer="crowded" onclick="game1.handleSlotClick(this)"></span> 
-                    with tourists, but the view of the <span class="drop-slot" data-answer="vast" onclick="game1.handleSlotClick(this)"></span> 
-                    ocean was incredible. Our guide told us about a <span class="drop-slot" data-answer="nearby" onclick="game1.handleSlotClick(this)"></span> 
-                    forest that remained completely <span class="drop-slot" data-answer="untouched" onclick="game1.handleSlotClick(this)"></span> 
-                    by modern development. I highly <span class="drop-slot" data-answer="recommend" onclick="game1.handleSlotClick(this)"></span> 
-                    this trip; it was truly a <span class="drop-slot" data-answer="memorable" onclick="game1.handleSlotClick(this)"></span> experience.
+                <div class="text-box">
+                    <div class="flex items-center gap-3 mb-4 text-gray-500 font-bold">
+                        <span class="q-number bg-gray-500">2</span> Text 2
+                    </div>
+                    <div class="sign-box" style="border: 3px solid #ef4444; background-color: #fef2f2; color: #991b1b;">
+                        PRIVATE ROAD<br>
+                        NO PUBLIC ACCESS OR PARKING.<br>
+                        RESIDENTS AND GUESTS ONLY.<br>
+                        <span class="text-[0.85em] font-bold mt-2 block">IN USE 24 HOURS. DRIVE SLOWLY.</span>
+                    </div>
                 </div>
 
-                <div class="mt-8 text-center">
-                    <button onclick="game1.checkAnswers()" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-8 rounded-full shadow-lg transition-transform transform hover:scale-105">
+                <div class="text-box">
+                    <div class="flex items-center gap-3 mb-4 text-gray-500 font-bold">
+                        <span class="q-number bg-gray-500">3</span> Text 3
+                    </div>
+                    <div class="sign-box" style="border: 3px solid #f59e0b; background-color: #fffbeb;">
+                        <div class="text-amber-600 text-xl mb-2 uppercase tracking-widest">Warning</div>
+                        Thieves will be reported to the police and taken to the police station.<br><br>
+                        <span class="text-[0.85em] text-gray-600">Security cameras in use 24/7.</span>
+                    </div>
+                </div>
+
+                <div class="text-box">
+                    <div class="flex items-center gap-3 mb-4 text-gray-500 font-bold">
+                        <span class="q-number bg-gray-500">4</span> Text 4
+                    </div>
+                    <div class="email-box">
+                        <div class="email-header">
+                            <div><strong>To:</strong> Mr. Clinton</div>
+                            <div><strong>From:</strong> Mr. Smith</div>
+                            <div><strong>Re:</strong> Museum trip</div>
+                        </div>
+                        <div class="email-body">
+                            Could you inform me how much it would cost to take my class of thirty students to the local museum?<br><br>
+                            Thank you
+                        </div>
+                    </div>
+                </div>
+
+                <div class="text-box">
+                    <div class="flex items-center gap-3 mb-4 text-gray-500 font-bold">
+                        <span class="q-number bg-gray-500">5</span> Text 5
+                    </div>
+                    <div class="email-box" style="background-color: #fffde7;">
+                        <div class="email-body font-sans">
+                            <strong>Dave,</strong><br><br>
+                            Can you pick up a fresh loaf, two pies and a cream cake? I'm going to buy some chicken.<br><br>
+                            Don't forget we're meeting Sam at the cafe in the afternoon.<br><br>
+                            <em>Thanks, Annie</em>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="reading-text tab-content" data-part="2">
+                <h2 class="part-title">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>
+                    Part 2
+                </h2>
+                <div class="instruction">Questions 6-10<br>The people below are looking for a holiday destination in Greece. There are eight resort reviews. Decide which resort would be the most suitable for the people below.</div>
+                
+                <div class="text-box">
+                    <h3 class="text-2xl mb-6 text-center text-blue-900">Recommended Greek Holiday Options</h3>
+                    <div class="grid gap-6">
+                        <div class="p-4 bg-gray-50 rounded-lg border border-gray-200">
+                            <h4 class="text-lg font-bold text-blue-800 mb-2">A. Corfu</h4>
+                            <p>If you want the classic Greek holiday resort, come to our new family destination in Corfu. The resort has a two-kilometre beach, which has no bars or nightclubs. Each day there are special children's club activities on the main beach and parents are welcome to join in most of them!</p>
+                        </div>
+                        <div class="p-4 bg-gray-50 rounded-lg border border-gray-200">
+                            <h4 class="text-lg font-bold text-blue-800 mb-2">B. Cape Attica</h4>
+                            <p>This resort is located only a few hundred metres from historic Cape Sounio, and is only a fifty-minute coach trip from Athens. Daily trips to the Acropolis and other famous landmarks in the city are available. The night bus service allows a full experience of the nightlife in Athens.</p>
+                        </div>
+                        <div class="p-4 bg-gray-50 rounded-lg border border-gray-200">
+                            <h4 class="text-lg font-bold text-blue-800 mb-2">C. Mount Athos</h4>
+                            <p>The religious peninsula known as Mount Athos is untouched by modern development and contains some of the most beautiful natural scenery in the whole country. This male-only area is home to <span class="vocab-word" data-word="monasteries">monasteries</span> from various countries, and is peaceful enough for some time alone.</p>
+                        </div>
+                        <div class="p-4 bg-gray-50 rounded-lg border border-gray-200">
+                            <h4 class="text-lg font-bold text-blue-800 mb-2">D. Mykonos</h4>
+                            <p>Mykonos is now internationally famous for its <span class="vocab-word" data-word="glamorous">glamorous</span> clubs and bars, which attract many of the rich and famous from the international celebrity world. The unique party atmosphere of this island is not to be missed. Ferries are also available to provide short trips to many of the nearby islands.</p>
+                        </div>
+                        <div class="p-4 bg-gray-50 rounded-lg border border-gray-200">
+                            <h4 class="text-lg font-bold text-blue-800 mb-2">E. Crete</h4>
+                            <p>In the south of Crete you can visit some of the most <span class="vocab-word" data-word="exotic">exotic</span> beaches around. After you've cooled off in the sea, the famous Samaria <span class="vocab-word" data-word="canyon">canyon</span>, the longest in Europe, is well worth a visit for the very active and fit. Some remarkable scenery can be discovered if you put in the legwork.</p>
+                        </div>
+                        <div class="p-4 bg-gray-50 rounded-lg border border-gray-200">
+                            <h4 class="text-lg font-bold text-blue-800 mb-2">F. Thessalonica</h4>
+                            <p>Experience shopping in the wide streets of Greece's second biggest city. All the top designers are to be found in the commercial centre. After this, why not enjoy some traditional nightlife in one of the many live music clubs in the city?</p>
+                        </div>
+                        <div class="p-4 bg-gray-50 rounded-lg border border-gray-200">
+                            <h4 class="text-lg font-bold text-blue-800 mb-2">G. Peloponnesian Tour</h4>
+                            <p>Enjoy a tour of the sights of the historic Peloponnese, taking in Sparta, Argos and Corinth. In each location you will stay in comfortable and peaceful hotels, which specialise in the best of local food and wines. Perfect for those who would like to learn more about Greek history and culture.</p>
+                        </div>
+                        <div class="p-4 bg-gray-50 rounded-lg border border-gray-200">
+                            <h4 class="text-lg font-bold text-blue-800 mb-2">H. Santorini</h4>
+                            <p>For an experience that's unique among the Greek islands, the volcanic island of Santorini has a magic of its own, even though it doesn't have as many beaches as some others. The spectacular views of the sunset are not to be missed. Santorini is the perfect place for people who are in love.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="reading-text tab-content" data-part="3">
+                <h2 class="part-title">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>
+                    Part 3
+                </h2>
+                <div class="instruction">Questions 11-15<br>For each question, choose the correct answer.</div>
+                
+                <div class="text-box">
+                    <h3 class="text-2xl font-bold mb-2 text-center">How to follow your dreams</h3>
+                    <p class="italic text-sm mb-6 text-center text-gray-500">by Paul Staples</p>
+                    
+                    <p>I have had many years as a successful rock star, but will always remember how it all started and how I formed my first band. At sixteen I was still growing up in a bad part of town. I didn't have any way to express myself; I was disappointed by the terrible state of the neighbourhood and the unfairness that existed. Rich people, who had everything, lived just one mile away, while we had nothing, and could only hope for the worst of jobs.</p>
+                    
+                    <p>One night, while I was at a friend's house, we found a pair of electric guitars and started playing. We pretty much taught ourselves the music, and when a couple of other guys, who really knew how to play, joined us I knew we had something. With my songs, I could express far more emotion and I could communicate with other people. Soon after that we set up our own band.</p>
+                    
+                    <p>The songs we write are still very important to us. They're about telling others how we feel about the problems and issues around us; crime, unemployment, <span class="vocab-word" data-word="exploitation">exploitation</span>, and the <span class="vocab-word" data-word="inequality">inequality</span> present in the country. Of course, we are also expressing our own dreams and desires. It is amazing to be on stage and have twenty thousand people sing the songs that you write, songs that are about people like them, and in the end, these songs are for people like them.</p>
+
+                    <p>Our music has been very popular and is worth listening to, as it is the ordinary people who have made it such a success. We sing what we feel so we're sure that if people listen to the music, they'll understand our message, too.</p>
+                    
+                    <p>So my advice to anyone dreaming of becoming a rock star is to never give up! Learn how to play a musical instrument and take <span class="vocab-word" data-word="vocal">vocal</span> lessons. Put together a band and practise as much as you can. Write your own music, record it and let your friends listen to it. Play in front of an audience. Make a YouTube channel with your music and videos of live performances. You will, sooner or later, find yourself with a larger fan base and this will be the time when the adventure will begin!</p>
+                </div>
+            </div>
+
+            <div class="reading-text tab-content" data-part="4">
+                <h2 class="part-title">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>
+                    Part 4
+                </h2>
+                <div class="instruction">Questions 16-20<br>Five sentences have been removed from the text below. For each question, choose the correct answer (A-H). There are three extra sentences.</div>
+                
+                <div class="text-box">
+                    <h3 class="text-2xl font-bold mb-6 text-center">Dangerous Fun</h3>
+                    <p>When we think about dangerous and extreme sports, bungee jumping or sky diving comes to mind. But did you know that there are several festivals or events that take place around the world where people risk serious injury or even death?</p>
+                    
+                    <p>The custom of cheese rolling in the UK is only one of them. It is actually so unsafe that many think it should be banned. <span class="drop-zone in-text" data-name="q16" data-label="16"></span> This event takes place on a grassy hill which is too <span class="vocab-word" data-word="steep">steep</span> for a person to walk down standing up. <span class="vocab-word" data-word="competitors">Competitors</span> run after a round, five-kilo English cheese, going at speed down this hill. The cheese, which is given a one-second head start on the runners, may go as fast as one hundred and twelve kilometres an hour. <span class="drop-zone in-text" data-name="q17" data-label="17"></span> However, it is the competitors who are in the most danger as they fall down running after the cheese. As you can imagine, there are broken bones and other injuries by the time this event has finished. <span class="drop-zone in-text" data-name="q18" data-label="18"></span> However, very few do, which means the winner is the first person to reach the bottom, broken bones or not.</p>
+                    
+                    <p>And if you thought this was mad enough, go to Greece, where at the village of Vrontados people have an unusual, but extremely dangerous custom. Two competing churches have an <span class="vocab-word" data-word="annual">annual</span> war. <span class="drop-zone in-text" data-name="q19" data-label="19"></span> This attack does not happen while the churches are empty, but while services are being held, so both churches are full. <span class="drop-zone in-text" data-name="q20" data-label="20"></span> This is why this extreme tradition is also very dangerous. Nobody is sure exactly how it got started but, whatever the history, if you feel like risking your life, these two unusual extreme customs are a good way to start.</p>
+                </div>
+            </div>
+
+            <div class="reading-text tab-content" data-part="5">
+                <h2 class="part-title">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>
+                    Part 5
+                </h2>
+                <div class="instruction">Questions 21-26<br>For each question, choose the correct answer.</div>
+                
+                <div class="text-box">
+                    <h3 class="text-2xl font-bold mb-6 text-center">Our Homes: Now and Then</h3>
+                    <p>Everyone needs to have a place to call home where they can feel safe and <span class="vocab-word" data-word="sheltered">sheltered</span>. Whether they have bought their own <span class="gap">(21)</span> ............... or rent it, it matters very little. Our modern-day houses or apartments have air-conditioning to keep us cool, and heating to keep us warm. There is electricity for lighting and the use of several <span class="gap">(22)</span> ............... , such as TVs and computers, and supplies of gas or heating oil for keeping us warm. Hot and cold water flows from the taps and dirty water <span class="gap">(23)</span> ............... down the drains. Many of our homes have balconies or gardens, as well.</p>
+                    
+                    <p>In the past, people made their homes from <span class="gap">(24)</span> ............... that they found nearby. When we look at different houses we can tell how old they are <span class="gap">(25)</span> ............... on that and the way they were built. In the past, people did not have running water in their homes and there were no electric lights. There was no <span class="gap">(26)</span> ............... heating of course, so, to keep warm, they sometimes had to light a fire inside their homes. They would use the same fire to also cook their food and heat their water.</p>
+                </div>
+            </div>
+
+            <div class="reading-text tab-content" data-part="6">
+                <h2 class="part-title">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>
+                    Part 6
+                </h2>
+                <div class="instruction">Questions 27-32<br>For each question, write the correct answer. Write <strong>ONE</strong> word for each gap.</div>
+                
+                <div class="text-box">
+                    <h3 class="text-2xl font-bold mb-6 text-center">Namibia</h3>
+                    <p>Namibia is in Southern Western Africa. It's a country of desert and sand, with a long coast on the South Atlantic Ocean. The Namib Desert, which, at 80 million years old, is the <span class="gap">(27)</span> ............... ancient desert on the whole planet, is also home to the highest sand hill in the world, known <span class="gap">(28)</span> ............... a dune.</p>
+                    
+                    <p>The name 'Namib' translates as 'vast place', or in <span class="gap">(29)</span> ............... words, a huge area. This is an accurate description of this desert region <span class="gap">(30)</span> ............... is one of the least crowded places on the planet. Only Greenland, the Falkland Islands, Mongolia and the Western Sahara have fewer people for <span class="gap">(31)</span> ............... square kilometre.</p>
+                    
+                    <p>And in this huge empty area of Southern Africa lives the fastest land animal on the planet, the cheetah. As home to the world's largest population of wild and completely free cheetahs, it is hardly surprising <span class="gap">(32)</span> ............... Namibia is turning into a popular tourist destination.</p>
+                </div>
+            </div>
+
+            <div style="height: 100px;"></div> <!-- Extra space for scrolling -->
+        </div>
+
+        <!-- SPLITTER -->
+        <div class="splitter" id="splitter"></div>
+
+        <!-- RIGHT PANE: QUESTIONS -->
+        <div class="pane pane-right" id="right-pane">
+            
+            <!-- Part 1 Questions -->
+            <div class="question-group tab-content active" data-part="1">
+                <h2 class="text-2xl font-bold mb-6 text-blue-900">Part 1 Questions</h2>
+                
+                <div class="q-wrapper">
+                    <div class="flex mb-3">
+                        <span class="q-number">1</span>
+                        <p class="font-semibold text-lg m-0">What does the sign say about the drink?</p>
+                    </div>
+                    <label class="radio-custom"><input type="radio" name="q1" value="A"> <span><strong>A.</strong> Chill the drink in the fridge before you use it.</span></label>
+                    <label class="radio-custom"><input type="radio" name="q1" value="B"> <span><strong>B.</strong> The drink should be served at room temperature.</span></label>
+                    <label class="radio-custom"><input type="radio" name="q1" value="C"> <span><strong>C.</strong> Keep the drink in the fridge at all times.</span></label>
+                    <div class="explanation-box" id="exp-q1"></div>
+                </div>
+
+                <div class="q-wrapper">
+                    <div class="flex mb-3">
+                        <span class="q-number">2</span>
+                        <p class="font-semibold text-lg m-0">What does the notice about the road mean?</p>
+                    </div>
+                    <label class="radio-custom"><input type="radio" name="q2" value="A"> <span><strong>A.</strong> The car park is open to the public 24 hours.</span></label>
+                    <label class="radio-custom"><input type="radio" name="q2" value="B"> <span><strong>B.</strong> It is forbidden for most people to use, or stop on, this road.</span></label>
+                    <label class="radio-custom"><input type="radio" name="q2" value="C"> <span><strong>C.</strong> Guests' cars are not allowed on this road.</span></label>
+                    <div class="explanation-box" id="exp-q2"></div>
+                </div>
+
+                <div class="q-wrapper">
+                    <div class="flex mb-3">
+                        <span class="q-number">3</span>
+                        <p class="font-semibold text-lg m-0">The warning sign tells us that...</p>
+                    </div>
+                    <label class="radio-custom"><input type="radio" name="q3" value="A"> <span><strong>A.</strong> The police are watching thieves in the area around the police station.</span></label>
+                    <label class="radio-custom"><input type="radio" name="q3" value="B"> <span><strong>B.</strong> The police will be informed of anyone taking someone else's personal property.</span></label>
+                    <label class="radio-custom"><input type="radio" name="q3" value="C"> <span><strong>C.</strong> The police have arrived to arrest some thieves without using any security cameras.</span></label>
+                    <div class="explanation-box" id="exp-q3"></div>
+                </div>
+
+                <div class="q-wrapper">
+                    <div class="flex mb-3">
+                        <span class="q-number">4</span>
+                        <p class="font-semibold text-lg m-0">Why did Mr. Smith send this email?</p>
+                    </div>
+                    <label class="radio-custom"><input type="radio" name="q4" value="A"> <span><strong>A.</strong> Mr. Smith works for the local museum.</span></label>
+                    <label class="radio-custom"><input type="radio" name="q4" value="B"> <span><strong>B.</strong> Mr. Clinton wants to take a school class to the museum.</span></label>
+                    <label class="radio-custom"><input type="radio" name="q4" value="C"> <span><strong>C.</strong> Mr. Smith is organising a school trip to a museum.</span></label>
+                    <div class="explanation-box" id="exp-q4"></div>
+                </div>
+
+                <div class="q-wrapper">
+                    <div class="flex mb-3">
+                        <span class="q-number">5</span>
+                        <p class="font-semibold text-lg m-0">What does Annie want Dave to do?</p>
+                    </div>
+                    <label class="radio-custom"><input type="radio" name="q5" value="A"> <span><strong>A.</strong> go to the bakery to get some things she needs</span></label>
+                    <label class="radio-custom"><input type="radio" name="q5" value="B"> <span><strong>B.</strong> meet her at the cafe on his way back from the bakery</span></label>
+                    <label class="radio-custom"><input type="radio" name="q5" value="C"> <span><strong>C.</strong> prepare some chicken for lunch when he gets back</span></label>
+                    <div class="explanation-box" id="exp-q5"></div>
+                </div>
+
+                <div class="mt-8 pt-6 border-t border-gray-300 flex items-center justify-between">
+                    <button class="btn-primary btn-check flex items-center gap-2" data-part="1">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd" /></svg>
                         Check Answers
                     </button>
+                    <span class="font-bold text-xl text-gray-700" id="score-part-1"></span>
                 </div>
             </div>
 
-            <!-- GAME 2: Match Definitions -->
-            <div id="game2" class="game-section hidden">
-                <div class="flex justify-between items-center mb-6">
-                    <h2 class="text-2xl font-bold text-gray-800">Match the Definitions</h2>
-                    <button onclick="game2.reset()" class="text-gray-500 hover:text-red-500 font-semibold flex items-center gap-1">
-                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M4 2a1 1 0 011 1v2.101a7.002 7.002 0 0111.601 2.566 1 1 0 11-1.885.666A5.002 5.002 0 005.999 7H9a1 1 0 010 2H4a1 1 0 01-1-1V3a1 1 0 011-1zm.008 9.057a1 1 0 011.276.61A5.002 5.002 0 0014.001 13H11a1 1 0 110-2h5a1 1 0 011 1v5a1 1 0 11-2 0v-2.101a7.002 7.002 0 01-11.601-2.566 1 1 0 01.61-1.276z" clip-rule="evenodd" /></svg>
-                        Reset
-                    </button>
-                </div>
-                <p class="text-gray-600 mb-6 bg-purple-50 p-4 rounded-lg border border-purple-100">
-                    <strong>How to play:</strong> Click a word to select it, then click the empty box next to its correct definition.
-                </p>
-
-                <!-- Word Bank -->
-                <div class="mb-8 border-b-2 border-gray-100 pb-6">
-                    <h3 class="text-sm uppercase font-bold text-gray-400 mb-3 tracking-wider">Vocabulary Words</h3>
-                    <div id="g2-wordbank" class="flex flex-wrap gap-3">
-                        <!-- Words injected by JS -->
-                    </div>
-                </div>
-
-                <!-- Definitions List (Changed to grid) -->
-                <div id="g2-definitions" class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <!-- Injected by JS -->
-                </div>
-
-                <div class="mt-8 text-center">
-                    <button onclick="game2.checkAnswers()" class="bg-purple-600 hover:bg-purple-700 text-white font-bold py-3 px-8 rounded-full shadow-lg transition-transform transform hover:scale-105">
-                        Check Matches
-                    </button>
-                </div>
-            </div>
-
-            <!-- GAME 3: Word Scramble -->
-            <div id="game3" class="game-section hidden">
-                <div class="text-center mb-6">
-                    <h2 class="text-2xl font-bold text-gray-800">Word Scramble</h2>
-                    <p class="text-gray-600 mt-2">Unscramble the letters to find the vocabulary word.</p>
-                </div>
-
-                <div class="max-w-xl mx-auto bg-gray-50 p-6 md:p-8 rounded-2xl border border-gray-200 shadow-sm relative overflow-hidden">
-                    
-                    <!-- Progress / Score -->
-                    <div class="flex justify-between text-sm font-bold text-gray-500 mb-6 uppercase tracking-widest">
-                        <span id="g3-progress">Word 1 of 10</span>
-                        <span id="g3-score" class="text-orange-500">Score: 0</span>
-                    </div>
-
-                    <!-- Hint -->
-                    <div class="bg-white border-l-4 border-orange-400 p-4 mb-8 shadow-sm rounded-r-lg">
-                        <h4 class="text-xs font-bold text-gray-400 uppercase mb-1">Hint</h4>
-                        <p id="g3-hint" class="text-lg text-gray-800 font-semibold">Mix things together</p>
-                    </div>
-
-                    <!-- Answer Slots -->
-                    <div class="mb-8">
-                        <h4 class="text-xs font-bold text-center text-gray-400 uppercase mb-3">Your Answer</h4>
-                        <div id="g3-answer-zone" class="flex flex-wrap justify-center gap-2 min-h-[50px] p-2 bg-white rounded-xl border-2 border-dashed border-gray-300">
-                            <!-- Answer tiles placed here -->
+            <!-- Part 2 Questions -->
+            <div class="question-group tab-content" data-part="2">
+                <h2 class="text-2xl font-bold mb-6 text-blue-900">Part 2 Questions</h2>
+                
+                <div class="q-wrapper">
+                    <div class="flex items-start justify-between gap-4">
+                        <div class="flex-1">
+                            <span class="q-number float-left mt-1">6</span> 
+                            <p class="m-0 leading-relaxed"><strong>Jay</strong> wants to go to an island with lots of exciting nightlife, and also be able to visit other nearby islands for day trips.</p>
                         </div>
+                        <select class="select-custom" name="q6">
+                            <option value="">Select</option>
+                            <option value="A">A</option><option value="B">B</option><option value="C">C</option><option value="D">D</option><option value="E">E</option><option value="F">F</option><option value="G">G</option><option value="H">H</option>
+                        </select>
                     </div>
-
-                    <!-- Scrambled Letters -->
-                    <div>
-                        <h4 class="text-xs font-bold text-center text-gray-400 uppercase mb-3">Tap letters to build the word</h4>
-                        <div id="g3-scramble-zone" class="flex flex-wrap justify-center gap-2">
-                            <!-- Scrambled tiles placed here -->
-                        </div>
-                    </div>
+                    <div class="explanation-box" id="exp-q6"></div>
                 </div>
 
-                <div class="mt-8 text-center flex justify-center gap-4">
-                    <button onclick="game3.clearLetters()" class="bg-gray-200 hover:bg-gray-300 text-gray-700 font-bold py-3 px-6 rounded-full transition-colors">
-                        Clear
+                <div class="q-wrapper">
+                    <div class="flex items-start justify-between gap-4">
+                        <div class="flex-1">
+                            <span class="q-number float-left mt-1">7</span> 
+                            <p class="m-0 leading-relaxed"><strong>Dean</strong> wants to go with a group of university students to a place where they can both enjoy nightlife and visit historic sites during the day.</p>
+                        </div>
+                        <select class="select-custom" name="q7">
+                            <option value="">Select</option>
+                            <option value="A">A</option><option value="B">B</option><option value="C">C</option><option value="D">D</option><option value="E">E</option><option value="F">F</option><option value="G">G</option><option value="H">H</option>
+                        </select>
+                    </div>
+                    <div class="explanation-box" id="exp-q7"></div>
+                </div>
+
+                <div class="q-wrapper">
+                    <div class="flex items-start justify-between gap-4">
+                        <div class="flex-1">
+                            <span class="q-number float-left mt-1">8</span> 
+                            <p class="m-0 leading-relaxed"><strong>Chris and his wife</strong> are celebrating their first wedding anniversary. They have been to some popular resorts before, but now they want to visit somewhere different and memorable.</p>
+                        </div>
+                        <select class="select-custom" name="q8">
+                            <option value="">Select</option>
+                            <option value="A">A</option><option value="B">B</option><option value="C">C</option><option value="D">D</option><option value="E">E</option><option value="F">F</option><option value="G">G</option><option value="H">H</option>
+                        </select>
+                    </div>
+                    <div class="explanation-box" id="exp-q8"></div>
+                </div>
+
+                <div class="q-wrapper">
+                    <div class="flex items-start justify-between gap-4">
+                        <div class="flex-1">
+                            <span class="q-number float-left mt-1">9</span> 
+                            <p class="m-0 leading-relaxed"><strong>Alan and his three friends</strong> want to combine days on hot beaches with their interest in outdoor activities, such as climbing and hill walking.</p>
+                        </div>
+                        <select class="select-custom" name="q9">
+                            <option value="">Select</option>
+                            <option value="A">A</option><option value="B">B</option><option value="C">C</option><option value="D">D</option><option value="E">E</option><option value="F">F</option><option value="G">G</option><option value="H">H</option>
+                        </select>
+                    </div>
+                    <div class="explanation-box" id="exp-q9"></div>
+                </div>
+
+                <div class="q-wrapper">
+                    <div class="flex items-start justify-between gap-4">
+                        <div class="flex-1">
+                            <span class="q-number float-left mt-1">10</span> 
+                            <p class="m-0 leading-relaxed"><strong>George and his group</strong> of retired couples want to visit areas of historical importance, and experience the local culture. They need a relaxing place to stay.</p>
+                        </div>
+                        <select class="select-custom" name="q10">
+                            <option value="">Select</option>
+                            <option value="A">A</option><option value="B">B</option><option value="C">C</option><option value="D">D</option><option value="E">E</option><option value="F">F</option><option value="G">G</option><option value="H">H</option>
+                        </select>
+                    </div>
+                    <div class="explanation-box" id="exp-q10"></div>
+                </div>
+
+                <div class="mt-8 pt-6 border-t border-gray-300 flex items-center justify-between">
+                    <button class="btn-primary btn-check flex items-center gap-2" data-part="2">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd" /></svg>
+                        Check Answers
                     </button>
-                    <button id="g3-submit-btn" onclick="game3.checkWord()" class="bg-orange-500 hover:bg-orange-600 text-white font-bold py-3 px-8 rounded-full shadow-lg transition-transform transform hover:scale-105">
-                        Submit Answer
-                    </button>
+                    <span class="font-bold text-xl text-gray-700" id="score-part-2"></span>
                 </div>
             </div>
 
+            <!-- Part 3 Questions -->
+            <div class="question-group tab-content" data-part="3">
+                <h2 class="text-2xl font-bold mb-6 text-blue-900">Part 3 Questions</h2>
+                
+                <div class="q-wrapper">
+                    <div class="flex mb-3">
+                        <span class="q-number">11</span>
+                        <p class="font-semibold text-lg m-0">What could a reader learn about Paul's childhood?</p>
+                    </div>
+                    <label class="radio-custom"><input type="radio" name="q11" value="A"> <span><strong>A.</strong> His family always treated him terribly.</span></label>
+                    <label class="radio-custom"><input type="radio" name="q11" value="B"> <span><strong>B.</strong> He was surrounded by rich people.</span></label>
+                    <label class="radio-custom"><input type="radio" name="q11" value="C"> <span><strong>C.</strong> He grew up in a poor area of town.</span></label>
+                    <label class="radio-custom"><input type="radio" name="q11" value="D"> <span><strong>D.</strong> His family had the worst jobs in the area.</span></label>
+                    <div class="explanation-box" id="exp-q11"></div>
+                </div>
+
+                <div class="q-wrapper">
+                    <div class="flex mb-3">
+                        <span class="q-number">12</span>
+                        <p class="font-semibold text-lg m-0">How does Paul describe his lyrics?</p>
+                    </div>
+                    <label class="radio-custom"><input type="radio" name="q12" value="A"> <span><strong>A.</strong> They express his feelings on serious issues.</span></label>
+                    <label class="radio-custom"><input type="radio" name="q12" value="B"> <span><strong>B.</strong> They are written by a professional songwriter.</span></label>
+                    <label class="radio-custom"><input type="radio" name="q12" value="C"> <span><strong>C.</strong> They are about the problem of international conflict.</span></label>
+                    <label class="radio-custom"><input type="radio" name="q12" value="D"> <span><strong>D.</strong> They are the most important thing in his life.</span></label>
+                    <div class="explanation-box" id="exp-q12"></div>
+                </div>
+
+                <div class="q-wrapper">
+                    <div class="flex mb-3">
+                        <span class="q-number">13</span>
+                        <p class="font-semibold text-lg m-0">What does Paul say about performing on stage?</p>
+                    </div>
+                    <label class="radio-custom"><input type="radio" name="q13" value="A"> <span><strong>A.</strong> It was his great dream, as he always loved attention.</span></label>
+                    <label class="radio-custom"><input type="radio" name="q13" value="B"> <span><strong>B.</strong> He only performs in front of crowds of twenty thousand or more.</span></label>
+                    <label class="radio-custom"><input type="radio" name="q13" value="C"> <span><strong>C.</strong> Most people at the concerts do not understand his music.</span></label>
+                    <label class="radio-custom"><input type="radio" name="q13" value="D"> <span><strong>D.</strong> He feels amazing when the crowd sing his own songs.</span></label>
+                    <div class="explanation-box" id="exp-q13"></div>
+                </div>
+
+                <div class="q-wrapper">
+                    <div class="flex mb-3">
+                        <span class="q-number">14</span>
+                        <p class="font-semibold text-lg m-0">Paul would advise anyone interested in becoming a rock star to...</p>
+                    </div>
+                    <label class="radio-custom"><input type="radio" name="q14" value="A"> <span><strong>A.</strong> try hard to make it but if it doesn't work out soon, give up.</span></label>
+                    <label class="radio-custom"><input type="radio" name="q14" value="B"> <span><strong>B.</strong> start as a solo artist and try to become popular without a band at first.</span></label>
+                    <label class="radio-custom"><input type="radio" name="q14" value="C"> <span><strong>C.</strong> make use of technology to make themselves known to the wider audience.</span></label>
+                    <label class="radio-custom"><input type="radio" name="q14" value="D"> <span><strong>D.</strong> perform in front of an audience only after practising for years.</span></label>
+                    <div class="explanation-box" id="exp-q14"></div>
+                </div>
+
+                <div class="q-wrapper">
+                    <div class="flex mb-3">
+                        <span class="q-number">15</span>
+                        <p class="font-semibold text-lg m-0">How might Paul describe being in a band?</p>
+                    </div>
+                    <label class="radio-custom"><input type="radio" name="q15" value="A"> <span><strong>A.</strong> Being in a band is the greatest thing I could ever hope to do. The best part is the money and being famous.</span></label>
+                    <label class="radio-custom"><input type="radio" name="q15" value="B"> <span><strong>B.</strong> We are now a hugely successful band all over the world. I want to make more pop and commercial music to make more money.</span></label>
+                    <label class="radio-custom"><input type="radio" name="q15" value="C"> <span><strong>C.</strong> Music has always been important to me as a way to comment on social problems and communicate with the people.</span></label>
+                    <label class="radio-custom"><input type="radio" name="q15" value="D"> <span><strong>D.</strong> The enjoyment I got when I was younger is no longer there. I don't feel so connected with the people as I used to.</span></label>
+                    <div class="explanation-box" id="exp-q15"></div>
+                </div>
+
+                <div class="mt-8 pt-6 border-t border-gray-300 flex items-center justify-between">
+                    <button class="btn-primary btn-check flex items-center gap-2" data-part="3">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd" /></svg>
+                        Check Answers
+                    </button>
+                    <span class="font-bold text-xl text-gray-700" id="score-part-3"></span>
+                </div>
+            </div>
+
+            <!-- Part 4 Questions -->
+            <div class="question-group tab-content" data-part="4">
+                <h2 class="text-2xl font-bold mb-4 text-blue-900">Part 4 Questions</h2>
+                <p class="mb-6 text-gray-600">Drag and drop the correct sentence (A-H) from the pool below into the gaps in the reading text on the left.</p>
+
+                <!-- The Pool -->
+                <div class="draggable-pool bg-slate-50 p-4 rounded-xl border-2 border-dashed border-slate-300 mb-8 min-h-[100px] transition-colors" id="pool-part-4">
+                    <span class="drag-item" draggable="true" id="drag-A" data-value="A"><strong class="letter">A.</strong> <span class="full-text">They fire up to 60,000 small rockets at each other's bell towers.</span></span>
+                    <span class="drag-item" draggable="true" id="drag-B" data-value="B"><strong class="letter">B.</strong> <span class="full-text">They are situated on opposite hills.</span></span>
+                    <span class="drag-item" draggable="true" id="drag-C" data-value="C"><strong class="letter">C.</strong> <span class="full-text">This is hardly surprising.</span></span>
+                    <span class="drag-item" draggable="true" id="drag-D" data-value="D"><strong class="letter">D.</strong> <span class="full-text">Everyone is aiming to catch the cheese.</span></span>
+                    <span class="drag-item" draggable="true" id="drag-E" data-value="E"><strong class="letter">E.</strong> <span class="full-text">Although the light show in the night sky is amazing, some of the rockets go off course.</span></span>
+                    <span class="drag-item" draggable="true" id="drag-F" data-value="F"><strong class="letter">F.</strong> <span class="full-text">The cheese is a particular local type.</span></span>
+                    <span class="drag-item" draggable="true" id="drag-G" data-value="G"><strong class="letter">G.</strong> <span class="full-text">This obviously is dangerous for anybody watching, too.</span></span>
+                    <span class="drag-item" draggable="true" id="drag-H" data-value="H"><strong class="letter">H.</strong> <span class="full-text">No competitors could, at such a speed, hurt themselves.</span></span>
+                </div>
+
+                <div class="q-wrapper">
+                    <div class="flex items-center mb-1">
+                        <span class="q-number">16</span> <span class="font-semibold text-lg text-gray-700">Gap 16</span>
+                    </div>
+                    <div class="text-sm text-gray-500">Drag answer into the text on the left.</div>
+                    <input type="hidden" name="q16" id="input-q16" value="">
+                    <div class="explanation-box w-full mt-3" id="exp-q16"></div>
+                </div>
+                <div class="q-wrapper">
+                    <div class="flex items-center mb-1">
+                        <span class="q-number">17</span> <span class="font-semibold text-lg text-gray-700">Gap 17</span>
+                    </div>
+                    <div class="text-sm text-gray-500">Drag answer into the text on the left.</div>
+                    <input type="hidden" name="q17" id="input-q17" value="">
+                    <div class="explanation-box w-full mt-3" id="exp-q17"></div>
+                </div>
+                <div class="q-wrapper">
+                    <div class="flex items-center mb-1">
+                        <span class="q-number">18</span> <span class="font-semibold text-lg text-gray-700">Gap 18</span>
+                    </div>
+                    <div class="text-sm text-gray-500">Drag answer into the text on the left.</div>
+                    <input type="hidden" name="q18" id="input-q18" value="">
+                    <div class="explanation-box w-full mt-3" id="exp-q18"></div>
+                </div>
+                <div class="q-wrapper">
+                    <div class="flex items-center mb-1">
+                        <span class="q-number">19</span> <span class="font-semibold text-lg text-gray-700">Gap 19</span>
+                    </div>
+                    <div class="text-sm text-gray-500">Drag answer into the text on the left.</div>
+                    <input type="hidden" name="q19" id="input-q19" value="">
+                    <div class="explanation-box w-full mt-3" id="exp-q19"></div>
+                </div>
+                <div class="q-wrapper">
+                    <div class="flex items-center mb-1">
+                        <span class="q-number">20</span> <span class="font-semibold text-lg text-gray-700">Gap 20</span>
+                    </div>
+                    <div class="text-sm text-gray-500">Drag answer into the text on the left.</div>
+                    <input type="hidden" name="q20" id="input-q20" value="">
+                    <div class="explanation-box w-full mt-3" id="exp-q20"></div>
+                </div>
+                
+                <div class="mt-8 pt-6 border-t border-gray-300 flex items-center justify-between">
+                    <button class="btn-primary btn-check flex items-center gap-2" data-part="4">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd" /></svg>
+                        Check Answers
+                    </button>
+                    <span class="font-bold text-xl text-gray-700" id="score-part-4"></span>
+                </div>
+            </div>
+
+            <!-- Part 5 Questions -->
+            <div class="question-group tab-content" data-part="5">
+                <h2 class="text-2xl font-bold mb-6 text-blue-900">Part 5 Questions</h2>
+                
+                <div class="q-wrapper">
+                    <div class="flex items-center gap-4">
+                        <span class="q-number">21</span> 
+                        <select class="select-custom" name="q21">
+                            <option value="">Select word</option>
+                            <option value="A">A. possession</option>
+                            <option value="B">B. product</option>
+                            <option value="C">C. property</option>
+                            <option value="D">D. land</option>
+                        </select>
+                    </div>
+                    <div class="explanation-box" id="exp-q21"></div>
+                </div>
+                <div class="q-wrapper">
+                    <div class="flex items-center gap-4">
+                        <span class="q-number">22</span> 
+                        <select class="select-custom" name="q22">
+                            <option value="">Select word</option>
+                            <option value="A">A. appliances</option>
+                            <option value="B">B. tools</option>
+                            <option value="C">C. gadgets</option>
+                            <option value="D">D. instruments</option>
+                        </select>
+                    </div>
+                    <div class="explanation-box" id="exp-q22"></div>
+                </div>
+                <div class="q-wrapper">
+                    <div class="flex items-center gap-4">
+                        <span class="q-number">23</span> 
+                        <select class="select-custom" name="q23">
+                            <option value="">Select word</option>
+                            <option value="A">A. flies</option>
+                            <option value="B">B. escapes</option>
+                            <option value="C">C. sinks</option>
+                            <option value="D">D. disappears</option>
+                        </select>
+                    </div>
+                    <div class="explanation-box" id="exp-q23"></div>
+                </div>
+                <div class="q-wrapper">
+                    <div class="flex items-center gap-4">
+                        <span class="q-number">24</span> 
+                        <select class="select-custom" name="q24">
+                            <option value="">Select word</option>
+                            <option value="A">A. places</option>
+                            <option value="B">B. materials</option>
+                            <option value="C">C. parts</option>
+                            <option value="D">D. pieces</option>
+                        </select>
+                    </div>
+                    <div class="explanation-box" id="exp-q24"></div>
+                </div>
+                <div class="q-wrapper">
+                    <div class="flex items-center gap-4">
+                        <span class="q-number">25</span> 
+                        <select class="select-custom" name="q25">
+                            <option value="">Select word</option>
+                            <option value="A">A. depended</option>
+                            <option value="B">B. relied</option>
+                            <option value="C">C. based</option>
+                            <option value="D">D. counted</option>
+                        </select>
+                    </div>
+                    <div class="explanation-box" id="exp-q25"></div>
+                </div>
+                <div class="q-wrapper">
+                    <div class="flex items-center gap-4">
+                        <span class="q-number">26</span> 
+                        <select class="select-custom" name="q26">
+                            <option value="">Select word</option>
+                            <option value="A">A. main</option>
+                            <option value="B">B. basic</option>
+                            <option value="C">C. central</option>
+                            <option value="D">D. inner</option>
+                        </select>
+                    </div>
+                    <div class="explanation-box" id="exp-q26"></div>
+                </div>
+
+                <div class="mt-8 pt-6 border-t border-gray-300 flex items-center justify-between">
+                    <button class="btn-primary btn-check flex items-center gap-2" data-part="5">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd" /></svg>
+                        Check Answers
+                    </button>
+                    <span class="font-bold text-xl text-gray-700" id="score-part-5"></span>
+                </div>
+            </div>
+
+            <!-- Part 6 Questions -->
+            <div class="question-group tab-content" data-part="6">
+                <h2 class="text-2xl font-bold mb-6 text-blue-900">Part 6 Questions</h2>
+                
+                <div class="q-wrapper flex items-center gap-4">
+                    <span class="q-number">27</span> 
+                    <input type="text" class="input-text" name="q27" placeholder="Type one word...">
+                    <div class="explanation-box w-full" id="exp-q27"></div>
+                </div>
+                <div class="q-wrapper flex items-center gap-4">
+                    <span class="q-number">28</span> 
+                    <input type="text" class="input-text" name="q28" placeholder="Type one word...">
+                    <div class="explanation-box w-full" id="exp-q28"></div>
+                </div>
+                <div class="q-wrapper flex items-center gap-4">
+                    <span class="q-number">29</span> 
+                    <input type="text" class="input-text" name="q29" placeholder="Type one word...">
+                    <div class="explanation-box w-full" id="exp-q29"></div>
+                </div>
+                <div class="q-wrapper flex items-center gap-4">
+                    <span class="q-number">30</span> 
+                    <input type="text" class="input-text" name="q30" placeholder="Type one word...">
+                    <div class="explanation-box w-full" id="exp-q30"></div>
+                </div>
+                <div class="q-wrapper flex items-center gap-4">
+                    <span class="q-number">31</span> 
+                    <input type="text" class="input-text" name="q31" placeholder="Type one word...">
+                    <div class="explanation-box w-full" id="exp-q31"></div>
+                </div>
+                <div class="q-wrapper flex items-center gap-4">
+                    <span class="q-number">32</span> 
+                    <input type="text" class="input-text" name="q32" placeholder="Type one word...">
+                    <div class="explanation-box w-full" id="exp-q32"></div>
+                </div>
+                
+                <div class="mt-8 pt-6 border-t border-gray-300 flex items-center justify-between">
+                    <button class="btn-primary btn-check flex items-center gap-2" data-part="6">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd" /></svg>
+                        Check Answers
+                    </button>
+                    <span class="font-bold text-xl text-gray-700" id="score-part-6"></span>
+                </div>
+            </div>
+
+            <div style="height: 100px;"></div>
         </div>
     </div>
 
-    <!-- Custom Message Modal -->
-    <div id="message-modal" class="fixed inset-0 z-50 hidden flex items-center justify-center bg-gray-900 bg-opacity-50">
-        <div class="bg-white rounded-2xl shadow-2xl max-w-sm w-full p-8 text-center transform scale-90 transition-transform duration-300" id="modal-content">
-            <div id="modal-icon" class="mx-auto flex items-center justify-center h-16 w-16 rounded-full mb-4">
-                <!-- Icon injected by JS -->
-            </div>
-            <h3 id="modal-title" class="text-2xl font-bold mb-2 text-gray-900">Great Job!</h3>
-            <p id="modal-text" class="text-gray-600 mb-6">You got everything right.</p>
-            <button onclick="closeModal()" class="w-full font-bold py-3 px-4 rounded-xl text-white transition-colors" id="modal-btn">
-                Continue
-            </button>
-        </div>
+    <!-- Highlight Tooltip Button -->
+    <button id="highlightTooltip">Highlight</button>
+    
+    <!-- Vocab Tooltip -->
+    <div id="vocabInfoTooltip">
+        <h4 id="v-word" class="font-bold text-blue-800 text-xl capitalize mb-1"></h4>
+        <p id="v-ipa" class="text-gray-500 italic font-medium mb-3"></p>
+        <p id="v-def" class="text-[0.95em] text-gray-700 mb-4 leading-relaxed"></p>
+        <button id="v-audio" class="w-full bg-blue-50 hover:bg-blue-100 text-blue-700 py-2.5 rounded-lg text-sm font-bold flex items-center justify-center gap-2 transition-colors border border-blue-200">
+            <span>🔊</span> Listen to Pronunciation
+        </button>
     </div>
+</div>
 
-    <script>
-        // --- Shared Logic ---
-        function switchTab(tabId) {
-            document.querySelectorAll('.game-section').forEach(sec => sec.classList.add('hidden'));
-            document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active', 'bg-green-500', 'text-white'));
+<script>
+    document.addEventListener('DOMContentLoaded', () => {
+        // Detailed Answer Key and Explanations for TEST 5
+        const answerKey = {
+            q1: { ans: ['A'], exp: "'Put in fridge for half an hour before opening' directly means you must chill the drink in the fridge before you use it." },
+            q2: { ans: ['B'], exp: "'NO PUBLIC ACCESS' and 'RESIDENTS AND GUESTS ONLY' clearly show that it is forbidden for most people to use this road." },
+            q3: { ans: ['B'], exp: "'Thieves will be reported to the police' means the police will be informed of anyone taking someone else's personal property." },
+            q4: { ans: ['C'], exp: "Mr. Smith is asking for the cost to take his class of thirty students to the local museum, showing he is organizing a school trip." },
+            q5: { ans: ['A'], exp: "Annie wants Dave to 'pick up a fresh loaf, two pies and a cream cake', which are items you get from a bakery." },
             
-            document.getElementById(tabId).classList.remove('hidden');
-            event.currentTarget.classList.add('active');
-        }
+            q6: { ans: ['D'], exp: "Mykonos is famous for its 'glamorous clubs and bars' (exciting nightlife) and provides ferries for 'short trips to many of the nearby islands'." },
+            q7: { ans: ['B'], exp: "Cape Attica allows an experience of nightlife via the night bus to Athens, and offers daily trips to the Acropolis and Cape Sounio (historic sites)." },
+            q8: { ans: ['H'], exp: "Santorini is 'unique' (different and memorable) and is described as 'the perfect place for people who are in love' (ideal for a wedding anniversary)." },
+            q9: { ans: ['E'], exp: "Crete offers 'exotic beaches' (hot beaches) and the Samaria canyon 'for the very active and fit' (hill walking/outdoor activities)." },
+            q10: { ans: ['G'], exp: "The Peloponnesian Tour visits historic places like Sparta and Corinth, offers 'local food and wines', and has 'comfortable and peaceful hotels' (relaxing)." },
 
-        const icons = {
-            success: `<svg class="h-10 w-10 text-green-500" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>`,
-            error: `<svg class="h-10 w-10 text-red-500" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>`,
-            info: `<svg class="h-10 w-10 text-blue-500" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>`
+            q11: { ans: ['C'], exp: "Paul mentions he was 'growing up in a bad part of town' and that his family 'had nothing'." },
+            q12: { ans: ['A'], exp: "He says the songs are about 'telling others how we feel about the problems and issues around us; crime, unemployment, exploitation'." },
+            q13: { ans: ['D'], exp: "Paul states 'It is amazing to be on stage and have twenty thousand people sing the songs that you write'." },
+            q14: { ans: ['C'], exp: "Paul advises future rock stars to 'Make a YouTube channel with your music and videos of live performances', which is using technology to reach a wider audience." },
+            q15: { ans: ['C'], exp: "The overall text emphasizes that his music is a way to express emotion, highlight social issues (inequality/exploitation), and communicate with people." },
+
+            q16: { ans: ['C'], exp: "The previous sentence states 'many think it should be banned' because it is unsafe. Sentence C ('This is hardly surprising') follows this logical thought perfectly." },
+            q17: { ans: ['G'], exp: "The text says the cheese goes very fast (112 km/h). Sentence G notes 'This obviously is dangerous for anybody watching, too', which contrasts with the next sentence about the competitors." },
+            q18: { ans: ['D'], exp: "Sentence D says 'Everyone is aiming to catch the cheese.' This fits before the next sentence: 'However, very few do, which means the winner is the first person to reach the bottom...'" },
+            q19: { ans: ['A'], exp: "The previous sentence introduces an 'annual war' between two churches. Sentence A explains this war: 'They fire up to 60,000 small rockets at each other's bell towers.'" },
+            q20: { ans: ['E'], exp: "The rockets are mentioned. Sentence E ('...some of the rockets go off course.') leads perfectly into 'This is why this extreme tradition is also very dangerous'." },
+
+            q21: { ans: ['C'], exp: "'property' refers to a building or piece of land that someone owns (like a house or an apartment)." },
+            q22: { ans: ['A'], exp: "'appliances' are devices or machines, like TVs and computers, that are used in the home." },
+            q23: { ans: ['B'], exp: "Water 'escapes' (runs or flows out) down the drains to leave the house." },
+            q24: { ans: ['B'], exp: "Houses are built using different 'materials' (like wood, stone, or brick) found nearby." },
+            q25: { ans: ['C'], exp: "'based on' is a fixed prepositional phrase meaning 'using something as the reason or foundation'." },
+            q26: { ans: ['C'], exp: "'central heating' is a specific collocation for a system that heats a whole building." },
+
+            q27: { ans: ['most'], exp: "Used to form the superlative adjective: 'the most ancient'." },
+            q28: { ans: ['as'], exp: "Collocation: 'known as' means it is called by that name." },
+            q29: { ans: ['other'], exp: "Phrase: 'in other words' is used to explain something in a different, usually simpler, way." },
+            q30: { ans: ['which', 'that'], exp: "Relative pronoun referring to 'this desert region'." },
+            q31: { ans: ['each', 'every', 'a', 'one', 'per'], exp: "All these words fit perfectly to show the ratio of people to a single square kilometre." },
+            q32: { ans: ['that'], exp: "Grammar structure: 'it is hardly surprising that [clause]'." }
         };
 
-        function showModal(type, title, text, btnText = "Continue", onBtnClick = null) {
-            const modal = document.getElementById('message-modal');
-            const content = document.getElementById('modal-content');
-            const iconWrap = document.getElementById('modal-icon');
-            const btn = document.getElementById('modal-btn');
+        const vocabData = {
+            "monasteries": { ipa: "/ˈmɒnəstəriz/", def: "Buildings occupied by a community of monks living under religious vows." },
+            "glamorous": { ipa: "/ˈɡlæmərəs/", def: "Attractive in an exciting and special way." },
+            "exotic": { ipa: "/ɪɡˈzɒtɪk/", def: "Originating in or characteristic of a distant foreign country." },
+            "canyon": { ipa: "/ˈkænjən/", def: "A deep gorge, typically one with a river flowing through it." },
+            "exploitation": { ipa: "/ˌeksplɔɪˈteɪʃn/", def: "The action of treating someone unfairly in order to benefit from their work." },
+            "inequality": { ipa: "/ˌɪnɪˈkwɒləti/", def: "Difference in size, degree, circumstances, etc.; lack of equality." },
+            "vocal": { ipa: "/ˈvəʊkl/", def: "Relating to the human voice, especially in singing." },
+            "steep": { ipa: "/stiːp/", def: "Rising or falling sharply; almost perpendicular." },
+            "competitors": { ipa: "/kəmˈpetɪtərz/", def: "People who take part in an athletic contest or other competition." },
+            "annual": { ipa: "/ˈænjuəl/", def: "Occurring once a year." },
+            "sheltered": { ipa: "/ˈʃeltərd/", def: "Protected from bad weather, danger, or difficulty." }
+        };
 
-            document.getElementById('modal-title').innerText = title;
-            document.getElementById('modal-text').innerText = text;
-            btn.innerText = btnText;
+        const app = {
+            fontSize: 16,
+            highlightTooltip: document.getElementById('highlightTooltip'),
+            vocabTooltip: document.getElementById('vocabInfoTooltip'),
 
-            if (type === 'success') {
-                iconWrap.className = 'mx-auto flex items-center justify-center h-16 w-16 rounded-full mb-4 bg-green-100';
-                iconWrap.innerHTML = icons.success;
-                btn.className = 'w-full font-bold py-3 px-4 rounded-xl text-white bg-green-500 hover:bg-green-600 transition-colors';
-            } else if (type === 'error') {
-                iconWrap.className = 'mx-auto flex items-center justify-center h-16 w-16 rounded-full mb-4 bg-red-100';
-                iconWrap.innerHTML = icons.error;
-                btn.className = 'w-full font-bold py-3 px-4 rounded-xl text-white bg-red-500 hover:bg-red-600 transition-colors';
-            } else {
-                iconWrap.className = 'mx-auto flex items-center justify-center h-16 w-16 rounded-full mb-4 bg-blue-100';
-                iconWrap.innerHTML = icons.info;
-                btn.className = 'w-full font-bold py-3 px-4 rounded-xl text-white bg-blue-500 hover:bg-blue-600 transition-colors';
-            }
-
-            btn.onclick = () => {
-                closeModal();
-                if (onBtnClick) onBtnClick();
-            };
-
-            modal.classList.remove('hidden');
-            setTimeout(() => content.classList.replace('scale-90', 'scale-100'), 10);
-        }
-
-        function closeModal() {
-            const modal = document.getElementById('message-modal');
-            const content = document.getElementById('modal-content');
-            content.classList.replace('scale-100', 'scale-90');
-            setTimeout(() => modal.classList.add('hidden'), 300);
-        }
-
-        function shuffleArray(array) {
-            for (let i = array.length - 1; i > 0; i--) {
-                const j = Math.floor(Math.random() * (i + 1));
-                [array[i], array[j]] = [array[j], array[i]];
-            }
-            return array;
-        }
-
-        // --- Game 1: Story Filler ---
-        const game1 = {
-            words: ["ferry", "peninsula", "ancient", "landmark", "crowded", "vast", "nearby", "untouched", "recommend", "memorable", "glamorous", "commercial", "inner", "grassy"],
-            selectedWordElement: null,
-            
             init() {
-                this.reset();
+                this.initTabs();
+                this.initSplitter();
+                this.initFontResizer();
+                this.initHighlighter();
+                this.initCheckAnswers();
+                this.initVocabSystem();
+                this.initDragAndDrop();
             },
-            
-            renderBank() {
-                const bank = document.getElementById('g1-wordbank');
-                bank.innerHTML = '';
-                shuffleArray(this.words).forEach(word => {
-                    const el = document.createElement('div');
-                    el.className = 'word-pill bg-white border-2 border-gray-200 px-4 py-2 rounded-full font-semibold text-gray-700 hover:border-blue-400 hover:text-blue-600';
-                    el.innerText = word;
-                    el.dataset.word = word;
-                    el.onclick = () => this.selectWord(el);
-                    bank.appendChild(el);
+
+            initTabs() {
+                const tabs = document.querySelectorAll('.tab-btn');
+                tabs.forEach(tab => {
+                    tab.addEventListener('click', () => {
+                        tabs.forEach(t => t.classList.remove('active'));
+                        tab.classList.add('active');
+
+                        const targetPart = tab.getAttribute('data-target');
+                        document.querySelectorAll('.tab-content').forEach(content => {
+                            if (content.getAttribute('data-part') === targetPart) {
+                                content.classList.add('active');
+                            } else {
+                                content.classList.remove('active');
+                            }
+                        });
+                        
+                        document.getElementById('left-pane').scrollTop = 0;
+                        document.getElementById('right-pane').scrollTop = 0;
+                        this.vocabTooltip.style.display = 'none';
+                    });
                 });
             },
 
-            selectWord(el) {
-                // Deselect current
-                if (this.selectedWordElement) {
-                    this.selectedWordElement.style.border = '';
-                    this.selectedWordElement.style.backgroundColor = '';
-                    this.selectedWordElement.style.color = '';
-                }
-
-                // If clicking the already selected word, just deselect it
-                if (this.selectedWordElement === el) {
-                    this.selectedWordElement = null;
-                    return;
-                }
-
-                this.selectedWordElement = el;
-                el.style.border = '2px solid #3b82f6';
-                el.style.backgroundColor = '#eff6ff';
-                el.style.color = '#1d4ed8';
+            initCheckAnswers() {
+                document.querySelectorAll('.btn-check').forEach(btn => {
+                    btn.addEventListener('click', (e) => {
+                        // Prevent the event from bubbling up if necessary
+                        const targetBtn = e.target.closest('.btn-check');
+                        if(targetBtn) {
+                            const part = targetBtn.getAttribute('data-part');
+                            this.checkAnswersForPart(part);
+                        }
+                    });
+                });
             },
 
-            handleSlotClick(slot) {
-                // If the slot already has a word, put it back in the bank
-                if (slot.innerText !== '') {
-                    const word = slot.innerText;
-                    slot.innerText = '';
-                    slot.classList.remove('filled', 'correct', 'incorrect', 'revealed');
+            checkAnswersForPart(part) {
+                const container = document.querySelector(`.question-group[data-part="${part}"]`);
+                if (!container) return;
+
+                const questionWrappers = container.querySelectorAll('.q-wrapper');
+                let score = 0;
+                let total = questionWrappers.length;
+
+                questionWrappers.forEach(wrapper => {
+                    const inputEl = wrapper.querySelector('input, select');
+                    if (!inputEl) return;
+
+                    const qName = inputEl.name;
+                    const correctData = answerKey[qName];
+                    const correctAnswers = correctData ? correctData.ans : [];
                     
-                    // Unhide the word in the bank
-                    const bankWords = document.getElementById('g1-wordbank').children;
-                    for (let w of bankWords) {
-                        if (w.dataset.word === word) {
-                            w.style.display = 'block';
-                            break;
+                    let userAns = '';
+                    if (inputEl.type === 'radio') {
+                        const checked = wrapper.querySelector('input[type="radio"]:checked');
+                        if (checked) userAns = checked.value;
+                    } else if (inputEl.tagName === 'SELECT') {
+                        userAns = inputEl.value;
+                    } else if (inputEl.type === 'text' || inputEl.type === 'hidden') {
+                        userAns = inputEl.value.trim().toLowerCase();
+                    }
+
+                    const qNumBadge = wrapper.querySelector('.q-number');
+                    const expBox = wrapper.querySelector('.explanation-box');
+                    
+                    if (qNumBadge) {
+                        const isCorrect = correctAnswers.some(ans => ans.toLowerCase() === userAns.toLowerCase());
+
+                        if (userAns === '') {
+                            qNumBadge.style.backgroundColor = '#94a3b8'; // Slate for empty
+                        } else if (isCorrect) {
+                            qNumBadge.style.backgroundColor = '#16a34a'; // Green
+                            score++;
+                        } else {
+                            qNumBadge.style.backgroundColor = '#dc2626'; // Red
+                        }
+
+                        // Show Correct Answer and Explanation
+                        if (expBox && correctData) {
+                            // Ensure the wrapper expands smoothly
+                            expBox.style.display = 'block';
+                            
+                            const formattedCorrectAns = inputEl.type === 'text' || inputEl.type === 'hidden' 
+                                ? correctAnswers.join(' / ') 
+                                : correctAnswers[0];
+                            
+                            expBox.innerHTML = `
+                                <div class="mb-2 pb-2 border-b border-green-200">
+                                    <span class="font-bold text-green-800 uppercase tracking-wide text-[0.85em]">Correct Answer:</span> 
+                                    <span class="font-bold text-lg text-green-900 ml-1">${formattedCorrectAns}</span>
+                                </div>
+                                <div>
+                                    <span class="font-bold text-green-800">Explanation:</span> ${correctData.exp}
+                                </div>
+                            `;
+                            
+                            // Visual cue on the wrapper itself
+                            if(isCorrect) {
+                                wrapper.style.borderColor = '#bbf7d0';
+                                wrapper.style.backgroundColor = '#f0fdf4';
+                            } else if (userAns !== '') {
+                                wrapper.style.borderColor = '#fecaca';
+                                wrapper.style.backgroundColor = '#fef2f2';
+                            }
+                        }
+
+                        // Highlight in-text drop zones for Part 4
+                        const textGap = document.querySelector(`.drop-zone.in-text[data-name="${qName}"]`);
+                        if (textGap) {
+                            textGap.classList.remove('correct', 'incorrect');
+                            if (userAns !== '') {
+                                if (isCorrect) {
+                                    textGap.classList.add('correct');
+                                } else {
+                                    textGap.classList.add('incorrect');
+                                }
+                            }
                         }
                     }
-                }
-
-                // If a word is currently selected, place it in the slot
-                if (this.selectedWordElement) {
-                    slot.innerText = this.selectedWordElement.dataset.word;
-                    slot.classList.add('filled');
-                    slot.classList.remove('correct', 'incorrect', 'revealed');
-                    this.selectedWordElement.style.display = 'none'; // Hide from bank
-                    this.selectedWordElement = null; // Clear selection
-                }
-            },
-
-            checkAnswers() {
-                const slots = document.querySelectorAll('#game1 .drop-slot');
-                let correctCount = 0;
-                let total = slots.length;
-
-                slots.forEach(slot => {
-                    const isCorrect = slot.innerText === slot.dataset.answer;
-                    slot.classList.remove('correct', 'incorrect', 'filled', 'revealed');
-                    // Force reflow for animation
-                    void slot.offsetWidth; 
-
-                    if (isCorrect) {
-                        slot.classList.add('correct');
-                        correctCount++;
-                    } else {
-                        // Show the correct answer
-                        slot.innerText = slot.dataset.answer;
-                        slot.classList.add('revealed');
-                    }
                 });
 
-                if (correctCount === total) {
-                    showModal('success', 'Perfect!', 'You successfully filled in all the blanks correctly.');
-                } else {
-                    showModal('info', 'Answers Revealed', `You got ${correctCount} out of ${total} correct. The correct answers have been filled in for you.`);
+                const scoreLabel = document.getElementById(`score-part-${part}`);
+                if (scoreLabel) {
+                    scoreLabel.textContent = `Score: ${score} / ${total}`;
+                    scoreLabel.style.color = score === total ? '#16a34a' : (score > 0 ? '#d97706' : '#dc2626');
                 }
             },
 
-            reset() {
-                const slots = document.querySelectorAll('#game1 .drop-slot');
-                slots.forEach(slot => {
-                    slot.innerText = '';
-                    slot.classList.remove('filled', 'correct', 'incorrect', 'revealed');
-                });
-                this.selectedWordElement = null;
-                this.renderBank();
-            }
-        };
+            initVocabSystem() {
+                document.querySelectorAll('.vocab-word').forEach(wordEl => {
+                    wordEl.addEventListener('click', (e) => {
+                        e.stopPropagation();
+                        const key = wordEl.getAttribute('data-word');
+                        const data = vocabData[key];
+                        if (!data) return;
 
+                        document.getElementById('v-word').textContent = key;
+                        document.getElementById('v-ipa').textContent = data.ipa;
+                        document.getElementById('v-def').textContent = data.def;
 
-        // --- Game 2: Match Definitions ---
-        const game2 = {
-            words: ["forbid", "resident", "arrest", "unemployment", "gadget", "injury", "steep", "dune", "accurate", "crime", "issue", "emotion", "appliance", "property"],
-            definitions: [
-                { id: 1, text: "To legally stop someone from doing something.", answer: "forbid" },
-                { id: 2, text: "A person who lives in a specific house or area.", answer: "resident" },
-                { id: 3, text: "To take someone to a police station for a bad act.", answer: "arrest" },
-                { id: 4, text: "The state of not having a job.", answer: "unemployment" },
-                { id: 5, text: "A small electronic device or tool.", answer: "gadget" },
-                { id: 6, text: "Physical damage or harm to a person's body.", answer: "injury" },
-                { id: 7, text: "Rising or falling sharply, like a high hill.", answer: "steep" },
-                { id: 8, text: "A hill of sand near the sea or in a desert.", answer: "dune" },
-                { id: 9, text: "Correct in every detail with no mistakes.", answer: "accurate" },
-                { id: 10, text: "An action that breaks the law.", answer: "crime" }
-            ],
-            selectedWordElement: null,
+                        this.vocabTooltip.style.display = 'block';
+                        
+                        // Positioning logic to prevent tooltip from going off-screen
+                        const rect = wordEl.getBoundingClientRect();
+                        let leftPos = e.pageX;
+                        let topPos = e.pageY + 15;
 
-            init() {
-                this.renderDefinitions();
-                this.reset();
-            },
-
-            renderDefinitions() {
-                const container = document.getElementById('g2-definitions');
-                container.innerHTML = '';
-                this.definitions.forEach(def => {
-                    const row = document.createElement('div');
-                    // Adjusted classes for better layout inside a 2-column grid
-                    row.className = 'flex flex-col justify-between p-4 bg-white border border-gray-200 rounded-lg shadow-sm gap-3 h-full';
-                    row.innerHTML = `
-                        <p class="text-gray-700 font-medium">${def.text}</p>
-                        <div class="drop-slot w-full sm:w-auto self-start mt-auto" data-answer="${def.answer}" onclick="game2.handleSlotClick(this)"></div>
-                    `;
-                    container.appendChild(row);
-                });
-            },
-
-            renderBank() {
-                const bank = document.getElementById('g2-wordbank');
-                bank.innerHTML = '';
-                shuffleArray(this.words).forEach(word => {
-                    const el = document.createElement('div');
-                    el.className = 'word-pill bg-white border-2 border-gray-200 px-4 py-2 rounded-full font-semibold text-gray-700 hover:border-purple-400 hover:text-purple-600';
-                    el.innerText = word;
-                    el.dataset.word = word;
-                    el.onclick = () => this.selectWord(el);
-                    bank.appendChild(el);
-                });
-            },
-
-            selectWord(el) {
-                if (this.selectedWordElement) {
-                    this.selectedWordElement.style.border = '';
-                    this.selectedWordElement.style.backgroundColor = '';
-                    this.selectedWordElement.style.color = '';
-                }
-                if (this.selectedWordElement === el) {
-                    this.selectedWordElement = null;
-                    return;
-                }
-                this.selectedWordElement = el;
-                el.style.border = '2px solid #a855f7';
-                el.style.backgroundColor = '#faf5ff';
-                el.style.color = '#7e22ce';
-            },
-
-            handleSlotClick(slot) {
-                if (slot.innerText !== '') {
-                    const word = slot.innerText;
-                    slot.innerText = '';
-                    slot.classList.remove('filled', 'correct', 'incorrect', 'revealed');
-                    
-                    const bankWords = document.getElementById('g2-wordbank').children;
-                    for (let w of bankWords) {
-                        if (w.dataset.word === word) {
-                            w.style.display = 'block';
-                            break;
+                        // Ensure it doesn't spill off the right edge
+                        if (leftPos + 300 > window.innerWidth) {
+                            leftPos = window.innerWidth - 320;
                         }
-                    }
-                }
 
-                if (this.selectedWordElement) {
-                    slot.innerText = this.selectedWordElement.dataset.word;
-                    slot.classList.add('filled');
-                    slot.classList.remove('correct', 'incorrect', 'revealed');
-                    this.selectedWordElement.style.display = 'none';
-                    this.selectedWordElement = null;
-                }
+                        this.vocabTooltip.style.left = `${leftPos}px`;
+                        this.vocabTooltip.style.top = `${topPos}px`;
+
+                        document.getElementById('v-audio').onclick = () => {
+                            const utterance = new SpeechSynthesisUtterance(key);
+                            utterance.lang = 'en-US';
+                            utterance.rate = 0.9; // Slightly slower for clarity
+                            window.speechSynthesis.speak(utterance);
+                        };
+                    });
+                });
+
+                document.addEventListener('click', (e) => {
+                    if (!this.vocabTooltip.contains(e.target)) {
+                        this.vocabTooltip.style.display = 'none';
+                    }
+                });
             },
 
-            checkAnswers() {
-                const slots = document.querySelectorAll('#game2 .drop-slot');
-                let correctCount = 0;
-                let total = slots.length;
+            initDragAndDrop() {
+                const dragItems = document.querySelectorAll('.drag-item');
+                const dropZones = document.querySelectorAll('.drop-zone.in-text');
+                const pool = document.getElementById('pool-part-4');
 
-                slots.forEach(slot => {
-                    const isCorrect = slot.innerText === slot.dataset.answer;
-                    slot.classList.remove('correct', 'incorrect', 'filled', 'revealed');
-                    void slot.offsetWidth; 
+                if (!pool) return; // Guard clause if not on the right page
 
-                    if (isCorrect) {
-                        slot.classList.add('correct');
-                        correctCount++;
+                let draggedItem = null;
+
+                dragItems.forEach(item => {
+                    item.addEventListener('dragstart', (e) => {
+                        draggedItem = item;
+                        e.dataTransfer.effectAllowed = 'move';
+                        // Required for Firefox
+                        e.dataTransfer.setData('text/plain', item.id); 
+                        setTimeout(() => item.classList.add('opacity-40'), 0);
+                    });
+                    item.addEventListener('dragend', () => {
+                        setTimeout(() => {
+                            item.classList.remove('opacity-40');
+                            draggedItem = null;
+                        }, 0);
+                    });
+                });
+
+                const updateAllHiddenInputs = () => {
+                    dropZones.forEach(z => {
+                        const item = z.querySelector('.drag-item');
+                        const input = document.getElementById(`input-${z.dataset.name}`);
+                        if (input) {
+                            input.value = item ? item.dataset.value : '';
+                        }
+                    });
+                };
+
+                dropZones.forEach(zone => {
+                    zone.addEventListener('dragover', (e) => {
+                        e.preventDefault();
+                        zone.classList.add('drag-over');
+                    });
+                    zone.addEventListener('dragleave', () => {
+                        zone.classList.remove('drag-over');
+                    });
+                    zone.addEventListener('drop', (e) => {
+                        e.preventDefault();
+                        zone.classList.remove('drag-over');
+                        if (draggedItem) {
+                            // If zone already has an item, return it to pool
+                            const existingItem = zone.querySelector('.drag-item');
+                            if (existingItem && existingItem !== draggedItem) {
+                                pool.appendChild(existingItem);
+                            }
+                            zone.appendChild(draggedItem);
+                            zone.classList.remove('correct', 'incorrect');
+                            updateAllHiddenInputs();
+                        }
+                    });
+                });
+
+                pool.addEventListener('dragover', (e) => {
+                    e.preventDefault();
+                    pool.classList.add('border-blue-400', 'bg-slate-100');
+                });
+                pool.addEventListener('dragleave', () => {
+                    pool.classList.remove('border-blue-400', 'bg-slate-100');
+                });
+                pool.addEventListener('drop', (e) => {
+                    e.preventDefault();
+                    pool.classList.remove('border-blue-400', 'bg-slate-100');
+                    if (draggedItem) {
+                        pool.appendChild(draggedItem);
+                        updateAllHiddenInputs();
+                        // Clear validation classes when returned to pool
+                        dropZones.forEach(z => z.classList.remove('correct', 'incorrect'));
+                    }
+                });
+            },
+
+            initSplitter() {
+                const splitter = document.getElementById('splitter');
+                const panesContainer = document.getElementById('panes-container');
+                let isDragging = false;
+
+                splitter.addEventListener('mousedown', () => {
+                    isDragging = true;
+                    document.body.style.cursor = 'col-resize';
+                });
+
+                document.addEventListener('mousemove', (e) => {
+                    if (!isDragging) return;
+                    const containerRect = panesContainer.getBoundingClientRect();
+                    let newLeftWidth = e.clientX - containerRect.left;
+                    if (newLeftWidth < 300) newLeftWidth = 300; // Min width
+                    if (newLeftWidth > containerRect.width - 300) newLeftWidth = containerRect.width - 300;
+                    const percentage = (newLeftWidth / containerRect.width) * 100;
+                    panesContainer.style.gridTemplateColumns = `${percentage}% 6px 1fr`;
+                });
+
+                document.addEventListener('mouseup', () => {
+                    if (isDragging) {
+                        isDragging = false;
+                        document.body.style.cursor = 'default';
+                    }
+                });
+            },
+
+            initFontResizer() {
+                document.getElementById('btn-increase-font').addEventListener('click', () => {
+                    if (this.fontSize < 24) {
+                        this.fontSize += 2;
+                        document.documentElement.style.setProperty('--app-font-size', `${this.fontSize}px`);
+                    }
+                });
+                document.getElementById('btn-decrease-font').addEventListener('click', () => {
+                    if (this.fontSize > 12) {
+                        this.fontSize -= 2;
+                        document.documentElement.style.setProperty('--app-font-size', `${this.fontSize}px`);
+                    }
+                });
+            },
+
+            initHighlighter() {
+                const leftPane = document.getElementById('left-pane');
+                leftPane.addEventListener('mouseup', (e) => {
+                    const selection = window.getSelection();
+                    const text = selection.toString().trim();
+                    if (text.length > 0) {
+                        const range = selection.getRangeAt(0);
+                        const rect = range.getBoundingClientRect();
+                        this.highlightTooltip.style.display = 'block';
+                        this.highlightTooltip.style.left = `${rect.left + (rect.width / 2) - (this.highlightTooltip.offsetWidth / 2)}px`;
+                        this.highlightTooltip.style.top = `${rect.top - 40}px`;
+                        this.highlightTooltip.onclick = () => {
+                            const mark = document.createElement('mark');
+                            try {
+                                range.surroundContents(mark);
+                            } catch (ex) {} 
+                            selection.removeAllRanges();
+                            this.highlightTooltip.style.display = 'none';
+                        };
                     } else {
-                        // Show the correct answer
-                        slot.innerText = slot.dataset.answer;
-                        slot.classList.add('revealed');
+                        this.highlightTooltip.style.display = 'none';
                     }
                 });
-
-                if (correctCount === total) {
-                    showModal('success', 'Outstanding!', 'You matched all definitions correctly!');
-                } else {
-                    showModal('info', 'Answers Revealed', `You matched ${correctCount} out of ${total} correctly. The missing or incorrect answers are now displayed.`);
-                }
-            },
-
-            reset() {
-                const slots = document.querySelectorAll('#game2 .drop-slot');
-                slots.forEach(slot => {
-                    slot.innerText = '';
-                    slot.classList.remove('filled', 'correct', 'incorrect', 'revealed');
+                document.body.addEventListener('mousedown', (e) => {
+                   if (e.target !== this.highlightTooltip && window.getSelection().toString().length === 0) {
+                        this.highlightTooltip.style.display = 'none';
+                   }
                 });
-                this.selectedWordElement = null;
-                this.renderBank();
             }
         };
 
+        app.init();
+    });
+</script>
 
-        // --- Game 3: Word Scramble ---
-        const game3 = {
-            items: [
-                { word: "combine", hint: "Mix things together to make one" },
-                { word: "culture", hint: "Ideas, beliefs, and arts of a specific group" },
-                { word: "desire", hint: "A strong feeling that you want something" },
-                { word: "conflict", hint: "A serious disagreement or fight" },
-                { word: "several", hint: "More than two but not very many" },
-                { word: "situated", hint: "Located in a specific place" },
-                { word: "obviously", hint: "In a way that is easy to understand and see" },
-                { word: "sheltered", hint: "Protected from bad weather or danger" },
-                { word: "rely", hint: "To trust or depend on someone/something" },
-                { word: "region", hint: "A large area of a country" }
-            ],
-            currentIndex: 0,
-            score: 0,
-            currentLetters: [],
-            answerLetters: [],
-            
-            init() {
-                this.items = shuffleArray([...this.items]); // Shuffle game order
-                this.currentIndex = 0;
-                this.score = 0;
-                this.loadWord();
-            },
-
-            loadWord() {
-                if (this.currentIndex >= this.items.length) {
-                    showModal('success', 'Game Complete!', `You scored ${this.score} out of ${this.items.length}!`, "Play Again", () => this.init());
-                    return;
-                }
-
-                const currentItem = this.items[this.currentIndex];
-                document.getElementById('g3-hint').innerText = currentItem.hint;
-                document.getElementById('g3-progress').innerText = `Word ${this.currentIndex + 1} of ${this.items.length}`;
-                document.getElementById('g3-score').innerText = `Score: ${this.score}`;
-                
-                // Reset arrays
-                this.answerLetters = [];
-                // Scramble word letters
-                let chars = currentItem.word.split('');
-                // Ensure it's actually scrambled
-                let scrambled;
-                do {
-                    scrambled = shuffleArray([...chars]);
-                } while (scrambled.join('') === currentItem.word && chars.length > 3);
-                
-                this.currentLetters = scrambled.map((char, index) => ({ id: index, char: char, used: false }));
-                
-                this.renderLetters();
-            },
-
-            renderLetters() {
-                const scrambleZone = document.getElementById('g3-scramble-zone');
-                const answerZone = document.getElementById('g3-answer-zone');
-                
-                scrambleZone.innerHTML = '';
-                answerZone.innerHTML = '';
-
-                // Render Scrambled Letters (Available)
-                this.currentLetters.forEach((item) => {
-                    const tile = document.createElement('div');
-                    tile.className = `letter-tile ${item.used ? 'opacity-0 cursor-default pointer-events-none' : 'animate-pop'}`;
-                    tile.innerText = item.char;
-                    if (!item.used) {
-                        tile.onclick = () => this.moveToAnswer(item.id);
-                    }
-                    scrambleZone.appendChild(tile);
-                });
-
-                // Render Answer Letters (Placed)
-                this.answerLetters.forEach((item, answerIndex) => {
-                    const tile = document.createElement('div');
-                    tile.className = 'letter-tile border-orange-400 text-orange-600 bg-orange-50 animate-pop';
-                    tile.innerText = item.char;
-                    tile.onclick = () => this.returnToScramble(answerIndex);
-                    answerZone.appendChild(tile);
-                });
-            },
-
-            moveToAnswer(id) {
-                const letterItem = this.currentLetters.find(item => item.id === id);
-                if (letterItem && !letterItem.used) {
-                    letterItem.used = true;
-                    this.answerLetters.push({ ...letterItem }); // copy
-                    this.renderLetters();
-                }
-            },
-
-            returnToScramble(answerIndex) {
-                const removedItem = this.answerLetters.splice(answerIndex, 1)[0];
-                const originalItem = this.currentLetters.find(item => item.id === removedItem.id);
-                if (originalItem) {
-                    originalItem.used = false;
-                }
-                this.renderLetters();
-            },
-
-            clearLetters() {
-                this.answerLetters = [];
-                this.currentLetters.forEach(item => item.used = false);
-                this.renderLetters();
-            },
-
-            checkWord() {
-                const currentItem = this.items[this.currentIndex];
-                const userAnswer = this.answerLetters.map(item => item.char).join('');
-                const answerZone = document.getElementById('g3-answer-zone');
-
-                if (userAnswer === currentItem.word) {
-                    // Correct!
-                    this.score++;
-                    answerZone.classList.add('bg-green-100', 'border-green-400');
-                    setTimeout(() => {
-                        answerZone.classList.remove('bg-green-100', 'border-green-400');
-                        this.currentIndex++;
-                        this.loadWord();
-                    }, 1000);
-                } else {
-                    // Incorrect
-                    answerZone.classList.add('bg-red-100', 'border-red-400');
-                    answerZone.style.animation = 'shake 0.5s';
-                    setTimeout(() => {
-                        answerZone.classList.remove('bg-red-100', 'border-red-400');
-                        answerZone.style.animation = '';
-                    }, 500);
-                }
-            }
-        };
-
-        // Initialize all games when window loads
-        window.onload = () => {
-            game1.init();
-            game2.init();
-            game3.init();
-        };
-
-    </script>
 </body>
 </html>
