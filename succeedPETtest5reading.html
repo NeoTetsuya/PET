@@ -1,0 +1,732 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Vocabulary Review Games</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800&display=swap');
+        
+        body {
+            font-family: 'Nunito', sans-serif;
+            background-color: #f0fdf4;
+            color: #1f2937;
+        }
+
+        .tab-btn.active {
+            background-color: #22c55e;
+            color: white;
+            border-color: #22c55e;
+        }
+
+        /* Game 1 & 2 Interactions */
+        .word-pill {
+            cursor: pointer;
+            transition: all 0.2s ease;
+            user-select: none;
+        }
+        
+        .word-pill:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+        }
+
+        .word-pill.selected {
+            ring: 4px;
+            ring-color: #3b82f6;
+            background-color: #eff6ff;
+            border-color: #3b82f6;
+            transform: scale(1.05);
+        }
+
+        .drop-slot {
+            display: inline-flex;
+            min-width: 120px;
+            height: 36px;
+            border: 2px dashed #9ca3af;
+            border-radius: 9999px;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            vertical-align: middle;
+            margin: 0 4px;
+            transition: all 0.2s;
+            background-color: white;
+        }
+
+        .drop-slot.filled {
+            border: 2px solid #3b82f6;
+            background-color: #eff6ff;
+            color: #1d4ed8;
+            font-weight: 600;
+        }
+
+        .drop-slot.correct {
+            border-color: #22c55e;
+            background-color: #dcfce3;
+            color: #15803d;
+        }
+
+        .drop-slot.incorrect {
+            border-color: #ef4444;
+            background-color: #fee2e2;
+            color: #b91c1c;
+            animation: shake 0.5s;
+        }
+
+        .drop-slot.revealed {
+            border-color: #f59e0b;
+            background-color: #fef3c7;
+            color: #b45309;
+            font-weight: 600;
+        }
+
+        /* Game 3 Interactions */
+        .letter-tile {
+            width: 48px;
+            height: 48px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+            font-weight: 700;
+            background: white;
+            border: 2px solid #e5e7eb;
+            border-radius: 0.5rem;
+            cursor: pointer;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+            transition: all 0.2s;
+            text-transform: uppercase;
+        }
+
+        .letter-tile:hover {
+            border-color: #a855f7;
+            color: #a855f7;
+            transform: translateY(-2px);
+        }
+
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            25% { transform: translateX(-5px); }
+            50% { transform: translateX(5px); }
+            75% { transform: translateX(-5px); }
+        }
+
+        @keyframes pop {
+            0% { transform: scale(0.9); opacity: 0; }
+            50% { transform: scale(1.1); }
+            100% { transform: scale(1); opacity: 1; }
+        }
+
+        .animate-pop {
+            animation: pop 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+        }
+        
+        /* Modal */
+        #message-modal {
+            backdrop-filter: blur(4px);
+        }
+    </style>
+</head>
+<body class="min-h-screen p-4 md:p-8">
+
+    <div class="max-w-5xl mx-auto">
+        <!-- Header -->
+        <header class="text-center mb-8">
+            <h1 class="text-4xl md:text-5xl font-extrabold text-green-700 mb-2">PET Vocabulary Games</h1>
+            <p class="text-gray-600 text-lg">Master your vocabulary with these interactive challenges!</p>
+        </header>
+
+        <!-- Navigation Tabs -->
+        <div class="flex flex-wrap justify-center gap-2 mb-8" id="tabs">
+            <button onclick="switchTab('game1')" class="tab-btn active px-6 py-3 rounded-full border-2 border-green-500 text-green-700 font-bold transition-colors hover:bg-green-50">1. Story Filler</button>
+            <button onclick="switchTab('game2')" class="tab-btn px-6 py-3 rounded-full border-2 border-green-500 text-green-700 font-bold transition-colors hover:bg-green-50">2. Match Definitions</button>
+            <button onclick="switchTab('game3')" class="tab-btn px-6 py-3 rounded-full border-2 border-green-500 text-green-700 font-bold transition-colors hover:bg-green-50">3. Word Scramble</button>
+        </div>
+
+        <!-- Main Content Area -->
+        <div class="bg-white rounded-2xl shadow-xl p-6 md:p-8 min-h-[500px] relative">
+            
+            <!-- GAME 1: Story Filler -->
+            <div id="game1" class="game-section">
+                <div class="flex justify-between items-center mb-6">
+                    <h2 class="text-2xl font-bold text-gray-800">Fill in the Blanks</h2>
+                    <button onclick="game1.reset()" class="text-gray-500 hover:text-red-500 font-semibold flex items-center gap-1">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M4 2a1 1 0 011 1v2.101a7.002 7.002 0 0111.601 2.566 1 1 0 11-1.885.666A5.002 5.002 0 005.999 7H9a1 1 0 010 2H4a1 1 0 01-1-1V3a1 1 0 011-1zm.008 9.057a1 1 0 011.276.61A5.002 5.002 0 0014.001 13H11a1 1 0 110-2h5a1 1 0 011 1v5a1 1 0 11-2 0v-2.101a7.002 7.002 0 01-11.601-2.566 1 1 0 01.61-1.276z" clip-rule="evenodd" /></svg>
+                        Reset
+                    </button>
+                </div>
+                <p class="text-gray-600 mb-6 bg-blue-50 p-4 rounded-lg border border-blue-100">
+                    <strong>How to play:</strong> Click a word from the word bank to select it, then click an empty slot in the paragraph to place it. Watch out, there are extra words!
+                </p>
+
+                <!-- Word Bank -->
+                <div class="mb-8 border-b-2 border-gray-100 pb-6">
+                    <h3 class="text-sm uppercase font-bold text-gray-400 mb-3 tracking-wider">Word Bank</h3>
+                    <div id="g1-wordbank" class="flex flex-wrap gap-3">
+                        <!-- Words injected by JS -->
+                    </div>
+                </div>
+
+                <!-- Paragraph -->
+                <div class="text-lg leading-relaxed text-gray-700 bg-gray-50 p-6 rounded-xl border border-gray-200">
+                    Last summer, we took a <span class="drop-slot" data-answer="ferry" onclick="game1.handleSlotClick(this)"></span> 
+                    to a beautiful <span class="drop-slot" data-answer="peninsula" onclick="game1.handleSlotClick(this)"></span>. 
+                    We visited an <span class="drop-slot" data-answer="ancient" onclick="game1.handleSlotClick(this)"></span> 
+                    castle which was a famous <span class="drop-slot" data-answer="landmark" onclick="game1.handleSlotClick(this)"></span>. 
+                    The area was quite <span class="drop-slot" data-answer="crowded" onclick="game1.handleSlotClick(this)"></span> 
+                    with tourists, but the view of the <span class="drop-slot" data-answer="vast" onclick="game1.handleSlotClick(this)"></span> 
+                    ocean was incredible. Our guide told us about a <span class="drop-slot" data-answer="nearby" onclick="game1.handleSlotClick(this)"></span> 
+                    forest that remained completely <span class="drop-slot" data-answer="untouched" onclick="game1.handleSlotClick(this)"></span> 
+                    by modern development. I highly <span class="drop-slot" data-answer="recommend" onclick="game1.handleSlotClick(this)"></span> 
+                    this trip; it was truly a <span class="drop-slot" data-answer="memorable" onclick="game1.handleSlotClick(this)"></span> experience.
+                </div>
+
+                <div class="mt-8 text-center">
+                    <button onclick="game1.checkAnswers()" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-8 rounded-full shadow-lg transition-transform transform hover:scale-105">
+                        Check Answers
+                    </button>
+                </div>
+            </div>
+
+            <!-- GAME 2: Match Definitions -->
+            <div id="game2" class="game-section hidden">
+                <div class="flex justify-between items-center mb-6">
+                    <h2 class="text-2xl font-bold text-gray-800">Match the Definitions</h2>
+                    <button onclick="game2.reset()" class="text-gray-500 hover:text-red-500 font-semibold flex items-center gap-1">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M4 2a1 1 0 011 1v2.101a7.002 7.002 0 0111.601 2.566 1 1 0 11-1.885.666A5.002 5.002 0 005.999 7H9a1 1 0 010 2H4a1 1 0 01-1-1V3a1 1 0 011-1zm.008 9.057a1 1 0 011.276.61A5.002 5.002 0 0014.001 13H11a1 1 0 110-2h5a1 1 0 011 1v5a1 1 0 11-2 0v-2.101a7.002 7.002 0 01-11.601-2.566 1 1 0 01.61-1.276z" clip-rule="evenodd" /></svg>
+                        Reset
+                    </button>
+                </div>
+                <p class="text-gray-600 mb-6 bg-purple-50 p-4 rounded-lg border border-purple-100">
+                    <strong>How to play:</strong> Click a word to select it, then click the empty box next to its correct definition.
+                </p>
+
+                <!-- Word Bank -->
+                <div class="mb-8 border-b-2 border-gray-100 pb-6">
+                    <h3 class="text-sm uppercase font-bold text-gray-400 mb-3 tracking-wider">Vocabulary Words</h3>
+                    <div id="g2-wordbank" class="flex flex-wrap gap-3">
+                        <!-- Words injected by JS -->
+                    </div>
+                </div>
+
+                <!-- Definitions List (Changed to grid) -->
+                <div id="g2-definitions" class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <!-- Injected by JS -->
+                </div>
+
+                <div class="mt-8 text-center">
+                    <button onclick="game2.checkAnswers()" class="bg-purple-600 hover:bg-purple-700 text-white font-bold py-3 px-8 rounded-full shadow-lg transition-transform transform hover:scale-105">
+                        Check Matches
+                    </button>
+                </div>
+            </div>
+
+            <!-- GAME 3: Word Scramble -->
+            <div id="game3" class="game-section hidden">
+                <div class="text-center mb-6">
+                    <h2 class="text-2xl font-bold text-gray-800">Word Scramble</h2>
+                    <p class="text-gray-600 mt-2">Unscramble the letters to find the vocabulary word.</p>
+                </div>
+
+                <div class="max-w-xl mx-auto bg-gray-50 p-6 md:p-8 rounded-2xl border border-gray-200 shadow-sm relative overflow-hidden">
+                    
+                    <!-- Progress / Score -->
+                    <div class="flex justify-between text-sm font-bold text-gray-500 mb-6 uppercase tracking-widest">
+                        <span id="g3-progress">Word 1 of 10</span>
+                        <span id="g3-score" class="text-orange-500">Score: 0</span>
+                    </div>
+
+                    <!-- Hint -->
+                    <div class="bg-white border-l-4 border-orange-400 p-4 mb-8 shadow-sm rounded-r-lg">
+                        <h4 class="text-xs font-bold text-gray-400 uppercase mb-1">Hint</h4>
+                        <p id="g3-hint" class="text-lg text-gray-800 font-semibold">Mix things together</p>
+                    </div>
+
+                    <!-- Answer Slots -->
+                    <div class="mb-8">
+                        <h4 class="text-xs font-bold text-center text-gray-400 uppercase mb-3">Your Answer</h4>
+                        <div id="g3-answer-zone" class="flex flex-wrap justify-center gap-2 min-h-[50px] p-2 bg-white rounded-xl border-2 border-dashed border-gray-300">
+                            <!-- Answer tiles placed here -->
+                        </div>
+                    </div>
+
+                    <!-- Scrambled Letters -->
+                    <div>
+                        <h4 class="text-xs font-bold text-center text-gray-400 uppercase mb-3">Tap letters to build the word</h4>
+                        <div id="g3-scramble-zone" class="flex flex-wrap justify-center gap-2">
+                            <!-- Scrambled tiles placed here -->
+                        </div>
+                    </div>
+                </div>
+
+                <div class="mt-8 text-center flex justify-center gap-4">
+                    <button onclick="game3.clearLetters()" class="bg-gray-200 hover:bg-gray-300 text-gray-700 font-bold py-3 px-6 rounded-full transition-colors">
+                        Clear
+                    </button>
+                    <button id="g3-submit-btn" onclick="game3.checkWord()" class="bg-orange-500 hover:bg-orange-600 text-white font-bold py-3 px-8 rounded-full shadow-lg transition-transform transform hover:scale-105">
+                        Submit Answer
+                    </button>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <!-- Custom Message Modal -->
+    <div id="message-modal" class="fixed inset-0 z-50 hidden flex items-center justify-center bg-gray-900 bg-opacity-50">
+        <div class="bg-white rounded-2xl shadow-2xl max-w-sm w-full p-8 text-center transform scale-90 transition-transform duration-300" id="modal-content">
+            <div id="modal-icon" class="mx-auto flex items-center justify-center h-16 w-16 rounded-full mb-4">
+                <!-- Icon injected by JS -->
+            </div>
+            <h3 id="modal-title" class="text-2xl font-bold mb-2 text-gray-900">Great Job!</h3>
+            <p id="modal-text" class="text-gray-600 mb-6">You got everything right.</p>
+            <button onclick="closeModal()" class="w-full font-bold py-3 px-4 rounded-xl text-white transition-colors" id="modal-btn">
+                Continue
+            </button>
+        </div>
+    </div>
+
+    <script>
+        // --- Shared Logic ---
+        function switchTab(tabId) {
+            document.querySelectorAll('.game-section').forEach(sec => sec.classList.add('hidden'));
+            document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active', 'bg-green-500', 'text-white'));
+            
+            document.getElementById(tabId).classList.remove('hidden');
+            event.currentTarget.classList.add('active');
+        }
+
+        const icons = {
+            success: `<svg class="h-10 w-10 text-green-500" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>`,
+            error: `<svg class="h-10 w-10 text-red-500" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>`,
+            info: `<svg class="h-10 w-10 text-blue-500" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>`
+        };
+
+        function showModal(type, title, text, btnText = "Continue", onBtnClick = null) {
+            const modal = document.getElementById('message-modal');
+            const content = document.getElementById('modal-content');
+            const iconWrap = document.getElementById('modal-icon');
+            const btn = document.getElementById('modal-btn');
+
+            document.getElementById('modal-title').innerText = title;
+            document.getElementById('modal-text').innerText = text;
+            btn.innerText = btnText;
+
+            if (type === 'success') {
+                iconWrap.className = 'mx-auto flex items-center justify-center h-16 w-16 rounded-full mb-4 bg-green-100';
+                iconWrap.innerHTML = icons.success;
+                btn.className = 'w-full font-bold py-3 px-4 rounded-xl text-white bg-green-500 hover:bg-green-600 transition-colors';
+            } else if (type === 'error') {
+                iconWrap.className = 'mx-auto flex items-center justify-center h-16 w-16 rounded-full mb-4 bg-red-100';
+                iconWrap.innerHTML = icons.error;
+                btn.className = 'w-full font-bold py-3 px-4 rounded-xl text-white bg-red-500 hover:bg-red-600 transition-colors';
+            } else {
+                iconWrap.className = 'mx-auto flex items-center justify-center h-16 w-16 rounded-full mb-4 bg-blue-100';
+                iconWrap.innerHTML = icons.info;
+                btn.className = 'w-full font-bold py-3 px-4 rounded-xl text-white bg-blue-500 hover:bg-blue-600 transition-colors';
+            }
+
+            btn.onclick = () => {
+                closeModal();
+                if (onBtnClick) onBtnClick();
+            };
+
+            modal.classList.remove('hidden');
+            setTimeout(() => content.classList.replace('scale-90', 'scale-100'), 10);
+        }
+
+        function closeModal() {
+            const modal = document.getElementById('message-modal');
+            const content = document.getElementById('modal-content');
+            content.classList.replace('scale-100', 'scale-90');
+            setTimeout(() => modal.classList.add('hidden'), 300);
+        }
+
+        function shuffleArray(array) {
+            for (let i = array.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [array[i], array[j]] = [array[j], array[i]];
+            }
+            return array;
+        }
+
+        // --- Game 1: Story Filler ---
+        const game1 = {
+            words: ["ferry", "peninsula", "ancient", "landmark", "crowded", "vast", "nearby", "untouched", "recommend", "memorable", "glamorous", "commercial", "inner", "grassy"],
+            selectedWordElement: null,
+            
+            init() {
+                this.reset();
+            },
+            
+            renderBank() {
+                const bank = document.getElementById('g1-wordbank');
+                bank.innerHTML = '';
+                shuffleArray(this.words).forEach(word => {
+                    const el = document.createElement('div');
+                    el.className = 'word-pill bg-white border-2 border-gray-200 px-4 py-2 rounded-full font-semibold text-gray-700 hover:border-blue-400 hover:text-blue-600';
+                    el.innerText = word;
+                    el.dataset.word = word;
+                    el.onclick = () => this.selectWord(el);
+                    bank.appendChild(el);
+                });
+            },
+
+            selectWord(el) {
+                // Deselect current
+                if (this.selectedWordElement) {
+                    this.selectedWordElement.style.border = '';
+                    this.selectedWordElement.style.backgroundColor = '';
+                    this.selectedWordElement.style.color = '';
+                }
+
+                // If clicking the already selected word, just deselect it
+                if (this.selectedWordElement === el) {
+                    this.selectedWordElement = null;
+                    return;
+                }
+
+                this.selectedWordElement = el;
+                el.style.border = '2px solid #3b82f6';
+                el.style.backgroundColor = '#eff6ff';
+                el.style.color = '#1d4ed8';
+            },
+
+            handleSlotClick(slot) {
+                // If the slot already has a word, put it back in the bank
+                if (slot.innerText !== '') {
+                    const word = slot.innerText;
+                    slot.innerText = '';
+                    slot.classList.remove('filled', 'correct', 'incorrect', 'revealed');
+                    
+                    // Unhide the word in the bank
+                    const bankWords = document.getElementById('g1-wordbank').children;
+                    for (let w of bankWords) {
+                        if (w.dataset.word === word) {
+                            w.style.display = 'block';
+                            break;
+                        }
+                    }
+                }
+
+                // If a word is currently selected, place it in the slot
+                if (this.selectedWordElement) {
+                    slot.innerText = this.selectedWordElement.dataset.word;
+                    slot.classList.add('filled');
+                    slot.classList.remove('correct', 'incorrect', 'revealed');
+                    this.selectedWordElement.style.display = 'none'; // Hide from bank
+                    this.selectedWordElement = null; // Clear selection
+                }
+            },
+
+            checkAnswers() {
+                const slots = document.querySelectorAll('#game1 .drop-slot');
+                let correctCount = 0;
+                let total = slots.length;
+
+                slots.forEach(slot => {
+                    const isCorrect = slot.innerText === slot.dataset.answer;
+                    slot.classList.remove('correct', 'incorrect', 'filled', 'revealed');
+                    // Force reflow for animation
+                    void slot.offsetWidth; 
+
+                    if (isCorrect) {
+                        slot.classList.add('correct');
+                        correctCount++;
+                    } else {
+                        // Show the correct answer
+                        slot.innerText = slot.dataset.answer;
+                        slot.classList.add('revealed');
+                    }
+                });
+
+                if (correctCount === total) {
+                    showModal('success', 'Perfect!', 'You successfully filled in all the blanks correctly.');
+                } else {
+                    showModal('info', 'Answers Revealed', `You got ${correctCount} out of ${total} correct. The correct answers have been filled in for you.`);
+                }
+            },
+
+            reset() {
+                const slots = document.querySelectorAll('#game1 .drop-slot');
+                slots.forEach(slot => {
+                    slot.innerText = '';
+                    slot.classList.remove('filled', 'correct', 'incorrect', 'revealed');
+                });
+                this.selectedWordElement = null;
+                this.renderBank();
+            }
+        };
+
+
+        // --- Game 2: Match Definitions ---
+        const game2 = {
+            words: ["forbid", "resident", "arrest", "unemployment", "gadget", "injury", "steep", "dune", "accurate", "crime", "issue", "emotion", "appliance", "property"],
+            definitions: [
+                { id: 1, text: "To legally stop someone from doing something.", answer: "forbid" },
+                { id: 2, text: "A person who lives in a specific house or area.", answer: "resident" },
+                { id: 3, text: "To take someone to a police station for a bad act.", answer: "arrest" },
+                { id: 4, text: "The state of not having a job.", answer: "unemployment" },
+                { id: 5, text: "A small electronic device or tool.", answer: "gadget" },
+                { id: 6, text: "Physical damage or harm to a person's body.", answer: "injury" },
+                { id: 7, text: "Rising or falling sharply, like a high hill.", answer: "steep" },
+                { id: 8, text: "A hill of sand near the sea or in a desert.", answer: "dune" },
+                { id: 9, text: "Correct in every detail with no mistakes.", answer: "accurate" },
+                { id: 10, text: "An action that breaks the law.", answer: "crime" }
+            ],
+            selectedWordElement: null,
+
+            init() {
+                this.renderDefinitions();
+                this.reset();
+            },
+
+            renderDefinitions() {
+                const container = document.getElementById('g2-definitions');
+                container.innerHTML = '';
+                this.definitions.forEach(def => {
+                    const row = document.createElement('div');
+                    // Adjusted classes for better layout inside a 2-column grid
+                    row.className = 'flex flex-col justify-between p-4 bg-white border border-gray-200 rounded-lg shadow-sm gap-3 h-full';
+                    row.innerHTML = `
+                        <p class="text-gray-700 font-medium">${def.text}</p>
+                        <div class="drop-slot w-full sm:w-auto self-start mt-auto" data-answer="${def.answer}" onclick="game2.handleSlotClick(this)"></div>
+                    `;
+                    container.appendChild(row);
+                });
+            },
+
+            renderBank() {
+                const bank = document.getElementById('g2-wordbank');
+                bank.innerHTML = '';
+                shuffleArray(this.words).forEach(word => {
+                    const el = document.createElement('div');
+                    el.className = 'word-pill bg-white border-2 border-gray-200 px-4 py-2 rounded-full font-semibold text-gray-700 hover:border-purple-400 hover:text-purple-600';
+                    el.innerText = word;
+                    el.dataset.word = word;
+                    el.onclick = () => this.selectWord(el);
+                    bank.appendChild(el);
+                });
+            },
+
+            selectWord(el) {
+                if (this.selectedWordElement) {
+                    this.selectedWordElement.style.border = '';
+                    this.selectedWordElement.style.backgroundColor = '';
+                    this.selectedWordElement.style.color = '';
+                }
+                if (this.selectedWordElement === el) {
+                    this.selectedWordElement = null;
+                    return;
+                }
+                this.selectedWordElement = el;
+                el.style.border = '2px solid #a855f7';
+                el.style.backgroundColor = '#faf5ff';
+                el.style.color = '#7e22ce';
+            },
+
+            handleSlotClick(slot) {
+                if (slot.innerText !== '') {
+                    const word = slot.innerText;
+                    slot.innerText = '';
+                    slot.classList.remove('filled', 'correct', 'incorrect', 'revealed');
+                    
+                    const bankWords = document.getElementById('g2-wordbank').children;
+                    for (let w of bankWords) {
+                        if (w.dataset.word === word) {
+                            w.style.display = 'block';
+                            break;
+                        }
+                    }
+                }
+
+                if (this.selectedWordElement) {
+                    slot.innerText = this.selectedWordElement.dataset.word;
+                    slot.classList.add('filled');
+                    slot.classList.remove('correct', 'incorrect', 'revealed');
+                    this.selectedWordElement.style.display = 'none';
+                    this.selectedWordElement = null;
+                }
+            },
+
+            checkAnswers() {
+                const slots = document.querySelectorAll('#game2 .drop-slot');
+                let correctCount = 0;
+                let total = slots.length;
+
+                slots.forEach(slot => {
+                    const isCorrect = slot.innerText === slot.dataset.answer;
+                    slot.classList.remove('correct', 'incorrect', 'filled', 'revealed');
+                    void slot.offsetWidth; 
+
+                    if (isCorrect) {
+                        slot.classList.add('correct');
+                        correctCount++;
+                    } else {
+                        // Show the correct answer
+                        slot.innerText = slot.dataset.answer;
+                        slot.classList.add('revealed');
+                    }
+                });
+
+                if (correctCount === total) {
+                    showModal('success', 'Outstanding!', 'You matched all definitions correctly!');
+                } else {
+                    showModal('info', 'Answers Revealed', `You matched ${correctCount} out of ${total} correctly. The missing or incorrect answers are now displayed.`);
+                }
+            },
+
+            reset() {
+                const slots = document.querySelectorAll('#game2 .drop-slot');
+                slots.forEach(slot => {
+                    slot.innerText = '';
+                    slot.classList.remove('filled', 'correct', 'incorrect', 'revealed');
+                });
+                this.selectedWordElement = null;
+                this.renderBank();
+            }
+        };
+
+
+        // --- Game 3: Word Scramble ---
+        const game3 = {
+            items: [
+                { word: "combine", hint: "Mix things together to make one" },
+                { word: "culture", hint: "Ideas, beliefs, and arts of a specific group" },
+                { word: "desire", hint: "A strong feeling that you want something" },
+                { word: "conflict", hint: "A serious disagreement or fight" },
+                { word: "several", hint: "More than two but not very many" },
+                { word: "situated", hint: "Located in a specific place" },
+                { word: "obviously", hint: "In a way that is easy to understand and see" },
+                { word: "sheltered", hint: "Protected from bad weather or danger" },
+                { word: "rely", hint: "To trust or depend on someone/something" },
+                { word: "region", hint: "A large area of a country" }
+            ],
+            currentIndex: 0,
+            score: 0,
+            currentLetters: [],
+            answerLetters: [],
+            
+            init() {
+                this.items = shuffleArray([...this.items]); // Shuffle game order
+                this.currentIndex = 0;
+                this.score = 0;
+                this.loadWord();
+            },
+
+            loadWord() {
+                if (this.currentIndex >= this.items.length) {
+                    showModal('success', 'Game Complete!', `You scored ${this.score} out of ${this.items.length}!`, "Play Again", () => this.init());
+                    return;
+                }
+
+                const currentItem = this.items[this.currentIndex];
+                document.getElementById('g3-hint').innerText = currentItem.hint;
+                document.getElementById('g3-progress').innerText = `Word ${this.currentIndex + 1} of ${this.items.length}`;
+                document.getElementById('g3-score').innerText = `Score: ${this.score}`;
+                
+                // Reset arrays
+                this.answerLetters = [];
+                // Scramble word letters
+                let chars = currentItem.word.split('');
+                // Ensure it's actually scrambled
+                let scrambled;
+                do {
+                    scrambled = shuffleArray([...chars]);
+                } while (scrambled.join('') === currentItem.word && chars.length > 3);
+                
+                this.currentLetters = scrambled.map((char, index) => ({ id: index, char: char, used: false }));
+                
+                this.renderLetters();
+            },
+
+            renderLetters() {
+                const scrambleZone = document.getElementById('g3-scramble-zone');
+                const answerZone = document.getElementById('g3-answer-zone');
+                
+                scrambleZone.innerHTML = '';
+                answerZone.innerHTML = '';
+
+                // Render Scrambled Letters (Available)
+                this.currentLetters.forEach((item) => {
+                    const tile = document.createElement('div');
+                    tile.className = `letter-tile ${item.used ? 'opacity-0 cursor-default pointer-events-none' : 'animate-pop'}`;
+                    tile.innerText = item.char;
+                    if (!item.used) {
+                        tile.onclick = () => this.moveToAnswer(item.id);
+                    }
+                    scrambleZone.appendChild(tile);
+                });
+
+                // Render Answer Letters (Placed)
+                this.answerLetters.forEach((item, answerIndex) => {
+                    const tile = document.createElement('div');
+                    tile.className = 'letter-tile border-orange-400 text-orange-600 bg-orange-50 animate-pop';
+                    tile.innerText = item.char;
+                    tile.onclick = () => this.returnToScramble(answerIndex);
+                    answerZone.appendChild(tile);
+                });
+            },
+
+            moveToAnswer(id) {
+                const letterItem = this.currentLetters.find(item => item.id === id);
+                if (letterItem && !letterItem.used) {
+                    letterItem.used = true;
+                    this.answerLetters.push({ ...letterItem }); // copy
+                    this.renderLetters();
+                }
+            },
+
+            returnToScramble(answerIndex) {
+                const removedItem = this.answerLetters.splice(answerIndex, 1)[0];
+                const originalItem = this.currentLetters.find(item => item.id === removedItem.id);
+                if (originalItem) {
+                    originalItem.used = false;
+                }
+                this.renderLetters();
+            },
+
+            clearLetters() {
+                this.answerLetters = [];
+                this.currentLetters.forEach(item => item.used = false);
+                this.renderLetters();
+            },
+
+            checkWord() {
+                const currentItem = this.items[this.currentIndex];
+                const userAnswer = this.answerLetters.map(item => item.char).join('');
+                const answerZone = document.getElementById('g3-answer-zone');
+
+                if (userAnswer === currentItem.word) {
+                    // Correct!
+                    this.score++;
+                    answerZone.classList.add('bg-green-100', 'border-green-400');
+                    setTimeout(() => {
+                        answerZone.classList.remove('bg-green-100', 'border-green-400');
+                        this.currentIndex++;
+                        this.loadWord();
+                    }, 1000);
+                } else {
+                    // Incorrect
+                    answerZone.classList.add('bg-red-100', 'border-red-400');
+                    answerZone.style.animation = 'shake 0.5s';
+                    setTimeout(() => {
+                        answerZone.classList.remove('bg-red-100', 'border-red-400');
+                        answerZone.style.animation = '';
+                    }, 500);
+                }
+            }
+        };
+
+        // Initialize all games when window loads
+        window.onload = () => {
+            game1.init();
+            game2.init();
+            game3.init();
+        };
+
+    </script>
+</body>
+</html>
