@@ -9,148 +9,363 @@
     <style>
         :root {
             --app-font-size: 16px;
+            --primary: #1e40af;
+            --primary-hover: #1e3a8a;
+            --bg-main: #f1f5f9;
+            --text-main: #334155;
+            --text-dark: #0f172a;
         }
         body {
             font-family: 'Inter', sans-serif;
             overscroll-behavior: none;
-            background-color: #f3f4f6;
+            background-color: var(--bg-main);
+            color: var(--text-main);
             margin: 0;
             padding: 0;
         }
         .ielts-container {
             display: grid;
-            grid-template-rows: auto auto 1fr; /* Header, Tabs, Content */
+            grid-template-rows: auto auto 1fr;
             height: 100vh;
         }
+        
+        /* Header */
         .header {
-            background-color: #1e3a8a;
+            background: linear-gradient(135deg, #1e3a8a 0%, #3b82f6 100%);
             color: white;
-            padding: 1rem 1.5rem;
+            padding: 1rem 2rem;
             display: flex;
             justify-content: space-between;
             align-items: center;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1);
             z-index: 20;
         }
+        .header h1 { color: white; font-weight: 700; letter-spacing: -0.025em; }
         
         /* Tabs Styles */
         .tabs-nav {
             display: flex;
-            background: #e2e8f0;
-            border-bottom: 1px solid #cbd5e1;
+            background: #ffffff;
+            border-bottom: 1px solid #e2e8f0;
             overflow-x: auto;
+            padding: 0 1rem;
         }
         .tab-btn {
-            padding: 0.75rem 1.5rem;
+            padding: 1rem 1.5rem;
             font-weight: 600;
-            color: #475569;
+            font-size: 0.95rem;
+            color: #64748b;
             background: transparent;
             border: none;
             cursor: pointer;
-            border-right: 1px solid #cbd5e1;
-            transition: all 0.2s;
+            border-bottom: 3px solid transparent;
+            transition: all 0.2s ease;
             white-space: nowrap;
         }
         .tab-btn:hover {
-            background: #f1f5f9;
+            color: var(--primary);
+            background: #f8fafc;
         }
         .tab-btn.active {
-            background: #ffffff;
-            color: #1e3a8a;
-            box-shadow: inset 0 3px 0 0 #1e3a8a;
+            color: var(--primary);
+            border-bottom-color: var(--primary);
         }
-        .tab-content {
-            display: none;
-        }
-        .tab-content.active {
-            display: block;
-            animation: fadeIn 0.3s;
-        }
-        @keyframes fadeIn {
-            from { opacity: 0; }
-            to { opacity: 1; }
-        }
+        .tab-content { display: none; }
+        .tab-content.active { display: block; animation: fadeIn 0.4s ease; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
 
+        /* Panes & Splitter */
         .content-panes {
             display: grid;
-            grid-template-columns: 1fr 5px 1fr;
+            grid-template-columns: 1fr 6px 1fr;
             overflow: hidden;
-            background-color: #e5e7eb;
+            background-color: var(--bg-main);
         }
         .pane {
             overflow-y: auto;
-            padding: 2rem;
+            padding: 2.5rem;
             font-size: var(--app-font-size);
-            background-color: #ffffff;
-            line-height: 1.6;
+            line-height: 1.75;
+            scroll-behavior: smooth;
         }
-        .pane-left {
-            border-right: 1px solid #d1d5db;
-        }
+        .pane-left { padding-right: 2rem; }
+        .pane-right { padding-left: 2rem; }
+        
         .splitter {
             background-color: #cbd5e1;
             cursor: col-resize;
             z-index: 10;
             transition: background-color 0.2s;
+            position: relative;
+            display: flex;
+            align-items: center;
+            justify-content: center;
         }
-        .splitter:hover, .splitter:active {
-            background-color: #94a3b8;
+        .splitter::after {
+            content: "⋮";
+            color: #64748b;
+            font-size: 1.2rem;
+            font-weight: bold;
+        }
+        .splitter:hover, .splitter:active { background-color: #94a3b8; }
+        
+        /* Typography & Reading Text Styles */
+        h2, h3 { color: var(--text-dark); font-weight: 700; margin-top: 0; }
+        .part-title { 
+            font-size: 1.5em; 
+            margin-bottom: 1.5rem; 
+            color: var(--primary); 
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
         }
         
-        /* Typography & Styles */
-        h1, h2, h3 { color: #111827; font-weight: 600; }
-        .part-title { font-size: 1.25em; margin-bottom: 1rem; color: #1e3a8a; border-bottom: 2px solid #e5e7eb; padding-bottom: 0.5rem;}
-        .instruction { font-style: italic; color: #4b5563; margin-bottom: 1.5rem; }
+        .instruction { 
+            background-color: #e0f2fe; 
+            color: #0369a1; 
+            padding: 1rem 1.25rem; 
+            border-radius: 0.5rem; 
+            border-left: 4px solid #0ea5e9;
+            font-weight: 500;
+            margin-bottom: 2rem;
+            font-size: 0.95em;
+        }
         
-        /* Reading Text Styles */
-        .reading-text { margin-bottom: 3rem; }
-        .text-box { background-color: #f8fafc; border: 1px solid #e2e8f0; padding: 1.5rem; border-radius: 0.5rem; margin-bottom: 1.5rem; }
-        .sign-box { border: 2px solid #111827; padding: 1rem; text-align: center; font-weight: bold; border-radius: 0.25rem; margin-bottom: 1rem; max-width: 300px; }
-        .email-box { border: 1px solid #94a3b8; padding: 1rem; border-radius: 0.25rem; margin-bottom: 1rem; background-color: #f1f5f9; font-family: monospace; font-size: 0.95em; }
+        .text-box { 
+            background-color: #ffffff; 
+            border: 1px solid #e2e8f0; 
+            padding: 2rem; 
+            border-radius: 0.75rem; 
+            margin-bottom: 2rem; 
+            box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05), 0 2px 4px -1px rgba(0,0,0,0.03);
+        }
+        .text-box p { margin-bottom: 1.25em; }
+        .text-box p:last-child { margin-bottom: 0; }
+        
+        /* Specific Box Styles (Part 1) */
+        .sign-box { 
+            border: 3px solid #334155; 
+            padding: 1.5rem; 
+            text-align: center; 
+            font-weight: 700; 
+            border-radius: 0.5rem; 
+            margin: 1rem auto; 
+            max-width: 80%;
+            background-color: #f8fafc;
+            color: #0f172a;
+            font-size: 1.1em;
+        }
+        .email-box { 
+            border: 1px solid #cbd5e1; 
+            border-radius: 0.5rem; 
+            margin: 1rem 0; 
+            background-color: #ffffff; 
+            font-family: 'Courier New', Courier, monospace; 
+            font-size: 0.95em;
+            box-shadow: inset 0 2px 4px 0 rgba(0, 0, 0, 0.02);
+            overflow: hidden;
+        }
+        .email-header {
+            background-color: #f1f5f9;
+            padding: 0.75rem 1rem;
+            border-bottom: 1px solid #cbd5e1;
+        }
+        .email-body {
+            padding: 1.25rem 1rem;
+        }
         
         /* Question Styles */
-        .question-group { margin-bottom: 2.5rem; }
-        .q-number { font-weight: 600; background-color: #1e3a8a; color: white; padding: 0.1rem 0.5rem; border-radius: 4px; margin-right: 0.5rem; font-size: 0.9em; transition: background-color 0.3s; }
+        .question-group { margin-bottom: 3rem; }
+        .q-wrapper {
+            background-color: #ffffff;
+            border: 1px solid #e2e8f0;
+            border-radius: 0.75rem;
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+            transition: box-shadow 0.2s ease, border-color 0.2s ease;
+        }
+        .q-wrapper:hover {
+            box-shadow: 0 10px 15px -3px rgba(0,0,0,0.05);
+            border-color: #cbd5e1;
+        }
+        
+        .q-number { 
+            font-weight: 700; 
+            background-color: #3b82f6; 
+            color: white; 
+            width: 28px;
+            height: 28px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 50%; 
+            margin-right: 0.75rem; 
+            font-size: 0.9em; 
+            transition: background-color 0.3s ease; 
+            flex-shrink: 0;
+        }
         
         /* Inputs */
         .radio-custom {
-            display: flex; align-items: flex-start; margin-bottom: 0.75rem; cursor: pointer; padding: 0.5rem; border-radius: 0.25rem; transition: background-color 0.2s;
+            display: flex; 
+            align-items: flex-start; 
+            margin-bottom: 0.5rem; 
+            cursor: pointer; 
+            padding: 0.75rem 1rem; 
+            border-radius: 0.5rem; 
+            border: 1px solid transparent;
+            transition: all 0.2s ease;
         }
-        .radio-custom:hover { background-color: #f1f5f9; }
-        .radio-custom input[type="radio"] { margin-top: 0.3rem; margin-right: 0.75rem; accent-color: #1e3a8a; width: 1.1rem; height: 1.1rem; }
+        .radio-custom:hover { 
+            background-color: #f8fafc; 
+            border-color: #cbd5e1;
+        }
+        .radio-custom input[type="radio"] { 
+            margin-top: 0.35em; 
+            margin-right: 1rem; 
+            accent-color: var(--primary); 
+            width: 1.15em; 
+            height: 1.15em; 
+            cursor: pointer;
+        }
         
         .select-custom {
-            padding: 0.5rem; border: 1px solid #cbd5e1; border-radius: 0.25rem; font-size: 1em; background-color: white; outline: none; margin-left: 0.5rem;
+            padding: 0.5rem 1rem; 
+            border: 1px solid #cbd5e1; 
+            border-radius: 0.5rem; 
+            font-size: 1em; 
+            background-color: #f8fafc; 
+            outline: none; 
+            margin-left: 0.5rem;
+            cursor: pointer;
+            transition: all 0.2s;
+            color: var(--text-dark);
+            font-weight: 500;
         }
-        .select-custom:focus { border-color: #1e3a8a; box-shadow: 0 0 0 2px rgba(30, 58, 138, 0.2); }
+        .select-custom:focus { border-color: var(--primary); box-shadow: 0 0 0 3px rgba(30, 64, 175, 0.1); background-color: white;}
         
         .input-text {
-            border: 1px solid #cbd5e1; border-radius: 0.25rem; padding: 0.25rem 0.5rem; width: 150px; font-size: 1em; outline: none; transition: border-color 0.2s;
+            border: 1px solid #cbd5e1; 
+            border-radius: 0.5rem; 
+            padding: 0.5rem 1rem; 
+            width: 160px; 
+            font-size: 1em; 
+            outline: none; 
+            transition: all 0.2s;
+            background-color: #f8fafc;
+            color: var(--text-dark);
+            font-weight: 500;
         }
-        .input-text:focus { border-color: #1e3a8a; box-shadow: 0 0 0 2px rgba(30, 58, 138, 0.2); }
+        .input-text:focus { border-color: var(--primary); box-shadow: 0 0 0 3px rgba(30, 64, 175, 0.1); background-color: white;}
+        
+        /* Drag and Drop Styles */
+        .drop-zone.in-text {
+            display: inline;
+            background-color: #f1f5f9;
+            border: 2px dashed #94a3b8;
+            border-radius: 0.25rem;
+            padding: 0 0.5rem;
+            cursor: pointer;
+            transition: all 0.2s;
+            margin: 0 0.25rem;
+        }
+        .drop-zone.in-text:empty {
+            display: inline-block;
+            min-width: 40px;
+            height: 1.5em;
+            vertical-align: middle;
+            text-align: center;
+            padding: 0;
+        }
+        .drop-zone.in-text:empty::before {
+            content: attr(data-label);
+            color: #64748b;
+            font-weight: 700;
+            font-size: 0.9em;
+            line-height: 1.5em;
+        }
+        .drop-zone.in-text.drag-over {
+            background-color: #dbeafe;
+            border-color: #3b82f6;
+        }
+        
+        .draggable-pool {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+        .draggable-pool .drag-item {
+            display: flex;
+            align-items: flex-start;
+            background-color: #ffffff;
+            border: 1px solid #e2e8f0;
+            padding: 0.75rem 1rem;
+            border-radius: 0.5rem;
+            cursor: grab;
+            transition: all 0.2s ease;
+            box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+            font-size: 0.95em;
+        }
+        .draggable-pool .drag-item:hover {
+            border-color: #3b82f6;
+            box-shadow: 0 4px 6px -1px rgba(59, 130, 246, 0.1);
+        }
+        .draggable-pool .drag-item .letter {
+            color: #2563eb;
+            margin-right: 0.75rem;
+            flex-shrink: 0;
+            font-weight: 700;
+        }
+        
+        .drop-zone.in-text .drag-item {
+            display: inline;
+            color: #1d4ed8;
+            font-weight: 600;
+            background: transparent;
+            border: none;
+            padding: 0;
+            margin: 0;
+            box-shadow: none;
+            cursor: grab;
+        }
+        .drop-zone.in-text .drag-item .letter {
+            display: none;
+        }
+        .drop-zone.in-text .drag-item .full-text {
+            display: inline;
+        }
+
+        .drop-zone.in-text.correct { border-color: #22c55e; background-color: #dcfce7; }
+        .drop-zone.in-text.correct .drag-item { color: #166534; }
+        .drop-zone.in-text.incorrect { border-color: #ef4444; background-color: #fee2e2; }
+        .drop-zone.in-text.incorrect .drag-item { color: #991b1b; }
         
         /* Gap styles */
-        .gap { display: inline-block; font-weight: bold; margin: 0 0.25rem; color: #1e3a8a; border-bottom: 1px dashed #1e3a8a;}
-
-        /* Highlight Tooltip */
-        #highlightTooltip {
-            position: absolute; display: none; background-color: #111827; color: white; padding: 6px 12px; border-radius: 4px; font-size: 14px; cursor: pointer; z-index: 1000; box-shadow: 0 4px 6px rgba(0,0,0,0.1); border: none; font-family: inherit;
+        .gap { 
+            display: inline-block; 
+            font-weight: 700; 
+            margin: 0 0.3em; 
+            color: var(--primary); 
+            border-bottom: 2px dashed #93c5fd;
+            padding: 0 0.2em;
         }
-        #highlightTooltip::after {
-            content: ''; position: absolute; top: 100%; left: 50%; margin-left: -5px; border-width: 5px; border-style: solid; border-color: #111827 transparent transparent transparent;
-        }
-        mark { background-color: #fef08a; color: inherit; padding: 0.1em 0; border-radius: 2px; }
 
         /* Vocabulary Highlight */
         .vocab-word {
             background-color: #dcfce7;
             border-bottom: 2px solid #22c55e;
+            color: #166534;
+            font-weight: 500;
             cursor: help;
-            padding: 0 2px;
-            border-radius: 2px;
-            transition: background-color 0.2s;
+            padding: 0.1em 0.3em;
+            border-radius: 4px;
+            transition: all 0.2s ease;
         }
-        .vocab-word:hover { background-color: #bbf7d0; }
+        .vocab-word:hover { 
+            background-color: #bbf7d0; 
+            box-shadow: 0 2px 4px rgba(34, 197, 94, 0.2);
+        }
 
         /* Vocab Tooltip */
         #vocabInfoTooltip {
@@ -158,33 +373,65 @@
             display: none;
             background: white;
             border: 1px solid #e2e8f0;
-            padding: 1rem;
-            border-radius: 0.5rem;
-            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+            padding: 1.25rem;
+            border-radius: 0.75rem;
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
             z-index: 100;
-            width: 280px;
+            width: 300px;
         }
+        
+        #highlightTooltip {
+            position: absolute; display: none; background-color: #1e293b; color: white; padding: 6px 12px; border-radius: 6px; font-size: 14px; font-weight: 500; cursor: pointer; z-index: 1000; box-shadow: 0 4px 6px rgba(0,0,0,0.1); border: none; font-family: inherit;
+        }
+        #highlightTooltip::after { content: ''; position: absolute; top: 100%; left: 50%; margin-left: -6px; border-width: 6px; border-style: solid; border-color: #1e293b transparent transparent transparent; }
+        mark { background-color: #fef08a; color: inherit; padding: 0.2em 0; border-radius: 4px; }
 
         /* Explanation Box */
         .explanation-box {
             display: none;
-            background-color: #eff6ff;
-            border-left: 4px solid #3b82f6;
-            padding: 1rem;
-            margin-top: 1rem;
-            border-radius: 0 0.5rem 0.5rem 0;
+            background-color: #f0fdf4;
+            border: 1px solid #bbf7d0;
+            border-left: 4px solid #22c55e;
+            padding: 1.25rem;
+            margin-top: 1.25rem;
+            border-radius: 0.5rem;
             font-size: 0.95em;
-            color: #1e40af;
-            line-height: 1.5;
+            color: #166534;
+            line-height: 1.6;
         }
 
-        /* Controls */
-        .controls { display: flex; gap: 1rem; align-items: center; }
-        .btn-icon { background: rgba(255,255,255,0.2); border: none; color: white; padding: 0.4rem 0.8rem; border-radius: 4px; cursor: pointer; font-weight: 500; transition: background 0.2s; }
-        .btn-icon:hover { background: rgba(255,255,255,0.3); }
+        /* Controls & Buttons */
+        .controls { display: flex; gap: 0.75rem; align-items: center; }
+        .btn-icon { 
+            background: rgba(255,255,255,0.15); 
+            border: 1px solid rgba(255,255,255,0.3); 
+            color: white; 
+            padding: 0.5rem 1rem; 
+            border-radius: 0.5rem; 
+            cursor: pointer; 
+            font-weight: 600; 
+            transition: all 0.2s; 
+        }
+        .btn-icon:hover { background: rgba(255,255,255,0.25); transform: translateY(-1px); }
+        .btn-icon:active { transform: translateY(0); }
         
-        .btn-primary { background-color: #1e3a8a; color: white; border: none; padding: 0.75rem 1.5rem; border-radius: 0.375rem; font-weight: 600; cursor: pointer; transition: background-color 0.2s; }
-        .btn-primary:hover { background-color: #1e40af; }
+        .btn-primary { 
+            background-color: var(--primary); 
+            color: white; 
+            border: none; 
+            padding: 0.75rem 2rem; 
+            border-radius: 0.5rem; 
+            font-weight: 600; 
+            font-size: 1em;
+            cursor: pointer; 
+            transition: all 0.2s ease; 
+            box-shadow: 0 4px 6px -1px rgba(30, 64, 175, 0.2);
+        }
+        .btn-primary:hover { background-color: var(--primary-hover); transform: translateY(-1px); box-shadow: 0 6px 8px -1px rgba(30, 64, 175, 0.3); }
+        .btn-primary:active { transform: translateY(0); }
+        
+        /* Layout utility for questions */
+        .flex-row-center { display: flex; align-items: center; gap: 1rem; }
     </style>
 </head>
 <body>
@@ -194,11 +441,11 @@
     <header class="header">
         <div>
             <h1 class="text-xl m-0">B1 Preliminary Practice Test</h1>
-            <div class="text-sm opacity-80">Reading - Test 4</div>
+            <div class="text-sm opacity-90 mt-1 font-medium">Reading - Test 4</div>
         </div>
         <div class="controls">
-            <button class="btn-icon" id="btn-decrease-font">A-</button>
-            <button class="btn-icon" id="btn-increase-font">A+</button>
+            <button class="btn-icon" id="btn-decrease-font" title="Decrease Font Size">A-</button>
+            <button class="btn-icon" id="btn-increase-font" title="Increase Font Size">A+</button>
         </div>
     </header>
 
@@ -219,148 +466,189 @@
         <div class="pane pane-left" id="left-pane">
             
             <div class="reading-text tab-content active" data-part="1">
-                <h2 class="part-title">Part 1</h2>
-                <p class="instruction">Questions 1-5<br>For each question, choose the correct answer.</p>
+                <h2 class="part-title">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>
+                    Part 1
+                </h2>
+                <div class="instruction">Questions 1-5<br>For each question, choose the correct answer.</div>
                 
                 <div class="text-box">
-                    <p><strong>1</strong></p>
-                    <div class="sign-box" style="border: 2px solid #ef4444;">
+                    <div class="flex items-center gap-3 mb-4 text-gray-500 font-bold">
+                        <span class="q-number bg-gray-500">1</span> Text 1
+                    </div>
+                    <div class="sign-box" style="border: 3px solid #ef4444; background-color: #fef2f2; color: #991b1b;">
                         NOTICE<br><br>
-                        All passengers are reminded that they are not allowed to eat, drink or smoke on the underground system.
+                        <span class="text-[0.85em] font-medium text-gray-800 block">All passengers are reminded that they are not allowed to eat, drink or smoke on the <span class="vocab-word" data-word="underground">underground</span> system.</span>
                     </div>
                 </div>
 
                 <div class="text-box">
-                    <p><strong>2</strong></p>
+                    <div class="flex items-center gap-3 mb-4 text-gray-500 font-bold">
+                        <span class="q-number bg-gray-500">2</span> Text 2
+                    </div>
                     <div class="email-box">
-                        <strong>Dear Jane,</strong><br><br>
-                        It's beautiful here in Spain; the sun's shining and we've been to the beach every day! The hotel's not great, but we're out most of the time!<br><br>
-                        Wish you were here,<br>
-                        Anne
+                        <div class="email-header">
+                            <div><strong>To:</strong> Jane</div>
+                        </div>
+                        <div class="email-body">
+                            Dear Jane,<br><br>
+                            It's beautiful here in Spain; the sun's shining and we've been to the beach every day! The hotel's not great, but we're out most of the time!<br><br>
+                            Wish you were here,<br>
+                            Anne
+                        </div>
                     </div>
                 </div>
 
                 <div class="text-box">
-                    <p><strong>3</strong></p>
-                    <div class="email-box">
-                        <strong>To:</strong> Nick<br>
-                        <strong>From:</strong> Peter<br><br>
-                        I've found a great site that's got reviews of all the latest Hollywood films! Check out the articles and let me know if you want us to go and see anything.
+                    <div class="flex items-center gap-3 mb-4 text-gray-500 font-bold">
+                        <span class="q-number bg-gray-500">3</span> Text 3
+                    </div>
+                    <div class="email-box" style="background-color: #f8fafc;">
+                        <div class="email-header">
+                            <div><strong>To:</strong> Nick</div>
+                            <div><strong>From:</strong> Peter</div>
+                        </div>
+                        <div class="email-body">
+                            I've found a great site that's got reviews of all the latest Hollywood films!<br><br>
+                            Check out the articles and let me know if you want us to go and see anything.
+                        </div>
                     </div>
                 </div>
 
                 <div class="text-box">
-                    <p><strong>4</strong></p>
-                    <div class="email-box">
-                        David,<br><br>
-                        As soon as you get this message, ring dad on his mobile. Mum's car broke down on the motorway and he's got to collect her.<br><br>
-                        Jane
+                    <div class="flex items-center gap-3 mb-4 text-gray-500 font-bold">
+                        <span class="q-number bg-gray-500">4</span> Text 4
+                    </div>
+                    <div class="email-box" style="background-color: #fffde7;">
+                        <div class="email-body font-sans">
+                            <strong>David,</strong><br><br>
+                            As soon as you get this message, ring dad on his mobile. <br>
+                            Mum's car broke down on the motorway and he's got to collect her.<br><br>
+                            <em>Jane</em>
+                        </div>
                     </div>
                 </div>
 
                 <div class="text-box">
-                    <p><strong>5</strong></p>
-                    <div class="sign-box" style="border-color: #1e40af;">
+                    <div class="flex items-center gap-3 mb-4 text-gray-500 font-bold">
+                        <span class="q-number bg-gray-500">5</span> Text 5
+                    </div>
+                    <div class="sign-box" style="border: 3px solid #3b82f6; background-color: #eff6ff; color: #1e3a8a;">
                         The headmaster has called an <span class="vocab-word" data-word="emergency">emergency</span> meeting. Bring your teaching plan to his office tomorrow at 4.00.<br><br>
-                        Don't forget to tell the other teachers.
+                        <span class="text-[0.85em] font-medium text-gray-600 block">Don't forget to tell the other teachers.</span>
                     </div>
                 </div>
             </div>
 
             <div class="reading-text tab-content" data-part="2">
-                <h2 class="part-title">Part 2</h2>
-                <p class="instruction">Questions 6-10<br>The people below all want to see a film at the cinema. There are eight film reviews. Decide which film would be the most suitable for each person below.</p>
+                <h2 class="part-title">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>
+                    Part 2
+                </h2>
+                <div class="instruction">Questions 6-10<br>The people below all want to see a film at the cinema. There are eight film reviews. Decide which film would be the most suitable for each person below.</div>
                 
                 <div class="text-box">
-                    <h3 class="font-bold text-lg mb-4">Films of the week</h3>
-                    <div class="mb-4">
-                        <p><strong>A. East-side Story</strong><br>This <span class="vocab-word" data-word="sequel">sequel</span> to the original musical classic is definitely worth seeing. This time, the romantic interest takes place between a middle-aged Italian man and a Russian woman in New York, with a great message about love and age. Excellent dance routines and singing performances make this exceptional film as entertaining as a Broadway hit.</p>
-                    </div>
-                    <div class="mb-4">
-                        <p><strong>B. Chuckling all Day</strong><br>The young comedian Steve Trumann gives us another extremely funny performance as the office worker who has one humorous accident after another in the busy city he lives in. In the end, we feel that this could happen to any one of us, which perhaps helps us laugh in an understanding way.</p>
-                    </div>
-                    <div class="mb-4">
-                        <p><strong>C. Phantom Screams</strong><br>In this tense <span class="vocab-word" data-word="psychological">psychological</span> thriller, James Tyler has the same terrible dream: that spirits who want the house empty, kill him and his family. However, when the first events of his dream start happening, a series of clues provide the only hope he has to save himself and the family.</p>
-                    </div>
-                    <div class="mb-4">
-                        <p><strong>D. The Soldier Returns</strong><br>Although Arnold Stallon tried his best in this film, he seems to have failed. He plays an ex-commando who must now fight a drug-lord. But the only thing he seems to do throughout the movie is fight everyone, using guns, knives and bombs. His character is nothing more than a guy who enjoys killing others.</p>
-                    </div>
-                    <div class="mb-4">
-                        <p><strong>E. Destiny of the Heart</strong><br>Two young students leave high school for college, and although they were in love with each other, neither managed to tell the other. The film is set four years later when the two meet by chance at a train station. Will they let each other go again or live happily ever after? A <span class="vocab-word" data-word="predictable">predictable</span> but sweet romantic movie for teenagers.</p>
-                    </div>
-                    <div class="mb-4">
-                        <p><strong>F. Murder at the Office</strong><br>This is a classic murder mystery. At the beginning of the film, we see through the murderer's eyes, as he attacks and kills his victim, a rich businessman. Next, we see a room with five suspects, all his employees, who were in the building at the time. Can you guess who did it?</p>
-                    </div>
-                    <div class="mb-4">
-                        <p><strong>G. The 23rd Century Man</strong><br>The biggest science fiction film of the year does not disappoint as Michael Saunt plays an astronaut in the 23rd century who is travelling the stars with only robots and computers as company. But there's more to this film than fiction, as it warns us about the danger of losing our human nature to computers.</p>
-                    </div>
-                    <div class="mb-4">
-                        <p><strong>H. Henry V</strong><br>Anyone looking for a classic should consider this Shakespeare play, complete with Hollywood special effects and star names. The hard reality of war in the Middle Ages is certainly brought to life by the tough actors as they march through France.</p>
+                    <h3 class="text-2xl mb-6 text-center text-blue-900">Films of the week</h3>
+                    <div class="grid gap-6">
+                        <div class="p-4 bg-gray-50 rounded-lg border border-gray-200">
+                            <h4 class="text-lg font-bold text-blue-800 mb-2">A. East-side Story</h4>
+                            <p>This <span class="vocab-word" data-word="sequel">sequel</span> to the original musical classic is definitely worth seeing. This time, the romantic interest takes place between a middle-aged Italian man and a Russian woman in New York, with a great message about love and age. Excellent dance routines and singing performances make this exceptional film as entertaining as a Broadway hit.</p>
+                        </div>
+                        <div class="p-4 bg-gray-50 rounded-lg border border-gray-200">
+                            <h4 class="text-lg font-bold text-blue-800 mb-2">B. Chuckling all Day</h4>
+                            <p>The young comedian Steve Trumann gives us another extremely funny performance as the office worker who has one humorous accident after another in the busy city he lives in. In the end, we feel that this could happen to any one of us, which perhaps helps us laugh in an understanding way.</p>
+                        </div>
+                        <div class="p-4 bg-gray-50 rounded-lg border border-gray-200">
+                            <h4 class="text-lg font-bold text-blue-800 mb-2">C. Phantom Screams</h4>
+                            <p>In this tense <span class="vocab-word" data-word="psychological">psychological</span> thriller, James Tyler has the same terrible dream: that spirits who want the house empty, kill him and his family. However, when the first events of his dream start happening, a series of clues provide the only hope he has to save himself and the family.</p>
+                        </div>
+                        <div class="p-4 bg-gray-50 rounded-lg border border-gray-200">
+                            <h4 class="text-lg font-bold text-blue-800 mb-2">D. The Soldier Returns</h4>
+                            <p>Although Arnold Stallon tried his best in this film, he seems to have failed. He plays an ex-commando who must now fight a drug-lord. But the only thing he seems to do throughout the movie is fight everyone, using guns, knives and bombs. His character is nothing more than a guy who enjoys killing others.</p>
+                        </div>
+                        <div class="p-4 bg-gray-50 rounded-lg border border-gray-200">
+                            <h4 class="text-lg font-bold text-blue-800 mb-2">E. Destiny of the Heart</h4>
+                            <p>Two young students leave high school for college, and although they were in love with each other, neither managed to tell the other. The film is set four years later when the two meet by chance at a train station. Will they let each other go again or live happily ever after? A <span class="vocab-word" data-word="predictable">predictable</span> but sweet romantic movie for teenagers.</p>
+                        </div>
+                        <div class="p-4 bg-gray-50 rounded-lg border border-gray-200">
+                            <h4 class="text-lg font-bold text-blue-800 mb-2">F. Murder at the Office</h4>
+                            <p>This is a classic murder mystery. At the beginning of the film, we see through the murderer's eyes, as he attacks and kills his victim, a rich businessman. Next, we see a room with five suspects, all his employees, who were in the building at the time. Can you guess who did it?</p>
+                        </div>
+                        <div class="p-4 bg-gray-50 rounded-lg border border-gray-200">
+                            <h4 class="text-lg font-bold text-blue-800 mb-2">G. The 23rd Century Man</h4>
+                            <p>The biggest science fiction film of the year does not disappoint as Michael Saunt plays an astronaut in the 23rd century who is travelling the stars with only robots and computers as company. But there's more to this film than fiction, as it warns us about the danger of losing our human nature to computers.</p>
+                        </div>
+                        <div class="p-4 bg-gray-50 rounded-lg border border-gray-200">
+                            <h4 class="text-lg font-bold text-blue-800 mb-2">H. Henry V</h4>
+                            <p>Anyone looking for a classic should consider this Shakespeare play, complete with Hollywood special effects and star names. The hard reality of war in the Middle Ages is certainly brought to life by the tough actors as they march through France.</p>
+                        </div>
                     </div>
                 </div>
             </div>
 
             <div class="reading-text tab-content" data-part="3">
-                <h2 class="part-title">Part 3</h2>
-                <p class="instruction">Questions 11-15<br>For each question, choose the correct answer.</p>
+                <h2 class="part-title">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>
+                    Part 3
+                </h2>
+                <div class="instruction">Questions 11-15<br>For each question, choose the correct answer.</div>
                 
                 <div class="text-box">
-                    <h3 class="text-xl font-bold mb-4">Giving back to the people</h3>
+                    <h3 class="text-2xl font-bold mb-6 text-center">Giving back to the people</h3>
+                    
                     <p>Ever since she arrived on the pop scene in the early eighties, Madonna has remained one of the most well-known celebrities in the world. She has shown herself to be a talented singer, dancer, songwriter and actress. Having achieved all this, one cannot doubt that she has a strong belief in herself and her abilities. She seems to have gained such a strong personality through her own painful childhood experiences. She went to a strict Catholic school, was one of many children, and her family was split up after her mother died from cancer.</p>
                     
                     <p>Eventually, in search of fame; she left college and went to New York with only her suitcase and a few dollars. Madonna became one of the biggest stars on the planet, and has sold over 200 million records worldwide, making her the most successful solo artist alive. Few, though, may have realized that her rough start in life is exactly what made her so determined to get ahead and to decide to help so many others.</p>
-                    
-                    <p>Madonna's single cause over the past 10 years of her life is to give back to the people as much as she can. This is why she has made such a huge effort to bring an end to the extreme <span class="vocab-word" data-word="poverty">poverty</span> and hardship experienced by Malawi's 2 million <span class="vocab-word" data-word="orphan">orphans</span>. She founded Raising Malawi, a non-profit organization that gives children in Malawi food, clothing, shelter, education, medical care and psychological support. At the same time, she supports other non-government organizations that offer many poor African families opportunities to earn money themselves. These programs try to change the lives of these people once and for all.</p>
+
+                    <p>Madonna's single cause over the past 10 years of her life is to give back to the people as much as she can. This is why she has made such a huge effort to bring an end to the extreme <span class="vocab-word" data-word="poverty">poverty</span> and hardship experienced by Malawi's 2 million <span class="vocab-word" data-word="orphan">orphans</span>. She founded <em>Raising Malawi</em>, a non-profit organization that gives children in Malawi food, clothing, shelter, education, medical care and psychological support. At the same time, she supports other non-government organizations that offer many poor African families opportunities to earn money themselves. These programs try to change the lives of these people once and for all.</p>
                     
                     <p>It makes you wonder, doesn't it? What would happen if every one of us, just like Madonna did, gave back to those in need? Without a doubt, the world would be such a better place to live in. And it's not simply because certain people would be able to have the things that they should have never lived without in the first place, but also because through volunteering and charity, everyone can become a better person, experiencing benefits one would have never even imagined.</p>
                 </div>
             </div>
 
             <div class="reading-text tab-content" data-part="4">
-                <h2 class="part-title">Part 4</h2>
-                <p class="instruction">Questions 16-20<br>Five sentences have been removed from the text below. For each question, choose the correct answer (A-H). There are three extra sentences.</p>
+                <h2 class="part-title">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>
+                    Part 4
+                </h2>
+                <div class="instruction">Questions 16-20<br>Five sentences have been removed from the text below. For each question, choose the correct answer (A-H). There are three extra sentences.</div>
                 
                 <div class="text-box">
-                    <h3 class="text-xl font-bold mb-4">Choosing a Career</h3>
-                    <p>You know what they say; find a job you love and you will never work a day in your life. So, if you are thinking about what to do with your life, this may be something to consider. <span class="gap">[ 16 ]</span> Especially because there are so many jobs to choose from and many things to think about, such as qualifications and financial rewards. <span class="gap">[ 17 ]</span> The only answer seems to be "choose one that makes you feel that you are getting paid for doing something you truly love".</p>
+                    <h3 class="text-2xl font-bold mb-6 text-center">Choosing a Career</h3>
+                    <p>You know what they say; find a job you love and you will never work a day in your life. So, if you are thinking about what to do with your life, this may be something to consider. <span class="drop-zone in-text" data-name="q16" data-label="16"></span> Especially because there are so many jobs to choose from and many things to think about, such as <span class="vocab-word" data-word="qualifications">qualifications</span> and financial rewards. <span class="drop-zone in-text" data-name="q17" data-label="17"></span> The only answer seems to be "choose one that makes you feel that you are getting paid for doing something you truly love".</p>
                     
-                    <p>Unless you have grown up with a talent or are keen on something that you can make a career out of, you need to consider certain things about yourself. What suits your personality? We are all different and just because your best friend wants to be a doctor, this does not mean that you should follow. <span class="gap">[ 18 ]</span> This means thinking carefully about the path you need to follow to get that job. Are you willing to get the training or education needed? <span class="gap">[ 19 ]</span> If it's just because it's well paid, then, for sure, sometime in the future you are going to feel 'empty', even with a healthy bank account.</p>
+                    <p>Unless you have grown up with a talent or are keen on something that you can make a career out of, you need to consider certain things about yourself. What suits your personality? We are all different and just because your best friend wants to be a doctor, this does not mean that you should follow. <span class="drop-zone in-text" data-name="q18" data-label="18"></span> This means thinking carefully about the path you need to follow to get that job. Are you willing to get the training or education needed? <span class="drop-zone in-text" data-name="q19" data-label="19"></span> If it's just because it's well paid, then, for sure, sometime in the future you are going to feel 'empty', even with a healthy bank account.</p>
                     
-                    <p>Nowadays, there are plenty of online career sites, but the main part has to come from you. You need to be honest and measure your skills and talents realistically. Also, you may need to talk to your parents who have their own ideas, based on their own experiences, about what you should do. <span class="gap">[ 20 ]</span> They don't want to see you having financial problems or being unemployed. But at the end of the day, it is your life. There is no point in being <span class="vocab-word" data-word="miserable">miserable</span> for the next forty years just to please someone else.</p>
-                </div>
-                
-                <div class="text-box bg-blue-50">
-                    <p><strong>A.</strong> They have your best interests at heart.</p>
-                    <p><strong>B.</strong> The education system is different in each country.</p>
-                    <p><strong>C.</strong> So how do you pick a career?</p>
-                    <p><strong>D.</strong> I always wanted to follow his profession.</p>
-                    <p><strong>E.</strong> Choosing a career can be difficult.</p>
-                    <p><strong>F.</strong> Money can be a major consideration in our choices.</p>
-                    <p><strong>G.</strong> You must also consider why you really want to do it.</p>
-                    <p><strong>H.</strong> You need to make an informed decision.</p>
+                    <p>Nowadays, there are plenty of online career sites, but the main part has to come from you. You need to be honest and measure your skills and talents realistically. Also, you may need to talk to your parents who have their own ideas, based on their own experiences, about what you should do. <span class="drop-zone in-text" data-name="q20" data-label="20"></span> They don't want to see you having financial problems or being unemployed. But at the end of the day, it is your life. There is no point in being <span class="vocab-word" data-word="miserable">miserable</span> for the next forty years just to please someone else.</p>
                 </div>
             </div>
 
             <div class="reading-text tab-content" data-part="5">
-                <h2 class="part-title">Part 5</h2>
-                <p class="instruction">Questions 21-26<br>For each question, choose the correct answer.</p>
+                <h2 class="part-title">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>
+                    Part 5
+                </h2>
+                <div class="instruction">Questions 21-26<br>For each question, choose the correct answer.</div>
                 
                 <div class="text-box">
-                    <h3 class="text-xl font-bold mb-4">Magnets</h3>
+                    <h3 class="text-2xl font-bold mb-6 text-center">Magnets</h3>
                     <p>Objects that have the power to pull iron and some other metals are called magnets. Magnets can do that because of their <span class="vocab-word" data-word="magnetic field">magnetic field</span>; that is a region of force around them. So magnets work from a(n) <span class="gap">(21)</span> ............... ; they do not have to be touching other objects to pull them.</p>
                     
                     <p>The objects that are attracted to the magnet, feel a force <span class="gap">(22)</span> ............... as 'magnetism', when they are inside the magnet's magnetic field. This magnetic force can also easily pass through some other <span class="gap">(23)</span> ............... , such as plastic. And even a not so strong magnet will <span class="gap">(24)</span> ............... to pull a pin to the other side of a sheet of paper.</p>
-                    
+
                     <p>Magnets come in different shapes and sizes, but the most common one is the one that <span class="gap">(25)</span> ............... like a horseshoe. But there are also other forms, such as bar magnets. Every magnet has two poles: a north pole and a south pole, at the opposite ends of it. Unsurprisingly, the north pole of a magnet <span class="gap">(26)</span> ............... towards the Earth's north pole and vice-versa.</p>
                 </div>
             </div>
 
             <div class="reading-text tab-content" data-part="6">
-                <h2 class="part-title">Part 6</h2>
-                <p class="instruction">Questions 27-32<br>For each question, write the correct answer. Write <strong>ONE</strong> word for each gap.</p>
+                <h2 class="part-title">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>
+                    Part 6
+                </h2>
+                <div class="instruction">Questions 27-32<br>For each question, write the correct answer. Write <strong>ONE</strong> word for each gap.</div>
                 
                 <div class="text-box">
-                    <h3 class="text-xl font-bold mb-4">Fishing for plastic</h3>
+                    <h3 class="text-2xl font-bold mb-6 text-center">Fishing for plastic</h3>
                     <p><span class="gap">(27)</span> ............... August last year, in Kollam, a fishing town in India's southernmost state, Kerala, fishermen have been bringing all the plastic they find in the sea back <span class="gap">(28)</span> ............... land. Until then they thought they could do nothing about this plastic, as they had nowhere to take it and nothing to help them do something with it. But now, they've managed to set up the first ever recycling centre in the area to clean, sort and process all the plastic bags, bottles and straws that they fish out.</p>
                     
                     <p><span class="gap">(29)</span> ............... years, fishermen have been complaining about plastic getting caught in their nets. Not <span class="gap">(30)</span> ............... has this plastic caused them problems, but it has also killed sea life by <span class="vocab-word" data-word="polluting">polluting</span> the sea. This, in turn, has affected how <span class="gap">(31)</span> ............... fish they can catch. As most of the plastic rubbish they fish out is <span class="gap">(32)</span> ............... damaged to recycle in the usual way, they cut it into very small pieces and then use it when making roads.</p>
@@ -378,62 +666,82 @@
             
             <!-- Part 1 Questions -->
             <div class="question-group tab-content active" data-part="1">
-                <h2 class="text-xl font-bold mb-4">Part 1 Questions</h2>
+                <h2 class="text-2xl font-bold mb-6 text-blue-900">Part 1 Questions</h2>
                 
-                <div class="mb-6 q-wrapper">
-                    <p class="mb-2"><span class="q-number">1</span> What does the notice say?</p>
-                    <label class="radio-custom"><input type="radio" name="q1" value="A"> A. You can only smoke, eat and drink in special areas on the train.</label>
-                    <label class="radio-custom"><input type="radio" name="q1" value="B"> B. You cannot drink, eat or smoke anywhere on the underground system.</label>
-                    <label class="radio-custom"><input type="radio" name="q1" value="C"> C. You cannot smoke, eat or drink on the train but you can on the platform.</label>
+                <div class="q-wrapper">
+                    <div class="flex mb-3">
+                        <span class="q-number">1</span>
+                        <p class="font-semibold text-lg m-0">What does the notice say?</p>
+                    </div>
+                    <label class="radio-custom"><input type="radio" name="q1" value="A"> <span><strong>A.</strong> You can only smoke, eat and drink in special areas on the train.</span></label>
+                    <label class="radio-custom"><input type="radio" name="q1" value="B"> <span><strong>B.</strong> You cannot drink, eat or smoke anywhere on the underground system.</span></label>
+                    <label class="radio-custom"><input type="radio" name="q1" value="C"> <span><strong>C.</strong> You cannot smoke, eat or drink on the train but you can on the platform.</span></label>
                     <div class="explanation-box" id="exp-q1"></div>
                 </div>
 
-                <div class="mb-6 q-wrapper">
-                    <p class="mb-2"><span class="q-number">2</span> From Anne's email, we can understand that:</p>
-                    <label class="radio-custom"><input type="radio" name="q2" value="A"> A. Anne is not very satisfied with the accommodation but doesn't mind that much.</label>
-                    <label class="radio-custom"><input type="radio" name="q2" value="B"> B. The weather in Spain is much better than they had expected for this time of year.</label>
-                    <label class="radio-custom"><input type="radio" name="q2" value="C"> C. Anne wasn't able to accompany Jane on her journey as she had intended.</label>
+                <div class="q-wrapper">
+                    <div class="flex mb-3">
+                        <span class="q-number">2</span>
+                        <p class="font-semibold text-lg m-0">From Anne's email, we can understand that:</p>
+                    </div>
+                    <label class="radio-custom"><input type="radio" name="q2" value="A"> <span><strong>A.</strong> Anne is not very satisfied with the accommodation but doesn't mind that much.</span></label>
+                    <label class="radio-custom"><input type="radio" name="q2" value="B"> <span><strong>B.</strong> The weather in Spain is much better than they had expected for this time of year.</span></label>
+                    <label class="radio-custom"><input type="radio" name="q2" value="C"> <span><strong>C.</strong> Anne wasn't able to accompany Jane on her journey as she had intended.</span></label>
                     <div class="explanation-box" id="exp-q2"></div>
                 </div>
 
-                <div class="mb-6 q-wrapper">
-                    <p class="mb-2"><span class="q-number">3</span> Why did Peter send this email?</p>
-                    <label class="radio-custom"><input type="radio" name="q3" value="A"> A. Nick is extremely interested in reading articles about Hollywood actors.</label>
-                    <label class="radio-custom"><input type="radio" name="q3" value="B"> B. Peter has written an article on films and wants Nick's opinion.</label>
-                    <label class="radio-custom"><input type="radio" name="q3" value="C"> C. Peter wants Nick to read film reviews from an internet site.</label>
+                <div class="q-wrapper">
+                    <div class="flex mb-3">
+                        <span class="q-number">3</span>
+                        <p class="font-semibold text-lg m-0">Why did Peter send this email?</p>
+                    </div>
+                    <label class="radio-custom"><input type="radio" name="q3" value="A"> <span><strong>A.</strong> Nick is extremely interested in reading articles about Hollywood actors.</span></label>
+                    <label class="radio-custom"><input type="radio" name="q3" value="B"> <span><strong>B.</strong> Peter has written an article on films and wants Nick's opinion.</span></label>
+                    <label class="radio-custom"><input type="radio" name="q3" value="C"> <span><strong>C.</strong> Peter wants Nick to read film reviews from an internet site.</span></label>
                     <div class="explanation-box" id="exp-q3"></div>
                 </div>
 
-                <div class="mb-6 q-wrapper">
-                    <p class="mb-2"><span class="q-number">4</span> What does Jane want David to do?</p>
-                    <label class="radio-custom"><input type="radio" name="q4" value="A"> A. collect their mother from the motorway.</label>
-                    <label class="radio-custom"><input type="radio" name="q4" value="B"> B. call their dad to let him know he must pick up their mother from the motorway.</label>
-                    <label class="radio-custom"><input type="radio" name="q4" value="C"> C. let their mother know that dad's car was involved in an accident on the motorway.</label>
+                <div class="q-wrapper">
+                    <div class="flex mb-3">
+                        <span class="q-number">4</span>
+                        <p class="font-semibold text-lg m-0">What does Jane want David to do?</p>
+                    </div>
+                    <label class="radio-custom"><input type="radio" name="q4" value="A"> <span><strong>A.</strong> collect their mother from the motorway.</span></label>
+                    <label class="radio-custom"><input type="radio" name="q4" value="B"> <span><strong>B.</strong> call their dad to let him know he must pick up their mother from the motorway.</span></label>
+                    <label class="radio-custom"><input type="radio" name="q4" value="C"> <span><strong>C.</strong> let their mother know that dad's car was involved in an accident on the motorway.</span></label>
                     <div class="explanation-box" id="exp-q4"></div>
                 </div>
 
-                <div class="mb-6 q-wrapper">
-                    <p class="mb-2"><span class="q-number">5</span> The headmaster's message means that:</p>
-                    <label class="radio-custom"><input type="radio" name="q5" value="A"> A. The teachers will attend one of their regular meetings.</label>
-                    <label class="radio-custom"><input type="radio" name="q5" value="B"> B. The headmaster does not like the teaching plan.</label>
-                    <label class="radio-custom"><input type="radio" name="q5" value="C"> C. There is a problem and someone must give a plan to the headmaster.</label>
+                <div class="q-wrapper">
+                    <div class="flex mb-3">
+                        <span class="q-number">5</span>
+                        <p class="font-semibold text-lg m-0">The headmaster's message means that:</p>
+                    </div>
+                    <label class="radio-custom"><input type="radio" name="q5" value="A"> <span><strong>A.</strong> The teachers will attend one of their regular meetings.</span></label>
+                    <label class="radio-custom"><input type="radio" name="q5" value="B"> <span><strong>B.</strong> The headmaster does not like the teaching plan.</span></label>
+                    <label class="radio-custom"><input type="radio" name="q5" value="C"> <span><strong>C.</strong> There is a problem and someone must give a plan to the headmaster.</span></label>
                     <div class="explanation-box" id="exp-q5"></div>
                 </div>
 
-                <div class="mt-8 pt-4 border-t border-gray-300 flex items-center gap-4">
-                    <button class="btn-primary btn-check" data-part="1">Check Answers</button>
-                    <span class="font-bold text-lg text-gray-700" id="score-part-1"></span>
+                <div class="mt-8 pt-6 border-t border-gray-300 flex items-center justify-between">
+                    <button class="btn-primary btn-check flex items-center gap-2" data-part="1">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd" /></svg>
+                        Check Answers
+                    </button>
+                    <span class="font-bold text-xl text-gray-700" id="score-part-1"></span>
                 </div>
             </div>
 
             <!-- Part 2 Questions -->
             <div class="question-group tab-content" data-part="2">
-                <h2 class="text-xl font-bold mb-4">Part 2 Questions</h2>
-                <p class="mb-4 text-sm text-gray-600">Match the people to the most suitable film.</p>
-
-                <div class="mb-4 q-wrapper">
-                    <div class="flex items-center justify-between">
-                        <div style="flex: 1;"><span class="q-number">6</span> <strong>Ian's</strong> favourite movies are horror films, but not if they contain too much blood. He would like to see something to do with mystery and ghosts.</div>
+                <h2 class="text-2xl font-bold mb-6 text-blue-900">Part 2 Questions</h2>
+                
+                <div class="q-wrapper">
+                    <div class="flex items-start justify-between gap-4">
+                        <div class="flex-1">
+                            <span class="q-number float-left mt-1">6</span> 
+                            <p class="m-0 leading-relaxed"><strong>Ian's</strong> favourite movies are horror films, but not if they contain too much blood. He would like to see something to do with mystery and ghosts.</p>
+                        </div>
                         <select class="select-custom" name="q6">
                             <option value="">Select</option>
                             <option value="A">A</option><option value="B">B</option><option value="C">C</option><option value="D">D</option><option value="E">E</option><option value="F">F</option><option value="G">G</option><option value="H">H</option>
@@ -442,9 +750,12 @@
                     <div class="explanation-box" id="exp-q6"></div>
                 </div>
 
-                <div class="mb-4 q-wrapper">
-                    <div class="flex items-center justify-between">
-                        <div style="flex: 1;"><span class="q-number">7</span> <strong>Jenny</strong> wants to go with her boyfriend on a date, and wants to see something that is romantic and ideal for young people, but she knows he does not like musicals.</div>
+                <div class="q-wrapper">
+                    <div class="flex items-start justify-between gap-4">
+                        <div class="flex-1">
+                            <span class="q-number float-left mt-1">7</span> 
+                            <p class="m-0 leading-relaxed"><strong>Jenny</strong> wants to go with her boyfriend on a date, and wants to see something that is romantic and ideal for young people, but she knows he does not like musicals.</p>
+                        </div>
                         <select class="select-custom" name="q7">
                             <option value="">Select</option>
                             <option value="A">A</option><option value="B">B</option><option value="C">C</option><option value="D">D</option><option value="E">E</option><option value="F">F</option><option value="G">G</option><option value="H">H</option>
@@ -453,9 +764,12 @@
                     <div class="explanation-box" id="exp-q7"></div>
                 </div>
 
-                <div class="mb-4 q-wrapper">
-                    <div class="flex items-center justify-between">
-                        <div style="flex: 1;"><span class="q-number">8</span> <strong>Nick</strong> has had a stressful day and wants to see a film that will help him relax and escape. He would like something funny but does not enjoy science fiction films.</div>
+                <div class="q-wrapper">
+                    <div class="flex items-start justify-between gap-4">
+                        <div class="flex-1">
+                            <span class="q-number float-left mt-1">8</span> 
+                            <p class="m-0 leading-relaxed"><strong>Nick</strong> has had a stressful day and wants to see a film that will help him relax and escape. He would like something funny but does not enjoy science fiction films.</p>
+                        </div>
                         <select class="select-custom" name="q8">
                             <option value="">Select</option>
                             <option value="A">A</option><option value="B">B</option><option value="C">C</option><option value="D">D</option><option value="E">E</option><option value="F">F</option><option value="G">G</option><option value="H">H</option>
@@ -464,9 +778,12 @@
                     <div class="explanation-box" id="exp-q8"></div>
                 </div>
 
-                <div class="mb-4 q-wrapper">
-                    <div class="flex items-center justify-between">
-                        <div style="flex: 1;"><span class="q-number">9</span> <strong>George is married to Sylvia</strong> and they want to see an entertaining film. They have seen many typical Hollywood movies but now they want something with singing or dancing.</div>
+                <div class="q-wrapper">
+                    <div class="flex items-start justify-between gap-4">
+                        <div class="flex-1">
+                            <span class="q-number float-left mt-1">9</span> 
+                            <p class="m-0 leading-relaxed"><strong>George is married to Sylvia</strong> and they want to see an entertaining film. They have seen many typical Hollywood movies but now they want something with singing or dancing.</p>
+                        </div>
                         <select class="select-custom" name="q9">
                             <option value="">Select</option>
                             <option value="A">A</option><option value="B">B</option><option value="C">C</option><option value="D">D</option><option value="E">E</option><option value="F">F</option><option value="G">G</option><option value="H">H</option>
@@ -475,9 +792,12 @@
                     <div class="explanation-box" id="exp-q9"></div>
                 </div>
 
-                <div class="mb-4 q-wrapper">
-                    <div class="flex items-center justify-between">
-                        <div style="flex: 1;"><span class="q-number">10</span> <strong>Rob</strong> is interested in technology and the future and he likes a different setting from everyday situations. He also prefers films to have a message or an issue to think about.</div>
+                <div class="q-wrapper">
+                    <div class="flex items-start justify-between gap-4">
+                        <div class="flex-1">
+                            <span class="q-number float-left mt-1">10</span> 
+                            <p class="m-0 leading-relaxed"><strong>Rob</strong> is interested in technology and the future and he likes a different setting from everyday situations. He also prefers films to have a message or an issue to think about.</p>
+                        </div>
                         <select class="select-custom" name="q10">
                             <option value="">Select</option>
                             <option value="A">A</option><option value="B">B</option><option value="C">C</option><option value="D">D</option><option value="E">E</option><option value="F">F</option><option value="G">G</option><option value="H">H</option>
@@ -486,177 +806,288 @@
                     <div class="explanation-box" id="exp-q10"></div>
                 </div>
 
-                <div class="mt-8 pt-4 border-t border-gray-300 flex items-center gap-4">
-                    <button class="btn-primary btn-check" data-part="2">Check Answers</button>
-                    <span class="font-bold text-lg text-gray-700" id="score-part-2"></span>
+                <div class="mt-8 pt-6 border-t border-gray-300 flex items-center justify-between">
+                    <button class="btn-primary btn-check flex items-center gap-2" data-part="2">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd" /></svg>
+                        Check Answers
+                    </button>
+                    <span class="font-bold text-xl text-gray-700" id="score-part-2"></span>
                 </div>
             </div>
 
             <!-- Part 3 Questions -->
             <div class="question-group tab-content" data-part="3">
-                <h2 class="text-xl font-bold mb-4">Part 3 Questions</h2>
+                <h2 class="text-2xl font-bold mb-6 text-blue-900">Part 3 Questions</h2>
                 
-                <div class="mb-6 q-wrapper">
-                    <p class="mb-2"><span class="q-number">11</span> Madonna's career:</p>
-                    <label class="radio-custom"><input type="radio" name="q11" value="A"> A. is steadily in decline since her first appearance in the eighties.</label>
-                    <label class="radio-custom"><input type="radio" name="q11" value="B"> B. has not been limited to the pop scene.</label>
-                    <label class="radio-custom"><input type="radio" name="q11" value="C"> C. has been down to luck rather than talent.</label>
-                    <label class="radio-custom"><input type="radio" name="q11" value="D"> D. is the result of a lifetime of opportunities.</label>
+                <div class="q-wrapper">
+                    <div class="flex mb-3">
+                        <span class="q-number">11</span>
+                        <p class="font-semibold text-lg m-0">Madonna's career:</p>
+                    </div>
+                    <label class="radio-custom"><input type="radio" name="q11" value="A"> <span><strong>A.</strong> is steadily in decline since her first appearance in the eighties.</span></label>
+                    <label class="radio-custom"><input type="radio" name="q11" value="B"> <span><strong>B.</strong> has not been limited to the pop scene.</span></label>
+                    <label class="radio-custom"><input type="radio" name="q11" value="C"> <span><strong>C.</strong> has been down to luck rather than talent.</span></label>
+                    <label class="radio-custom"><input type="radio" name="q11" value="D"> <span><strong>D.</strong> is the result of a lifetime of opportunities.</span></label>
                     <div class="explanation-box" id="exp-q11"></div>
                 </div>
 
-                <div class="mb-6 q-wrapper">
-                    <p class="mb-2"><span class="q-number">12</span> As a child, Madonna was probably:</p>
-                    <label class="radio-custom"><input type="radio" name="q12" value="A"> A. happiest during her school days.</label>
-                    <label class="radio-custom"><input type="radio" name="q12" value="B"> B. lonely and without anyone to talk to.</label>
-                    <label class="radio-custom"><input type="radio" name="q12" value="C"> C. unhappy in New York.</label>
-                    <label class="radio-custom"><input type="radio" name="q12" value="D"> D. made stronger due to difficult events.</label>
+                <div class="q-wrapper">
+                    <div class="flex mb-3">
+                        <span class="q-number">12</span>
+                        <p class="font-semibold text-lg m-0">As a child, Madonna was probably:</p>
+                    </div>
+                    <label class="radio-custom"><input type="radio" name="q12" value="A"> <span><strong>A.</strong> happiest during her school days.</span></label>
+                    <label class="radio-custom"><input type="radio" name="q12" value="B"> <span><strong>B.</strong> lonely and without anyone to talk to.</span></label>
+                    <label class="radio-custom"><input type="radio" name="q12" value="C"> <span><strong>C.</strong> unhappy in New York.</span></label>
+                    <label class="radio-custom"><input type="radio" name="q12" value="D"> <span><strong>D.</strong> made stronger due to difficult events.</span></label>
                     <div class="explanation-box" id="exp-q12"></div>
                 </div>
 
-                <div class="mb-6 q-wrapper">
-                    <p class="mb-2"><span class="q-number">13</span> What does the writer say about Madonna's success?</p>
-                    <label class="radio-custom"><input type="radio" name="q13" value="A"> A. She is the best-selling artist alive.</label>
-                    <label class="radio-custom"><input type="radio" name="q13" value="B"> B. She earned a lot of money early on in her career.</label>
-                    <label class="radio-custom"><input type="radio" name="q13" value="C"> C. Her success is mainly due to luck.</label>
-                    <label class="radio-custom"><input type="radio" name="q13" value="D"> D. Her move to New York didn't help much with her career.</label>
+                <div class="q-wrapper">
+                    <div class="flex mb-3">
+                        <span class="q-number">13</span>
+                        <p class="font-semibold text-lg m-0">What does the writer say about Madonna's success?</p>
+                    </div>
+                    <label class="radio-custom"><input type="radio" name="q13" value="A"> <span><strong>A.</strong> She is the best-selling artist alive.</span></label>
+                    <label class="radio-custom"><input type="radio" name="q13" value="B"> <span><strong>B.</strong> She earned a lot of money early on in her career.</span></label>
+                    <label class="radio-custom"><input type="radio" name="q13" value="C"> <span><strong>C.</strong> Her success is mainly due to luck.</span></label>
+                    <label class="radio-custom"><input type="radio" name="q13" value="D"> <span><strong>D.</strong> Her move to New York didn't help much with her career.</span></label>
                     <div class="explanation-box" id="exp-q13"></div>
                 </div>
 
-                <div class="mb-6 q-wrapper">
-                    <p class="mb-2"><span class="q-number">14</span> According to the text, Raising Malawi:</p>
-                    <label class="radio-custom"><input type="radio" name="q14" value="A"> A. has earned Madonna a lot of money.</label>
-                    <label class="radio-custom"><input type="radio" name="q14" value="B"> B. is a charity that helps poor African families.</label>
-                    <label class="radio-custom"><input type="radio" name="q14" value="C"> C. tries to make a difference in the lives of many children in Malawi.</label>
-                    <label class="radio-custom"><input type="radio" name="q14" value="D"> D. has failed to attract other's attention to the issues it deals with.</label>
+                <div class="q-wrapper">
+                    <div class="flex mb-3">
+                        <span class="q-number">14</span>
+                        <p class="font-semibold text-lg m-0">According to the text, Raising Malawi:</p>
+                    </div>
+                    <label class="radio-custom"><input type="radio" name="q14" value="A"> <span><strong>A.</strong> has earned Madonna a lot of money.</span></label>
+                    <label class="radio-custom"><input type="radio" name="q14" value="B"> <span><strong>B.</strong> is a charity that helps poor African families.</span></label>
+                    <label class="radio-custom"><input type="radio" name="q14" value="C"> <span><strong>C.</strong> tries to make a difference in the lives of many children in Malawi.</span></label>
+                    <label class="radio-custom"><input type="radio" name="q14" value="D"> <span><strong>D.</strong> has failed to attract other's attention to the issues it deals with.</span></label>
                     <div class="explanation-box" id="exp-q14"></div>
                 </div>
 
-                <div class="mb-6 q-wrapper">
-                    <p class="mb-2"><span class="q-number">15</span> How would the writer probably describe Madonna?</p>
-                    <label class="radio-custom"><input type="radio" name="q15" value="A"> A. "She is a woman that may seem to care for others but in fact only does so for herself."</label>
-                    <label class="radio-custom"><input type="radio" name="q15" value="B"> B. "She has failed to achieve what she could have because of a life of hardship that eventually brought her down."</label>
-                    <label class="radio-custom"><input type="radio" name="q15" value="C"> C. "Her success doesn't mean much to her as she always wants to become better and better."</label>
-                    <label class="radio-custom"><input type="radio" name="q15" value="D"> D. "What she is truly passionate about is helping those in need have a better future."</label>
+                <div class="q-wrapper">
+                    <div class="flex mb-3">
+                        <span class="q-number">15</span>
+                        <p class="font-semibold text-lg m-0">How would the writer probably describe Madonna?</p>
+                    </div>
+                    <label class="radio-custom"><input type="radio" name="q15" value="A"> <span><strong>A.</strong> "She is a woman that may seem to care for others but in fact only does so for herself."</span></label>
+                    <label class="radio-custom"><input type="radio" name="q15" value="B"> <span><strong>B.</strong> "She has failed to achieve what she could have because of a life of hardship that eventually brought her down."</span></label>
+                    <label class="radio-custom"><input type="radio" name="q15" value="C"> <span><strong>C.</strong> "Her success doesn't mean much to her as she always wants to become better and better."</span></label>
+                    <label class="radio-custom"><input type="radio" name="q15" value="D"> <span><strong>D.</strong> "What she is truly passionate about is helping those in need have a better future."</span></label>
                     <div class="explanation-box" id="exp-q15"></div>
                 </div>
 
-                <div class="mt-8 pt-4 border-t border-gray-300 flex items-center gap-4">
-                    <button class="btn-primary btn-check" data-part="3">Check Answers</button>
-                    <span class="font-bold text-lg text-gray-700" id="score-part-3"></span>
+                <div class="mt-8 pt-6 border-t border-gray-300 flex items-center justify-between">
+                    <button class="btn-primary btn-check flex items-center gap-2" data-part="3">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd" /></svg>
+                        Check Answers
+                    </button>
+                    <span class="font-bold text-xl text-gray-700" id="score-part-3"></span>
                 </div>
             </div>
 
             <!-- Part 4 Questions -->
             <div class="question-group tab-content" data-part="4">
-                <h2 class="text-xl font-bold mb-4">Part 4 Questions</h2>
-                <p class="mb-4 text-sm text-gray-600">Select the correct sentence (A-H) for each gap.</p>
+                <h2 class="text-2xl font-bold mb-4 text-blue-900">Part 4 Questions</h2>
+                <p class="mb-6 text-gray-600">Drag and drop the correct sentence (A-H) from the pool below into the gaps in the reading text on the left.</p>
+
+                <!-- The Pool -->
+                <div class="draggable-pool bg-slate-50 p-4 rounded-xl border-2 border-dashed border-slate-300 mb-8 min-h-[100px] transition-colors" id="pool-part-4">
+                    <span class="drag-item" draggable="true" id="drag-A" data-value="A"><strong class="letter">A.</strong> <span class="full-text">They have your best interests at heart.</span></span>
+                    <span class="drag-item" draggable="true" id="drag-B" data-value="B"><strong class="letter">B.</strong> <span class="full-text">The education system is different in each country.</span></span>
+                    <span class="drag-item" draggable="true" id="drag-C" data-value="C"><strong class="letter">C.</strong> <span class="full-text">So how do you pick a career?</span></span>
+                    <span class="drag-item" draggable="true" id="drag-D" data-value="D"><strong class="letter">D.</strong> <span class="full-text">I always wanted to follow his profession.</span></span>
+                    <span class="drag-item" draggable="true" id="drag-E" data-value="E"><strong class="letter">E.</strong> <span class="full-text">Choosing a career can be difficult.</span></span>
+                    <span class="drag-item" draggable="true" id="drag-F" data-value="F"><strong class="letter">F.</strong> <span class="full-text">Money can be a major consideration in our choices.</span></span>
+                    <span class="drag-item" draggable="true" id="drag-G" data-value="G"><strong class="letter">G.</strong> <span class="full-text">You must also consider why you really want to do it.</span></span>
+                    <span class="drag-item" draggable="true" id="drag-H" data-value="H"><strong class="letter">H.</strong> <span class="full-text">You need to make an informed decision.</span></span>
+                </div>
+
+                <div class="q-wrapper">
+                    <div class="flex items-center mb-1">
+                        <span class="q-number">16</span> <span class="font-semibold text-lg text-gray-700">Gap 16</span>
+                    </div>
+                    <div class="text-sm text-gray-500">Drag answer into the text on the left.</div>
+                    <input type="hidden" name="q16" id="input-q16" value="">
+                    <div class="explanation-box w-full mt-3" id="exp-q16"></div>
+                </div>
+                <div class="q-wrapper">
+                    <div class="flex items-center mb-1">
+                        <span class="q-number">17</span> <span class="font-semibold text-lg text-gray-700">Gap 17</span>
+                    </div>
+                    <div class="text-sm text-gray-500">Drag answer into the text on the left.</div>
+                    <input type="hidden" name="q17" id="input-q17" value="">
+                    <div class="explanation-box w-full mt-3" id="exp-q17"></div>
+                </div>
+                <div class="q-wrapper">
+                    <div class="flex items-center mb-1">
+                        <span class="q-number">18</span> <span class="font-semibold text-lg text-gray-700">Gap 18</span>
+                    </div>
+                    <div class="text-sm text-gray-500">Drag answer into the text on the left.</div>
+                    <input type="hidden" name="q18" id="input-q18" value="">
+                    <div class="explanation-box w-full mt-3" id="exp-q18"></div>
+                </div>
+                <div class="q-wrapper">
+                    <div class="flex items-center mb-1">
+                        <span class="q-number">19</span> <span class="font-semibold text-lg text-gray-700">Gap 19</span>
+                    </div>
+                    <div class="text-sm text-gray-500">Drag answer into the text on the left.</div>
+                    <input type="hidden" name="q19" id="input-q19" value="">
+                    <div class="explanation-box w-full mt-3" id="exp-q19"></div>
+                </div>
+                <div class="q-wrapper">
+                    <div class="flex items-center mb-1">
+                        <span class="q-number">20</span> <span class="font-semibold text-lg text-gray-700">Gap 20</span>
+                    </div>
+                    <div class="text-sm text-gray-500">Drag answer into the text on the left.</div>
+                    <input type="hidden" name="q20" id="input-q20" value="">
+                    <div class="explanation-box w-full mt-3" id="exp-q20"></div>
+                </div>
                 
-                <div class="mb-3 q-wrapper"><span class="q-number">16</span> Gap 16: <select class="select-custom" name="q16"><option value="">Select</option><option value="A">A</option><option value="B">B</option><option value="C">C</option><option value="D">D</option><option value="E">E</option><option value="F">F</option><option value="G">G</option><option value="H">H</option></select><div class="explanation-box" id="exp-q16"></div></div>
-                <div class="mb-3 q-wrapper"><span class="q-number">17</span> Gap 17: <select class="select-custom" name="q17"><option value="">Select</option><option value="A">A</option><option value="B">B</option><option value="C">C</option><option value="D">D</option><option value="E">E</option><option value="F">F</option><option value="G">G</option><option value="H">H</option></select><div class="explanation-box" id="exp-q17"></div></div>
-                <div class="mb-3 q-wrapper"><span class="q-number">18</span> Gap 18: <select class="select-custom" name="q18"><option value="">Select</option><option value="A">A</option><option value="B">B</option><option value="C">C</option><option value="D">D</option><option value="E">E</option><option value="F">F</option><option value="G">G</option><option value="H">H</option></select><div class="explanation-box" id="exp-q18"></div></div>
-                <div class="mb-3 q-wrapper"><span class="q-number">19</span> Gap 19: <select class="select-custom" name="q19"><option value="">Select</option><option value="A">A</option><option value="B">B</option><option value="C">C</option><option value="D">D</option><option value="E">E</option><option value="F">F</option><option value="G">G</option><option value="H">H</option></select><div class="explanation-box" id="exp-q19"></div></div>
-                <div class="mb-3 q-wrapper"><span class="q-number">20</span> Gap 20: <select class="select-custom" name="q20"><option value="">Select</option><option value="A">A</option><option value="B">B</option><option value="C">C</option><option value="D">D</option><option value="E">E</option><option value="F">F</option><option value="G">G</option><option value="H">H</option></select><div class="explanation-box" id="exp-q20"></div></div>
-                
-                <div class="mt-8 pt-4 border-t border-gray-300 flex items-center gap-4">
-                    <button class="btn-primary btn-check" data-part="4">Check Answers</button>
-                    <span class="font-bold text-lg text-gray-700" id="score-part-4"></span>
+                <div class="mt-8 pt-6 border-t border-gray-300 flex items-center justify-between">
+                    <button class="btn-primary btn-check flex items-center gap-2" data-part="4">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd" /></svg>
+                        Check Answers
+                    </button>
+                    <span class="font-bold text-xl text-gray-700" id="score-part-4"></span>
                 </div>
             </div>
 
             <!-- Part 5 Questions -->
             <div class="question-group tab-content" data-part="5">
-                <h2 class="text-xl font-bold mb-4">Part 5 Questions</h2>
-                <p class="mb-4 text-sm text-gray-600">Choose the correct word for each gap.</p>
-
-                <div class="mb-4 q-wrapper">
-                    <span class="q-number">21</span> 
-                    <select class="select-custom" name="q21" style="width:150px">
-                        <option value="">Select</option>
-                        <option value="A">A. area</option>
-                        <option value="B">B. gap</option>
-                        <option value="C">C. distance</option>
-                        <option value="D">D. space</option>
-                    </select>
+                <h2 class="text-2xl font-bold mb-6 text-blue-900">Part 5 Questions</h2>
+                
+                <div class="q-wrapper">
+                    <div class="flex items-center gap-4">
+                        <span class="q-number">21</span> 
+                        <select class="select-custom" name="q21">
+                            <option value="">Select word</option>
+                            <option value="A">A. area</option>
+                            <option value="B">B. gap</option>
+                            <option value="C">C. distance</option>
+                            <option value="D">D. space</option>
+                        </select>
+                    </div>
                     <div class="explanation-box" id="exp-q21"></div>
                 </div>
-                <div class="mb-4 q-wrapper">
-                    <span class="q-number">22</span> 
-                    <select class="select-custom" name="q22" style="width:150px">
-                        <option value="">Select</option>
-                        <option value="A">A. mentioned</option>
-                        <option value="B">B. called</option>
-                        <option value="C">C. known</option>
-                        <option value="D">D. referred</option>
-                    </select>
+                <div class="q-wrapper">
+                    <div class="flex items-center gap-4">
+                        <span class="q-number">22</span> 
+                        <select class="select-custom" name="q22">
+                            <option value="">Select word</option>
+                            <option value="A">A. mentioned</option>
+                            <option value="B">B. called</option>
+                            <option value="C">C. known</option>
+                            <option value="D">D. referred</option>
+                        </select>
+                    </div>
                     <div class="explanation-box" id="exp-q22"></div>
                 </div>
-                <div class="mb-4 q-wrapper">
-                    <span class="q-number">23</span> 
-                    <select class="select-custom" name="q23" style="width:150px">
-                        <option value="">Select</option>
-                        <option value="A">A. objects</option>
-                        <option value="B">B. materials</option>
-                        <option value="C">C. ingredients</option>
-                        <option value="D">D. products</option>
-                    </select>
+                <div class="q-wrapper">
+                    <div class="flex items-center gap-4">
+                        <span class="q-number">23</span> 
+                        <select class="select-custom" name="q23">
+                            <option value="">Select word</option>
+                            <option value="A">A. objects</option>
+                            <option value="B">B. materials</option>
+                            <option value="C">C. ingredients</option>
+                            <option value="D">D. products</option>
+                        </select>
+                    </div>
                     <div class="explanation-box" id="exp-q23"></div>
                 </div>
-                <div class="mb-4 q-wrapper">
-                    <span class="q-number">24</span> 
-                    <select class="select-custom" name="q24" style="width:150px">
-                        <option value="">Select</option>
-                        <option value="A">A. succeed</option>
-                        <option value="B">B. enable</option>
-                        <option value="C">C. manage</option>
-                        <option value="D">D. allow</option>
-                    </select>
+                <div class="q-wrapper">
+                    <div class="flex items-center gap-4">
+                        <span class="q-number">24</span> 
+                        <select class="select-custom" name="q24">
+                            <option value="">Select word</option>
+                            <option value="A">A. succeed</option>
+                            <option value="B">B. enable</option>
+                            <option value="C">C. manage</option>
+                            <option value="D">D. allow</option>
+                        </select>
+                    </div>
                     <div class="explanation-box" id="exp-q24"></div>
                 </div>
-                <div class="mb-4 q-wrapper">
-                    <span class="q-number">25</span> 
-                    <select class="select-custom" name="q25" style="width:150px">
-                        <option value="">Select</option>
-                        <option value="A">A. seems</option>
-                        <option value="B">B. looks</option>
-                        <option value="C">C. shows</option>
-                        <option value="D">D. appears</option>
-                    </select>
+                <div class="q-wrapper">
+                    <div class="flex items-center gap-4">
+                        <span class="q-number">25</span> 
+                        <select class="select-custom" name="q25">
+                            <option value="">Select word</option>
+                            <option value="A">A. seems</option>
+                            <option value="B">B. looks</option>
+                            <option value="C">C. shows</option>
+                            <option value="D">D. appears</option>
+                        </select>
+                    </div>
                     <div class="explanation-box" id="exp-q25"></div>
                 </div>
-                <div class="mb-4 q-wrapper">
-                    <span class="q-number">26</span> 
-                    <select class="select-custom" name="q26" style="width:150px">
-                        <option value="">Select</option>
-                        <option value="A">A. points</option>
-                        <option value="B">B. aims</option>
-                        <option value="C">C. directs</option>
-                        <option value="D">D. approaches</option>
-                    </select>
+                <div class="q-wrapper">
+                    <div class="flex items-center gap-4">
+                        <span class="q-number">26</span> 
+                        <select class="select-custom" name="q26">
+                            <option value="">Select word</option>
+                            <option value="A">A. points</option>
+                            <option value="B">B. aims</option>
+                            <option value="C">C. directs</option>
+                            <option value="D">D. approaches</option>
+                        </select>
+                    </div>
                     <div class="explanation-box" id="exp-q26"></div>
                 </div>
 
-                <div class="mt-8 pt-4 border-t border-gray-300 flex items-center gap-4">
-                    <button class="btn-primary btn-check" data-part="5">Check Answers</button>
-                    <span class="font-bold text-lg text-gray-700" id="score-part-5"></span>
+                <div class="mt-8 pt-6 border-t border-gray-300 flex items-center justify-between">
+                    <button class="btn-primary btn-check flex items-center gap-2" data-part="5">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd" /></svg>
+                        Check Answers
+                    </button>
+                    <span class="font-bold text-xl text-gray-700" id="score-part-5"></span>
                 </div>
             </div>
 
             <!-- Part 6 Questions -->
             <div class="question-group tab-content" data-part="6">
-                <h2 class="text-xl font-bold mb-4">Part 6 Questions</h2>
-                <p class="mb-4 text-sm text-gray-600">Type <strong>ONE</strong> word in each gap.</p>
-
-                <div class="mb-4 q-wrapper"><span class="q-number">27</span> <input type="text" class="input-text" name="q27" placeholder="Gap 27..."><div class="explanation-box" id="exp-q27"></div></div>
-                <div class="mb-4 q-wrapper"><span class="q-number">28</span> <input type="text" class="input-text" name="q28" placeholder="Gap 28..."><div class="explanation-box" id="exp-q28"></div></div>
-                <div class="mb-4 q-wrapper"><span class="q-number">29</span> <input type="text" class="input-text" name="q29" placeholder="Gap 29..."><div class="explanation-box" id="exp-q29"></div></div>
-                <div class="mb-4 q-wrapper"><span class="q-number">30</span> <input type="text" class="input-text" name="q30" placeholder="Gap 30..."><div class="explanation-box" id="exp-q30"></div></div>
-                <div class="mb-4 q-wrapper"><span class="q-number">31</span> <input type="text" class="input-text" name="q31" placeholder="Gap 31..."><div class="explanation-box" id="exp-q31"></div></div>
-                <div class="mb-4 q-wrapper"><span class="q-number">32</span> <input type="text" class="input-text" name="q32" placeholder="Gap 32..."><div class="explanation-box" id="exp-q32"></div></div>
+                <h2 class="text-2xl font-bold mb-6 text-blue-900">Part 6 Questions</h2>
                 
-                <div class="mt-8 pt-4 border-t border-gray-300 flex items-center gap-4">
-                    <button class="btn-primary btn-check" data-part="6">Check Answers</button>
-                    <span class="font-bold text-lg text-gray-700" id="score-part-6"></span>
+                <div class="q-wrapper flex items-center gap-4">
+                    <span class="q-number">27</span> 
+                    <input type="text" class="input-text" name="q27" placeholder="Type one word...">
+                    <div class="explanation-box w-full" id="exp-q27"></div>
+                </div>
+                <div class="q-wrapper flex items-center gap-4">
+                    <span class="q-number">28</span> 
+                    <input type="text" class="input-text" name="q28" placeholder="Type one word...">
+                    <div class="explanation-box w-full" id="exp-q28"></div>
+                </div>
+                <div class="q-wrapper flex items-center gap-4">
+                    <span class="q-number">29</span> 
+                    <input type="text" class="input-text" name="q29" placeholder="Type one word...">
+                    <div class="explanation-box w-full" id="exp-q29"></div>
+                </div>
+                <div class="q-wrapper flex items-center gap-4">
+                    <span class="q-number">30</span> 
+                    <input type="text" class="input-text" name="q30" placeholder="Type one word...">
+                    <div class="explanation-box w-full" id="exp-q30"></div>
+                </div>
+                <div class="q-wrapper flex items-center gap-4">
+                    <span class="q-number">31</span> 
+                    <input type="text" class="input-text" name="q31" placeholder="Type one word...">
+                    <div class="explanation-box w-full" id="exp-q31"></div>
+                </div>
+                <div class="q-wrapper flex items-center gap-4">
+                    <span class="q-number">32</span> 
+                    <input type="text" class="input-text" name="q32" placeholder="Type one word...">
+                    <div class="explanation-box w-full" id="exp-q32"></div>
+                </div>
+                
+                <div class="mt-8 pt-6 border-t border-gray-300 flex items-center justify-between">
+                    <button class="btn-primary btn-check flex items-center gap-2" data-part="6">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd" /></svg>
+                        Check Answers
+                    </button>
+                    <span class="font-bold text-xl text-gray-700" id="score-part-6"></span>
                 </div>
             </div>
 
@@ -669,11 +1100,11 @@
     
     <!-- Vocab Tooltip -->
     <div id="vocabInfoTooltip">
-        <h4 id="v-word" class="font-bold text-blue-800 text-lg capitalize"></h4>
-        <p id="v-ipa" class="text-gray-500 italic mb-2"></p>
-        <p id="v-def" class="text-sm text-gray-700 mb-4"></p>
-        <button id="v-audio" class="w-full bg-blue-100 hover:bg-blue-200 text-blue-700 py-2 rounded text-sm font-semibold flex items-center justify-center gap-2">
-            <span>🔊</span> Listen
+        <h4 id="v-word" class="font-bold text-blue-800 text-xl capitalize mb-1"></h4>
+        <p id="v-ipa" class="text-gray-500 italic font-medium mb-3"></p>
+        <p id="v-def" class="text-[0.95em] text-gray-700 mb-4 leading-relaxed"></p>
+        <button id="v-audio" class="w-full bg-blue-50 hover:bg-blue-100 text-blue-700 py-2.5 rounded-lg text-sm font-bold flex items-center justify-center gap-2 transition-colors border border-blue-200">
+            <span>🔊</span> Listen to Pronunciation
         </button>
     </div>
 </div>
@@ -713,7 +1144,7 @@
             q25: { ans: ['B'], exp: "The most common magnet is one that 'looks' like a horseshoe." },
             q26: { ans: ['A'], exp: "The north pole of a magnet 'points' towards the Earth's north pole." },
 
-            q27: { ans: ['since'], exp: "Used with the present perfect continuous ('have been bringing') to show when the action started." },
+            q27: { ans: ['in'], exp: "Used to indicate the month: 'In August last year'." },
             q28: { ans: ['to', 'onto'], exp: "The preposition used for returning something to the shore is 'back to land'." },
             q29: { ans: ['for'], exp: "Used with the present perfect continuous to show duration ('For years')." },
             q30: { ans: ['only'], exp: "Part of the correlative conjunction 'Not only... but also'." },
@@ -722,29 +1153,17 @@
         };
 
         const vocabData = {
+            "underground": { ipa: "/ˈʌndəɡraʊnd/", def: "A railway system in which electric trains travel through tunnels below ground." },
             "emergency": { ipa: "/ɪˈmɜːdʒənsi/", def: "A serious, unexpected, and often dangerous situation requiring immediate action." },
-            "sequel": { ipa: "/ˈsiːkwəl/", def: "A movie, book, etc. that continues the story of an earlier one." },
+            "sequel": { ipa: "/ˈsiːkwəl/", def: "A published, broadcast, or recorded work that continues the story or develops the theme of an earlier one." },
             "psychological": { ipa: "/ˌsaɪkəˈlɒdʒɪkl/", def: "Related to the mental and emotional state of a person." },
-            "predictable": { ipa: "/prɪˈdɪktəbl/", def: "Behaving in a way that is expected; able to be foreseen." },
+            "predictable": { ipa: "/prɪˈdɪktəbl/", def: "Able to be predicted; behaving in a way that is expected." },
             "poverty": { ipa: "/ˈpɒvəti/", def: "The state of being extremely poor." },
             "orphan": { ipa: "/ˈɔːfn/", def: "A child whose parents are dead." },
+            "qualifications": { ipa: "/ˌkwɒlɪfɪˈkeɪʃnz/", def: "A pass of an examination or an official completion of a course." },
             "miserable": { ipa: "/ˈmɪzrəbl/", def: "Wretchedly unhappy or uncomfortable." },
-            "magnetic field": { ipa: "/mæɡˈnetɪk fiːld/", def: "A region around a magnetic material within which the force of magnetism acts." },
-            "polluting": { ipa: "/pəˈluːtɪŋ/", def: "Contaminating with harmful or poisonous substances." },
-            "fancy": { ipa: "/ˈfænsi/", def: "To feel like doing something or wanting something (British informal)." },
-            "trials": { ipa: "/ˈtraɪəlz/", def: "Tests to see how good a player or team is before selecting them." },
-            "litter": { ipa: "/ˈlɪtər/", def: "Rubbish or trash left in a public place." },
-            "fined": { ipa: "/faɪnd/", def: "Made to pay money as a punishment for breaking a law or rule." },
-            "admire": { ipa: "/ədˈmaɪər/", def: "To respect and approve of someone or their behavior." },
-            "out of the blue": { ipa: "/aʊt əv ðə bluː/", def: "Completely unexpected; without warning." },
-            "determination": { ipa: "/dɪˌtɜːmɪˈneɪʃn/", def: "The ability to continue trying to do something even if it is difficult." },
-            "identical": { ipa: "/aɪˈdentɪkl/", def: "Exactly the same; alike in every detail." },
-            "terrified": { ipa: "/ˈterɪfaɪd/", def: "Extremely frightened or scared." },
-            "southerly": { ipa: "/ˈsʌðərli/", def: "Moving toward or situated in the south." },
-            "master": { ipa: "/ˈmɑːstər/", def: "To learn how to do something well." },
-            "welfare": { ipa: "/ˈwelfeər/", def: "Help given by the government to people who need it." },
-            "attracted": { ipa: "/əˈtræktɪd/", def: "Feeling a pull toward something; having interest drawn to it." },
-            "essential": { ipa: "/ɪˈsenʃl/", def: "Absolutely necessary; extremely important." }
+            "magnetic field": { ipa: "/mæɡˈnetɪk fiːld/", def: "A region around a magnetic material or a moving electric charge within which the force of magnetism acts." },
+            "polluting": { ipa: "/pəˈluːtɪŋ/", def: "Contaminating (water, air, or a place) with harmful or poisonous substances." }
         };
 
         const app = {
@@ -759,6 +1178,7 @@
                 this.initHighlighter();
                 this.initCheckAnswers();
                 this.initVocabSystem();
+                this.initDragAndDrop();
             },
 
             initTabs() {
@@ -787,8 +1207,11 @@
             initCheckAnswers() {
                 document.querySelectorAll('.btn-check').forEach(btn => {
                     btn.addEventListener('click', (e) => {
-                        const part = e.target.getAttribute('data-part');
-                        this.checkAnswersForPart(part);
+                        const targetBtn = e.target.closest('.btn-check');
+                        if(targetBtn) {
+                            const part = targetBtn.getAttribute('data-part');
+                            this.checkAnswersForPart(part);
+                        }
                     });
                 });
             },
@@ -815,7 +1238,7 @@
                         if (checked) userAns = checked.value;
                     } else if (inputEl.tagName === 'SELECT') {
                         userAns = inputEl.value;
-                    } else if (inputEl.type === 'text') {
+                    } else if (inputEl.type === 'text' || inputEl.type === 'hidden') {
                         userAns = inputEl.value.trim().toLowerCase();
                     }
 
@@ -826,27 +1249,50 @@
                         const isCorrect = correctAnswers.some(ans => ans.toLowerCase() === userAns.toLowerCase());
 
                         if (userAns === '') {
-                            qNumBadge.style.backgroundColor = '#6b7280'; // Gray for empty
+                            qNumBadge.style.backgroundColor = '#94a3b8'; // Slate for empty
                         } else if (isCorrect) {
-                            qNumBadge.style.backgroundColor = '#22c55e'; // Green
+                            qNumBadge.style.backgroundColor = '#16a34a'; // Green
                             score++;
                         } else {
-                            qNumBadge.style.backgroundColor = '#ef4444'; // Red
+                            qNumBadge.style.backgroundColor = '#dc2626'; // Red
                         }
 
-                        // Show Correct Answer and Explanation
                         if (expBox && correctData) {
                             expBox.style.display = 'block';
-                            const formattedCorrectAns = inputEl.type === 'text' ? correctAnswers.join(' / ') : correctAnswers[0];
+                            
+                            const formattedCorrectAns = inputEl.type === 'text' || inputEl.type === 'hidden' 
+                                ? correctAnswers.join(' / ') 
+                                : correctAnswers[0];
+                            
                             expBox.innerHTML = `
-                                <div class="mb-2">
-                                    <span class="font-bold text-green-700">Correct Answer:</span> 
-                                    <span class="font-medium">${formattedCorrectAns}</span>
+                                <div class="mb-2 pb-2 border-b border-green-200">
+                                    <span class="font-bold text-green-800 uppercase tracking-wide text-[0.85em]">Correct Answer:</span> 
+                                    <span class="font-bold text-lg text-green-900 ml-1">${formattedCorrectAns}</span>
                                 </div>
                                 <div>
-                                    <span class="font-bold">Explanation:</span> ${correctData.exp}
+                                    <span class="font-bold text-green-800">Explanation:</span> ${correctData.exp}
                                 </div>
                             `;
+                            
+                            if(isCorrect) {
+                                wrapper.style.borderColor = '#bbf7d0';
+                                wrapper.style.backgroundColor = '#f0fdf4';
+                            } else if (userAns !== '') {
+                                wrapper.style.borderColor = '#fecaca';
+                                wrapper.style.backgroundColor = '#fef2f2';
+                            }
+                        }
+
+                        const textGap = document.querySelector(`.drop-zone.in-text[data-name="${qName}"]`);
+                        if (textGap) {
+                            textGap.classList.remove('correct', 'incorrect');
+                            if (userAns !== '') {
+                                if (isCorrect) {
+                                    textGap.classList.add('correct');
+                                } else {
+                                    textGap.classList.add('incorrect');
+                                }
+                            }
                         }
                     }
                 });
@@ -854,7 +1300,7 @@
                 const scoreLabel = document.getElementById(`score-part-${part}`);
                 if (scoreLabel) {
                     scoreLabel.textContent = `Score: ${score} / ${total}`;
-                    scoreLabel.style.color = score === total ? '#16a34a' : (score > 0 ? '#ca8a04' : '#ef4444');
+                    scoreLabel.style.color = score === total ? '#16a34a' : (score > 0 ? '#d97706' : '#dc2626');
                 }
             },
 
@@ -871,12 +1317,22 @@
                         document.getElementById('v-def').textContent = data.def;
 
                         this.vocabTooltip.style.display = 'block';
-                        this.vocabTooltip.style.left = `${e.pageX}px`;
-                        this.vocabTooltip.style.top = `${e.pageY + 10}px`;
+                        
+                        const rect = wordEl.getBoundingClientRect();
+                        let leftPos = e.pageX;
+                        let topPos = e.pageY + 15;
+
+                        if (leftPos + 300 > window.innerWidth) {
+                            leftPos = window.innerWidth - 320;
+                        }
+
+                        this.vocabTooltip.style.left = `${leftPos}px`;
+                        this.vocabTooltip.style.top = `${topPos}px`;
 
                         document.getElementById('v-audio').onclick = () => {
                             const utterance = new SpeechSynthesisUtterance(key);
                             utterance.lang = 'en-US';
+                            utterance.rate = 0.9;
                             window.speechSynthesis.speak(utterance);
                         };
                     });
@@ -885,6 +1341,81 @@
                 document.addEventListener('click', (e) => {
                     if (!this.vocabTooltip.contains(e.target)) {
                         this.vocabTooltip.style.display = 'none';
+                    }
+                });
+            },
+
+            initDragAndDrop() {
+                const dragItems = document.querySelectorAll('.drag-item');
+                const dropZones = document.querySelectorAll('.drop-zone.in-text');
+                const pool = document.getElementById('pool-part-4');
+
+                if (!pool) return;
+
+                let draggedItem = null;
+
+                dragItems.forEach(item => {
+                    item.addEventListener('dragstart', (e) => {
+                        draggedItem = item;
+                        e.dataTransfer.effectAllowed = 'move';
+                        e.dataTransfer.setData('text/plain', item.id); 
+                        setTimeout(() => item.classList.add('opacity-40'), 0);
+                    });
+                    item.addEventListener('dragend', () => {
+                        setTimeout(() => {
+                            item.classList.remove('opacity-40');
+                            draggedItem = null;
+                        }, 0);
+                    });
+                });
+
+                const updateAllHiddenInputs = () => {
+                    dropZones.forEach(z => {
+                        const item = z.querySelector('.drag-item');
+                        const input = document.getElementById(`input-${z.dataset.name}`);
+                        if (input) {
+                            input.value = item ? item.dataset.value : '';
+                        }
+                    });
+                };
+
+                dropZones.forEach(zone => {
+                    zone.addEventListener('dragover', (e) => {
+                        e.preventDefault();
+                        zone.classList.add('drag-over');
+                    });
+                    zone.addEventListener('dragleave', () => {
+                        zone.classList.remove('drag-over');
+                    });
+                    zone.addEventListener('drop', (e) => {
+                        e.preventDefault();
+                        zone.classList.remove('drag-over');
+                        if (draggedItem) {
+                            const existingItem = zone.querySelector('.drag-item');
+                            if (existingItem && existingItem !== draggedItem) {
+                                pool.appendChild(existingItem);
+                            }
+                            zone.appendChild(draggedItem);
+                            zone.classList.remove('correct', 'incorrect');
+                            updateAllHiddenInputs();
+                        }
+                    });
+                });
+
+                pool.addEventListener('dragover', (e) => {
+                    e.preventDefault();
+                    pool.classList.add('border-blue-400', 'bg-slate-100');
+                });
+                pool.addEventListener('dragleave', () => {
+                    pool.classList.remove('border-blue-400', 'bg-slate-100');
+                });
+                pool.addEventListener('drop', (e) => {
+                    e.preventDefault();
+                    pool.classList.remove('border-blue-400', 'bg-slate-100');
+                    if (draggedItem) {
+                        pool.appendChild(draggedItem);
+                        updateAllHiddenInputs();
+                        dropZones.forEach(z => z.classList.remove('correct', 'incorrect'));
                     }
                 });
             },
@@ -903,10 +1434,10 @@
                     if (!isDragging) return;
                     const containerRect = panesContainer.getBoundingClientRect();
                     let newLeftWidth = e.clientX - containerRect.left;
-                    if (newLeftWidth < 200) newLeftWidth = 200;
-                    if (newLeftWidth > containerRect.width - 200) newLeftWidth = containerRect.width - 200;
+                    if (newLeftWidth < 300) newLeftWidth = 300;
+                    if (newLeftWidth > containerRect.width - 300) newLeftWidth = containerRect.width - 300;
                     const percentage = (newLeftWidth / containerRect.width) * 100;
-                    panesContainer.style.gridTemplateColumns = `${percentage}% 5px 1fr`;
+                    panesContainer.style.gridTemplateColumns = `${percentage}% 6px 1fr`;
                 });
 
                 document.addEventListener('mouseup', () => {
