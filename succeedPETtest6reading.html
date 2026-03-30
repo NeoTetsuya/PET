@@ -1,0 +1,1514 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>B1 Preliminary Test Simulator - Test 6 Reading</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --app-font-size: 16px;
+            --primary: #1e40af;
+            --primary-hover: #1e3a8a;
+            --bg-main: #f1f5f9;
+            --text-main: #334155;
+            --text-dark: #0f172a;
+        }
+        body {
+            font-family: 'Inter', sans-serif;
+            overscroll-behavior: none;
+            background-color: var(--bg-main);
+            color: var(--text-main);
+            margin: 0;
+            padding: 0;
+        }
+        .ielts-container {
+            display: grid;
+            grid-template-rows: auto auto 1fr;
+            height: 100vh;
+        }
+        
+        /* Header */
+        .header {
+            background: linear-gradient(135deg, #1e3a8a 0%, #3b82f6 100%);
+            color: white;
+            padding: 1rem 2rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1);
+            z-index: 20;
+        }
+        .header h1 { color: white; font-weight: 700; letter-spacing: -0.025em; }
+        
+        /* Tabs Styles */
+        .tabs-nav {
+            display: flex;
+            background: #ffffff;
+            border-bottom: 1px solid #e2e8f0;
+            overflow-x: auto;
+            padding: 0 1rem;
+        }
+        .tab-btn {
+            padding: 1rem 1.5rem;
+            font-weight: 600;
+            font-size: 0.95rem;
+            color: #64748b;
+            background: transparent;
+            border: none;
+            cursor: pointer;
+            border-bottom: 3px solid transparent;
+            transition: all 0.2s ease;
+            white-space: nowrap;
+        }
+        .tab-btn:hover {
+            color: var(--primary);
+            background: #f8fafc;
+        }
+        .tab-btn.active {
+            color: var(--primary);
+            border-bottom-color: var(--primary);
+        }
+        .tab-content { display: none; }
+        .tab-content.active { display: block; animation: fadeIn 0.4s ease; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
+
+        /* Panes & Splitter */
+        .content-panes {
+            display: grid;
+            grid-template-columns: 1fr 6px 1fr;
+            overflow: hidden;
+            background-color: var(--bg-main);
+        }
+        .pane {
+            overflow-y: auto;
+            padding: 2.5rem;
+            font-size: var(--app-font-size);
+            line-height: 1.75;
+            scroll-behavior: smooth;
+        }
+        .pane-left { padding-right: 2rem; }
+        .pane-right { padding-left: 2rem; }
+        
+        .splitter {
+            background-color: #cbd5e1;
+            cursor: col-resize;
+            z-index: 10;
+            transition: background-color 0.2s;
+            position: relative;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .splitter::after {
+            content: "⋮";
+            color: #64748b;
+            font-size: 1.2rem;
+            font-weight: bold;
+        }
+        .splitter:hover, .splitter:active { background-color: #94a3b8; }
+        
+        /* Typography & Reading Text Styles */
+        h2, h3 { color: var(--text-dark); font-weight: 700; margin-top: 0; }
+        .part-title { 
+            font-size: 1.5em; 
+            margin-bottom: 1.5rem; 
+            color: var(--primary); 
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        
+        .instruction { 
+            background-color: #e0f2fe; 
+            color: #0369a1; 
+            padding: 1rem 1.25rem; 
+            border-radius: 0.5rem; 
+            border-left: 4px solid #0ea5e9;
+            font-weight: 500;
+            margin-bottom: 2rem;
+            font-size: 0.95em;
+        }
+        
+        .text-box { 
+            background-color: #ffffff; 
+            border: 1px solid #e2e8f0; 
+            padding: 2rem; 
+            border-radius: 0.75rem; 
+            margin-bottom: 2rem; 
+            box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05), 0 2px 4px -1px rgba(0,0,0,0.03);
+        }
+        .text-box p { margin-bottom: 1.25em; }
+        .text-box p:last-child { margin-bottom: 0; }
+        
+        /* Specific Box Styles (Part 1) */
+        .sign-box { 
+            border: 3px solid #334155; 
+            padding: 1.5rem; 
+            text-align: center; 
+            font-weight: 700; 
+            border-radius: 0.5rem; 
+            margin: 1rem auto; 
+            max-width: 80%;
+            background-color: #f8fafc;
+            color: #0f172a;
+            font-size: 1.1em;
+        }
+        .email-box { 
+            border: 1px solid #cbd5e1; 
+            border-radius: 0.5rem; 
+            margin: 1rem 0; 
+            background-color: #ffffff; 
+            font-family: 'Courier New', Courier, monospace; 
+            font-size: 0.95em;
+            box-shadow: inset 0 2px 4px 0 rgba(0, 0, 0, 0.02);
+            overflow: hidden;
+        }
+        .email-header {
+            background-color: #f1f5f9;
+            padding: 0.75rem 1rem;
+            border-bottom: 1px solid #cbd5e1;
+        }
+        .email-body {
+            padding: 1.25rem 1rem;
+        }
+        
+        /* Question Styles */
+        .question-group { margin-bottom: 3rem; }
+        .q-wrapper {
+            background-color: #ffffff;
+            border: 1px solid #e2e8f0;
+            border-radius: 0.75rem;
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+            transition: box-shadow 0.2s ease, border-color 0.2s ease;
+        }
+        .q-wrapper:hover {
+            box-shadow: 0 10px 15px -3px rgba(0,0,0,0.05);
+            border-color: #cbd5e1;
+        }
+        
+        .q-number { 
+            font-weight: 700; 
+            background-color: #3b82f6; 
+            color: white; 
+            width: 28px;
+            height: 28px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 50%; 
+            margin-right: 0.75rem; 
+            font-size: 0.9em; 
+            transition: background-color 0.3s ease; 
+            flex-shrink: 0;
+        }
+        
+        /* Inputs */
+        .radio-custom {
+            display: flex; 
+            align-items: flex-start; 
+            margin-bottom: 0.5rem; 
+            cursor: pointer; 
+            padding: 0.75rem 1rem; 
+            border-radius: 0.5rem; 
+            border: 1px solid transparent;
+            transition: all 0.2s ease;
+        }
+        .radio-custom:hover { 
+            background-color: #f8fafc; 
+            border-color: #cbd5e1;
+        }
+        .radio-custom input[type="radio"] { 
+            margin-top: 0.35em; 
+            margin-right: 1rem; 
+            accent-color: var(--primary); 
+            width: 1.15em; 
+            height: 1.15em; 
+            cursor: pointer;
+        }
+        
+        .select-custom {
+            padding: 0.5rem 1rem; 
+            border: 1px solid #cbd5e1; 
+            border-radius: 0.5rem; 
+            font-size: 1em; 
+            background-color: #f8fafc; 
+            outline: none; 
+            margin-left: 0.5rem;
+            cursor: pointer;
+            transition: all 0.2s;
+            color: var(--text-dark);
+            font-weight: 500;
+        }
+        .select-custom:focus { border-color: var(--primary); box-shadow: 0 0 0 3px rgba(30, 64, 175, 0.1); background-color: white;}
+        
+        .input-text {
+            border: 1px solid #cbd5e1; 
+            border-radius: 0.5rem; 
+            padding: 0.5rem 1rem; 
+            width: 160px; 
+            font-size: 1em; 
+            outline: none; 
+            transition: all 0.2s;
+            background-color: #f8fafc;
+            color: var(--text-dark);
+            font-weight: 500;
+        }
+        .input-text:focus { border-color: var(--primary); box-shadow: 0 0 0 3px rgba(30, 64, 175, 0.1); background-color: white;}
+        
+        /* Drag and Drop Styles */
+        .drop-zone.in-text {
+            display: inline;
+            background-color: #f1f5f9;
+            border: 2px dashed #94a3b8;
+            border-radius: 0.25rem;
+            padding: 0 0.5rem;
+            cursor: pointer;
+            transition: all 0.2s;
+            margin: 0 0.25rem;
+        }
+        .drop-zone.in-text:empty {
+            display: inline-block;
+            min-width: 40px;
+            height: 1.5em;
+            vertical-align: middle;
+            text-align: center;
+            padding: 0;
+        }
+        .drop-zone.in-text:empty::before {
+            content: attr(data-label);
+            color: #64748b;
+            font-weight: 700;
+            font-size: 0.9em;
+            line-height: 1.5em;
+        }
+        .drop-zone.in-text.drag-over {
+            background-color: #dbeafe;
+            border-color: #3b82f6;
+        }
+        
+        .draggable-pool {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+        .draggable-pool .drag-item {
+            display: flex;
+            align-items: flex-start;
+            background-color: #ffffff;
+            border: 1px solid #e2e8f0;
+            padding: 0.75rem 1rem;
+            border-radius: 0.5rem;
+            cursor: grab;
+            transition: all 0.2s ease;
+            box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+            font-size: 0.95em;
+        }
+        .draggable-pool .drag-item:hover {
+            border-color: #3b82f6;
+            box-shadow: 0 4px 6px -1px rgba(59, 130, 246, 0.1);
+        }
+        .draggable-pool .drag-item .letter {
+            color: #2563eb;
+            margin-right: 0.75rem;
+            flex-shrink: 0;
+            font-weight: 700;
+        }
+        
+        .drop-zone.in-text .drag-item {
+            display: inline;
+            color: #1d4ed8;
+            font-weight: 600;
+            background: transparent;
+            border: none;
+            padding: 0;
+            margin: 0;
+            box-shadow: none;
+            cursor: grab;
+        }
+        .drop-zone.in-text .drag-item .letter {
+            display: none;
+        }
+        .drop-zone.in-text .drag-item .full-text {
+            display: inline;
+        }
+
+        .drop-zone.in-text.correct { border-color: #22c55e; background-color: #dcfce7; }
+        .drop-zone.in-text.correct .drag-item { color: #166534; }
+        .drop-zone.in-text.incorrect { border-color: #ef4444; background-color: #fee2e2; }
+        .drop-zone.in-text.incorrect .drag-item { color: #991b1b; }
+        
+        /* Gap styles */
+        .gap { 
+            display: inline-block; 
+            font-weight: 700; 
+            margin: 0 0.3em; 
+            color: var(--primary); 
+            border-bottom: 2px dashed #93c5fd;
+            padding: 0 0.2em;
+        }
+
+        /* Vocabulary Highlight */
+        .vocab-word {
+            background-color: #dcfce7;
+            border-bottom: 2px solid #22c55e;
+            color: #166534;
+            font-weight: 500;
+            cursor: help;
+            padding: 0.1em 0.3em;
+            border-radius: 4px;
+            transition: all 0.2s ease;
+        }
+        .vocab-word:hover { 
+            background-color: #bbf7d0; 
+            box-shadow: 0 2px 4px rgba(34, 197, 94, 0.2);
+        }
+
+        /* Vocab Tooltip */
+        #vocabInfoTooltip {
+            position: absolute;
+            display: none;
+            background: white;
+            border: 1px solid #e2e8f0;
+            padding: 1.25rem;
+            border-radius: 0.75rem;
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+            z-index: 100;
+            width: 300px;
+        }
+        
+        #highlightTooltip {
+            position: absolute; display: none; background-color: #1e293b; color: white; padding: 6px 12px; border-radius: 6px; font-size: 14px; font-weight: 500; cursor: pointer; z-index: 1000; box-shadow: 0 4px 6px rgba(0,0,0,0.1); border: none; font-family: inherit;
+        }
+        #highlightTooltip::after { content: ''; position: absolute; top: 100%; left: 50%; margin-left: -6px; border-width: 6px; border-style: solid; border-color: #1e293b transparent transparent transparent; }
+        mark { background-color: #fef08a; color: inherit; padding: 0.2em 0; border-radius: 4px; }
+
+        /* Explanation Box */
+        .explanation-box {
+            display: none;
+            background-color: #f0fdf4;
+            border: 1px solid #bbf7d0;
+            border-left: 4px solid #22c55e;
+            padding: 1.25rem;
+            margin-top: 1.25rem;
+            border-radius: 0.5rem;
+            font-size: 0.95em;
+            color: #166534;
+            line-height: 1.6;
+        }
+
+        /* Controls & Buttons */
+        .controls { display: flex; gap: 0.75rem; align-items: center; }
+        .btn-icon { 
+            background: rgba(255,255,255,0.15); 
+            border: 1px solid rgba(255,255,255,0.3); 
+            color: white; 
+            padding: 0.5rem 1rem; 
+            border-radius: 0.5rem; 
+            cursor: pointer; 
+            font-weight: 600; 
+            transition: all 0.2s; 
+        }
+        .btn-icon:hover { background: rgba(255,255,255,0.25); transform: translateY(-1px); }
+        .btn-icon:active { transform: translateY(0); }
+        
+        .btn-primary { 
+            background-color: var(--primary); 
+            color: white; 
+            border: none; 
+            padding: 0.75rem 2rem; 
+            border-radius: 0.5rem; 
+            font-weight: 600; 
+            font-size: 1em;
+            cursor: pointer; 
+            transition: all 0.2s ease; 
+            box-shadow: 0 4px 6px -1px rgba(30, 64, 175, 0.2);
+        }
+        .btn-primary:hover { background-color: var(--primary-hover); transform: translateY(-1px); box-shadow: 0 6px 8px -1px rgba(30, 64, 175, 0.3); }
+        .btn-primary:active { transform: translateY(0); }
+        
+        /* Layout utility for questions */
+        .flex-row-center { display: flex; align-items: center; gap: 1rem; }
+    </style>
+</head>
+<body>
+
+<div class="ielts-container">
+    <!-- Header -->
+    <header class="header">
+        <div>
+            <h1 class="text-xl m-0">B1 Preliminary Practice Test</h1>
+            <div class="text-sm opacity-90 mt-1 font-medium">Reading - Test 6</div>
+        </div>
+        <div class="controls">
+            <button class="btn-icon" id="btn-decrease-font" title="Decrease Font Size">A-</button>
+            <button class="btn-icon" id="btn-increase-font" title="Increase Font Size">A+</button>
+        </div>
+    </header>
+
+    <!-- Tabs Navigation -->
+    <div class="tabs-nav" id="tabs-nav">
+        <button class="tab-btn active" data-target="1">Part 1</button>
+        <button class="tab-btn" data-target="2">Part 2</button>
+        <button class="tab-btn" data-target="3">Part 3</button>
+        <button class="tab-btn" data-target="4">Part 4</button>
+        <button class="tab-btn" data-target="5">Part 5</button>
+        <button class="tab-btn" data-target="6">Part 6</button>
+    </div>
+
+    <!-- Main Content -->
+    <div class="content-panes" id="panes-container">
+        
+        <!-- LEFT PANE: READING TEXTS -->
+        <div class="pane pane-left" id="left-pane">
+            
+            <div class="reading-text tab-content active" data-part="1">
+                <h2 class="part-title">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>
+                    Part 1
+                </h2>
+                <div class="instruction">Questions 1-5<br>For each question, choose the correct answer.</div>
+                
+                <div class="text-box">
+                    <div class="flex items-center gap-3 mb-4 text-gray-500 font-bold">
+                        <span class="q-number bg-gray-500">1</span> Text 1
+                    </div>
+                    <div class="email-box">
+                        <div class="email-header">
+                            <div><strong>To:</strong> Brian</div>
+                            <div><strong>From:</strong> Sue</div>
+                        </div>
+                        <div class="email-body">
+                            Hi Brian<br><br>
+                            Are you still feeling <span class="vocab-word" data-word="depressed">depressed</span>?<br>
+                            You should come out with us.<br>
+                            I'll come and pick you up on Saturday at six if you like.
+                        </div>
+                    </div>
+                </div>
+
+                <div class="text-box">
+                    <div class="flex items-center gap-3 mb-4 text-gray-500 font-bold">
+                        <span class="q-number bg-gray-500">2</span> Text 2
+                    </div>
+                    <div class="sign-box" style="border: 3px solid #3b82f6; background-color: #eff6ff; color: #1e3a8a;">
+                        As something unexpected happened, the shop will close at 4 pm instead of 5 pm on Wednesday.<br><br>
+                        <span class="text-[0.85em] font-medium text-gray-600 block">We apologise to our customers for any problems that this might create.</span>
+                    </div>
+                </div>
+
+                <div class="text-box">
+                    <div class="flex items-center gap-3 mb-4 text-gray-500 font-bold">
+                        <span class="q-number bg-gray-500">3</span> Text 3
+                    </div>
+                    <div class="sign-box" style="border: 3px solid #f59e0b; background-color: #fffbeb;">
+                        <span class="vocab-word" data-word="deposit">20% deposit</span> reserves any item in the shop.<br><br>
+                        <span class="text-[0.85em] text-amber-700">Our most popular items sell fast.<br>Buy now to avoid disappointment!</span>
+                    </div>
+                </div>
+
+                <div class="text-box">
+                    <div class="flex items-center gap-3 mb-4 text-gray-500 font-bold">
+                        <span class="q-number bg-gray-500">4</span> Text 4
+                    </div>
+                    <div class="sign-box" style="border: 2px dashed #ef4444; background-color: #fef2f2; color: #991b1b;">
+                        FREE <span class="vocab-word" data-word="admission">ADMISSION</span> TO THE GALLERY AFTER 6.30 pm<br><br>
+                        <span class="text-[0.85em] font-bold block">For groups of students:</span>
+                        <span class="text-[0.85em] block">Reservation by phone only.<br>Reservation is free but required.<br>No online reservations are accepted.</span>
+                    </div>
+                </div>
+
+                <div class="text-box">
+                    <div class="flex items-center gap-3 mb-4 text-gray-500 font-bold">
+                        <span class="q-number bg-gray-500">5</span> Text 5
+                    </div>
+                    <div class="email-box" style="background-color: #fffde7;">
+                        <div class="email-body font-sans">
+                            <strong>Hey John,</strong><br><br>
+                            We've decided to go to Berlin for the weekend.<br>
+                            Do you want to come and enjoy some good food with us?<br>
+                            We need you to translate!<br><br>
+                            <em>Tina</em>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="reading-text tab-content" data-part="2">
+                <h2 class="part-title">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>
+                    Part 2
+                </h2>
+                <div class="instruction">Questions 6-10<br>The people below are looking for a book to read. There are eight book reviews. Decide which book would be the most suitable for the people below.</div>
+                
+                <div class="text-box">
+                    <h3 class="text-2xl mb-6 text-center text-blue-900">BOOK REVIEWS</h3>
+                    <div class="grid gap-6">
+                        <div class="p-4 bg-gray-50 rounded-lg border border-gray-200">
+                            <h4 class="text-lg font-bold text-blue-800 mb-2">A. Journeys with my Family</h4>
+                            <p>This book of short stories isn't actually about travelling at all, even though the title may make you think so. It is a collection of studies of how people are with their families. Often funny and also often <span class="vocab-word" data-word="heartbreaking">heartbreaking</span>, these short stories show both the best and the worst of people.</p>
+                        </div>
+                        <div class="p-4 bg-gray-50 rounded-lg border border-gray-200">
+                            <h4 class="text-lg font-bold text-blue-800 mb-2">B. The Enchanted April</h4>
+                            <p>An advertisement for a castle to rent on the Italian Riviera brings together four very different women. The beautiful environment helps them make discoveries about themselves, life and love. A novel that you won't want to put down once you start reading it.</p>
+                        </div>
+                        <div class="p-4 bg-gray-50 rounded-lg border border-gray-200">
+                            <h4 class="text-lg font-bold text-blue-800 mb-2">C. Living with the Bushmen</h4>
+                            <p>This is the true story of Richard Berk's search for the African bushmen and their amazing acceptance of his presence in their timeless world. Berk managed, against all odds, to live with the bushmen for six months, learning their language and exploring their ancient culture. A great story about an impressive <span class="vocab-word" data-word="anthropologist">anthropologist</span>.</p>
+                        </div>
+                        <div class="p-4 bg-gray-50 rounded-lg border border-gray-200">
+                            <h4 class="text-lg font-bold text-blue-800 mb-2">D. Trouble in the Suburbs</h4>
+                            <p>A light-hearted crime story about a private detective on his final case before retirement. However, the investigation takes an unexpected turn of events and the hero is put in some dangerous situations. A good read for those who don't want to be challenged too much.</p>
+                        </div>
+                        <div class="p-4 bg-gray-50 rounded-lg border border-gray-200">
+                            <h4 class="text-lg font-bold text-blue-800 mb-2">E. The King of all Kings</h4>
+                            <p>This story of an imaginary Egyptian pharaoh has some interesting archaeological facts and some beautifully drawn maps and diagrams. But unless you have a passion for Ancient Egypt, it probably wouldn't be a <span class="vocab-word" data-word="gripping">gripping</span> read.</p>
+                        </div>
+                        <div class="p-4 bg-gray-50 rounded-lg border border-gray-200">
+                            <h4 class="text-lg font-bold text-blue-800 mb-2">F. The History of Advertising</h4>
+                            <p>A surprisingly interesting look at how the media has changed our lifestyles. This non-fiction book shows how advertising has developed over the years and how we now accept images that would have been criticised in the past.</p>
+                        </div>
+                        <div class="p-4 bg-gray-50 rounded-lg border border-gray-200">
+                            <h4 class="text-lg font-bold text-blue-800 mb-2">G. The Connection</h4>
+                            <p>Not an easy-reading book. This novel takes the reader into a world of mystery and strange events that all have an effect on each other. There is, however, one common factor that links everything together. Can you work out what this is before everything is explained in the final chapter?</p>
+                        </div>
+                        <div class="p-4 bg-gray-50 rounded-lg border border-gray-200">
+                            <h4 class="text-lg font-bold text-blue-800 mb-2">H. The Lost Leopard</h4>
+                            <p>The story of a snow leopard, orphaned by hunters, which ran across miles of frozen land searching for a home. This book is <span class="vocab-word" data-word="sponsored">sponsored</span> by the Leopard Sanctuary and its message about the illegal fur trade is clear and powerful.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="reading-text tab-content" data-part="3">
+                <h2 class="part-title">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>
+                    Part 3
+                </h2>
+                <div class="instruction">Questions 11-15<br>For each question, choose the correct answer.</div>
+                
+                <div class="text-box">
+                    <h3 class="text-2xl font-bold mb-2 text-center">This is how it all started</h3>
+                    <p class="italic text-sm mb-6 text-center text-gray-500">by Joanna Summers</p>
+                    
+                    <p>I guess you could say that acting is in my blood as my mother and my father are both actors, my grandfather was a theatre musician and my grandmother was a singer and dancer. I suppose it seemed normal for me to perform for family and friends and I certainly wasn't shy while growing up. I actually used to enjoy the attention and I still have many enjoyable memories of the whole family singing and dancing together.</p>
+                    
+                    <p>That's why it came as no surprise that I started going to Drama school from the young age of six. I attended classes there every Saturday for almost 10 years. We were taught how to sing and dance, as well as act, so I was quite good by my teens.</p>
+                    
+                    <p>Once I'd left school, I went to drama school in London full-time to do a degree. I must say that at that time, and for a period of about six months, I needed a break. I had spent my whole childhood acting and it felt like I had missed out on so much.</p>
+
+                    <p>So I started partying with friends, danced the nights away and slept late most mornings. It was only when my personal tutor told me that I was on my final warning that I <span class="vocab-word" data-word="realisation">realised</span> it was time to stop. Partying was great but I was about to lose everything I had worked so hard for all these years.</p>
+                    
+                    <p>After the shock of that realisation, I got my act together very quickly, went back to classes and workshops and soon after, I ended up <span class="vocab-word" data-word="graduating">graduating</span> with a first. I had always been confident about my acting skills but it was then that I felt truly ready to get myself out there professionally. A few months later, The Royal Shakespeare Company gave me my first real <span class="vocab-word" data-word="role">role</span> and I acted alongside some great names in the world of the stage. Now, of course, I'm better known for my Hollywood roles and people will probably be amazed to hear that I started my acting career as a Shakespearean actor. But it's true; this is how it all started.</p>
+                </div>
+            </div>
+
+            <div class="reading-text tab-content" data-part="4">
+                <h2 class="part-title">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>
+                    Part 4
+                </h2>
+                <div class="instruction">Questions 16-20<br>Five sentences have been removed from the text below. For each question, choose the correct answer (A-H). There are three extra sentences.</div>
+                
+                <div class="text-box">
+                    <h3 class="text-2xl font-bold mb-6 text-center">The Future of Water</h3>
+                    <p>Even at a time when global warming and the effect it will have on our water supply is often in the news, those of us living in developed countries cannot imagine not having a shower whenever we want, or drinking water when we are thirsty. We are often told about the effects of climate change and future water <span class="vocab-word" data-word="shortages">shortages</span>. <span class="drop-zone in-text" data-name="q16" data-label="16"></span> Of course not! It seems we haven't realised what is really going on around us or we choose not to.</p>
+                    
+                    <p>The fact that the growing world population is going to make an even bigger <span class="vocab-word" data-word="demand">demand</span> on the planet's water is something most of us prefer not to think about. <span class="drop-zone in-text" data-name="q17" data-label="17"></span> In addition, as developing countries become richer, more people have the ability to spend money, so there is greater demand for water. More gardens need watering, more dishwashers and washing machines are in use and there are more cars to wash. Water is being wasted every day for some people's comfort.</p>
+                    
+                    <p>However, for many people in less developed regions of the world, water is not a question of turning on a tap. For women, especially, it can mean a long walk to get water from a <span class="vocab-word" data-word="well">well</span> or a river. This may be some kilometres away from their homes. <span class="drop-zone in-text" data-name="q18" data-label="18"></span> And girls also have to help their mothers, so education takes second place, or no place at all. And without education there cannot be positive change. <span class="drop-zone in-text" data-name="q19" data-label="19"></span></p>
+                    
+                    <p>So, next time you leave the tap running when brushing your teeth, think. <span class="drop-zone in-text" data-name="q20" data-label="20"></span> And ask yourself: 'How can I help to save water?' Start thinking before it's too late because the time will come when all of us will have to deal with the lack of water.</p>
+                </div>
+            </div>
+
+            <div class="reading-text tab-content" data-part="5">
+                <h2 class="part-title">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>
+                    Part 5
+                </h2>
+                <div class="instruction">Questions 21-26<br>For each question, choose the correct answer.</div>
+                
+                <div class="text-box">
+                    <h3 class="text-2xl font-bold mb-6 text-center">Look after your eyes</h3>
+                    <p>The eye is undoubtedly one of the greatest organs in our body. It is actually like a camera working 24 hours a day, 7 days a week. The eye takes pictures of the world around us and <span class="gap">(21)</span> ............... these pictures to our brain. Then the brain works out what it is that our eyes see.</p>
+                    
+                    <p>As this happens from the moment we open our eyes in the morning to when we close them at night, most of us take our <span class="vocab-word" data-word="vision">vision</span> for granted, giving little thought to the <span class="vocab-word" data-word="complex">complex</span> processes that <span class="gap">(22)</span> ............... us to see, until one <span class="gap">(23)</span> ............... we realise we may have an eye problem.</p>
+
+                    <p>At middle age, several eye conditions are becoming more and more <span class="gap">(24)</span> ............... and by the age of 50 most people have <span class="gap">(25)</span> ............... that they cannot see as well as they once could. They may become near-sighted or far-sighted. People who are near-sighted can't see things far away while people who are far-sighted can't see things <span class="gap">(26)</span> ............... up. Most of these problems can be corrected with glasses but some of them may need surgery.</p>
+                </div>
+            </div>
+
+            <div class="reading-text tab-content" data-part="6">
+                <h2 class="part-title">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>
+                    Part 6
+                </h2>
+                <div class="instruction">Questions 27-32<br>For each question, write the correct answer. Write <strong>ONE</strong> word for each gap.</div>
+                
+                <div class="text-box">
+                    <h3 class="text-2xl font-bold mb-6 text-center">A Trip Back Home</h3>
+                    <p>Hi Sam,</p>
+                    <p>How are you? It's been some time since we last spoke. I have some exciting news to tell you.</p>
+                    <p>Recently, I decided to return to the village in <span class="gap">(27)</span> ............... I grew up, deep in the countryside in the South of England. As my home is now in Australia, this meant a long journey <span class="gap">(28)</span> ............... plane across continents. I was <span class="vocab-word" data-word="exhausted">exhausted</span> when I arrived at the airport, but <span class="gap">(29)</span> ............... having a long rest, I hired a car and set off.</p>
+                    
+                    <p>My first shock came <span class="gap">(30)</span> ............... I had to keep joining the busy motorways which now cross England in all directions. As I <span class="vocab-word" data-word="raced">raced</span> along with the rest of the traffic, I got the feeling that I was in for some more surprises.</p>
+                    
+                    <p>I was right. When I finally arrived at the village, I stood in the village square. Everything was very different. There was <span class="gap">(31)</span> ............... village shop; instead, I could see a large, bright supermarket. And the open fields I <span class="gap">(32)</span> ............... to walk through to get to school, once filled with beautiful wild flowers, were now full of box-like modern houses.</p>
+                </div>
+            </div>
+
+            <div style="height: 100px;"></div> <!-- Extra space for scrolling -->
+        </div>
+
+        <!-- SPLITTER -->
+        <div class="splitter" id="splitter"></div>
+
+        <!-- RIGHT PANE: QUESTIONS -->
+        <div class="pane pane-right" id="right-pane">
+            
+            <!-- Part 1 Questions -->
+            <div class="question-group tab-content active" data-part="1">
+                <h2 class="text-2xl font-bold mb-6 text-blue-900">Part 1 Questions</h2>
+                
+                <div class="q-wrapper">
+                    <div class="flex mb-3">
+                        <span class="q-number">1</span>
+                        <p class="font-semibold text-lg m-0">Sue wants to</p>
+                    </div>
+                    <label class="radio-custom"><input type="radio" name="q1" value="A"> <span><strong>A.</strong> see if Brian is feeling better after being sick for some time.</span></label>
+                    <label class="radio-custom"><input type="radio" name="q1" value="B"> <span><strong>B.</strong> invite Brian to hang out with her and her friends at the weekend.</span></label>
+                    <label class="radio-custom"><input type="radio" name="q1" value="C"> <span><strong>C.</strong> tell Brian she is feeling a bit depressed and may not go out after all.</span></label>
+                    <div class="explanation-box" id="exp-q1"></div>
+                </div>
+
+                <div class="q-wrapper">
+                    <div class="flex mb-3">
+                        <span class="q-number">2</span>
+                        <p class="font-semibold text-lg m-0">What does the notice mean?</p>
+                    </div>
+                    <label class="radio-custom"><input type="radio" name="q2" value="A"> <span><strong>A.</strong> The shop usually closes early once a week.</span></label>
+                    <label class="radio-custom"><input type="radio" name="q2" value="B"> <span><strong>B.</strong> They did not plan to close the shop early on Wednesday.</span></label>
+                    <label class="radio-custom"><input type="radio" name="q2" value="C"> <span><strong>C.</strong> The shop will be closed all afternoon on Wednesday.</span></label>
+                    <div class="explanation-box" id="exp-q2"></div>
+                </div>
+
+                <div class="q-wrapper">
+                    <div class="flex mb-3">
+                        <span class="q-number">3</span>
+                        <p class="font-semibold text-lg m-0">The sign says that...</p>
+                    </div>
+                    <label class="radio-custom"><input type="radio" name="q3" value="A"> <span><strong>A.</strong> Pay part of the price and we will keep any item for you.</span></label>
+                    <label class="radio-custom"><input type="radio" name="q3" value="B"> <span><strong>B.</strong> 20% reduction off any item in the shop if you pay now.</span></label>
+                    <label class="radio-custom"><input type="radio" name="q3" value="C"> <span><strong>C.</strong> No items can be bought without paying a deposit first.</span></label>
+                    <div class="explanation-box" id="exp-q3"></div>
+                </div>
+
+                <div class="q-wrapper">
+                    <div class="flex mb-3">
+                        <span class="q-number">4</span>
+                        <p class="font-semibold text-lg m-0">What is true according to the notice?</p>
+                    </div>
+                    <label class="radio-custom"><input type="radio" name="q4" value="A"> <span><strong>A.</strong> Students can't enter the gallery for free.</span></label>
+                    <label class="radio-custom"><input type="radio" name="q4" value="B"> <span><strong>B.</strong> There is no entrance fee to the gallery after 6.30 pm.</span></label>
+                    <label class="radio-custom"><input type="radio" name="q4" value="C"> <span><strong>C.</strong> You are not allowed to enter the gallery unless you pay for a reservation.</span></label>
+                    <div class="explanation-box" id="exp-q4"></div>
+                </div>
+
+                <div class="q-wrapper">
+                    <div class="flex mb-3">
+                        <span class="q-number">5</span>
+                        <p class="font-semibold text-lg m-0">Why did Tina send this email?</p>
+                    </div>
+                    <label class="radio-custom"><input type="radio" name="q5" value="A"> <span><strong>A.</strong> Tina wants John to help with the cooking while they are away on holiday.</span></label>
+                    <label class="radio-custom"><input type="radio" name="q5" value="B"> <span><strong>B.</strong> Tina speaks German well, so she should not have any trouble communicating while in Berlin.</span></label>
+                    <label class="radio-custom"><input type="radio" name="q5" value="C"> <span><strong>C.</strong> Tina needs John's language skills to get around in a foreign country.</span></label>
+                    <div class="explanation-box" id="exp-q5"></div>
+                </div>
+
+                <div class="mt-8 pt-6 border-t border-gray-300 flex items-center justify-between">
+                    <button class="btn-primary btn-check flex items-center gap-2" data-part="1">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd" /></svg>
+                        Check Answers
+                    </button>
+                    <span class="font-bold text-xl text-gray-700" id="score-part-1"></span>
+                </div>
+            </div>
+
+            <!-- Part 2 Questions -->
+            <div class="question-group tab-content" data-part="2">
+                <h2 class="text-2xl font-bold mb-6 text-blue-900">Part 2 Questions</h2>
+                
+                <div class="q-wrapper">
+                    <div class="flex items-start justify-between gap-4">
+                        <div class="flex-1">
+                            <span class="q-number float-left mt-1">6</span> 
+                            <p class="m-0 leading-relaxed"><strong>Brian</strong> is twenty-two and has just graduated with a degree in history. He enjoys reading about real people who have done something unusual or exciting in their life.</p>
+                        </div>
+                        <select class="select-custom" name="q6">
+                            <option value="">Select</option>
+                            <option value="A">A</option><option value="B">B</option><option value="C">C</option><option value="D">D</option><option value="E">E</option><option value="F">F</option><option value="G">G</option><option value="H">H</option>
+                        </select>
+                    </div>
+                    <div class="explanation-box" id="exp-q6"></div>
+                </div>
+
+                <div class="q-wrapper">
+                    <div class="flex items-start justify-between gap-4">
+                        <div class="flex-1">
+                            <span class="q-number float-left mt-1">7</span> 
+                            <p class="m-0 leading-relaxed"><strong>Marie</strong> is a primary school teacher. She enjoys reading books that transport her to another world, or to a completely different life from her own. She also likes romantic novels.</p>
+                        </div>
+                        <select class="select-custom" name="q7">
+                            <option value="">Select</option>
+                            <option value="A">A</option><option value="B">B</option><option value="C">C</option><option value="D">D</option><option value="E">E</option><option value="F">F</option><option value="G">G</option><option value="H">H</option>
+                        </select>
+                    </div>
+                    <div class="explanation-box" id="exp-q7"></div>
+                </div>
+
+                <div class="q-wrapper">
+                    <div class="flex items-start justify-between gap-4">
+                        <div class="flex-1">
+                            <span class="q-number float-left mt-1">8</span> 
+                            <p class="m-0 leading-relaxed"><strong>Bob</strong> is a retired scientist. He enjoys doing quizzes and solving puzzles because he has a very analytical mind. He wouldn't be interested in reading an ordinary book.</p>
+                        </div>
+                        <select class="select-custom" name="q8">
+                            <option value="">Select</option>
+                            <option value="A">A</option><option value="B">B</option><option value="C">C</option><option value="D">D</option><option value="E">E</option><option value="F">F</option><option value="G">G</option><option value="H">H</option>
+                        </select>
+                    </div>
+                    <div class="explanation-box" id="exp-q8"></div>
+                </div>
+
+                <div class="q-wrapper">
+                    <div class="flex items-start justify-between gap-4">
+                        <div class="flex-1">
+                            <span class="q-number float-left mt-1">9</span> 
+                            <p class="m-0 leading-relaxed"><strong>Angie</strong> doesn't have a lot of time to read so she enjoys books that she can read a little bit at a time. She particularly likes books about people and human relationships.</p>
+                        </div>
+                        <select class="select-custom" name="q9">
+                            <option value="">Select</option>
+                            <option value="A">A</option><option value="B">B</option><option value="C">C</option><option value="D">D</option><option value="E">E</option><option value="F">F</option><option value="G">G</option><option value="H">H</option>
+                        </select>
+                    </div>
+                    <div class="explanation-box" id="exp-q9"></div>
+                </div>
+
+                <div class="q-wrapper">
+                    <div class="flex items-start justify-between gap-4">
+                        <div class="flex-1">
+                            <span class="q-number float-left mt-1">10</span> 
+                            <p class="m-0 leading-relaxed"><strong>John</strong> likes detective stories. He doesn't like anything that is too difficult because he doesn't want to have to concentrate too much while he is reading.</p>
+                        </div>
+                        <select class="select-custom" name="q10">
+                            <option value="">Select</option>
+                            <option value="A">A</option><option value="B">B</option><option value="C">C</option><option value="D">D</option><option value="E">E</option><option value="F">F</option><option value="G">G</option><option value="H">H</option>
+                        </select>
+                    </div>
+                    <div class="explanation-box" id="exp-q10"></div>
+                </div>
+
+                <div class="mt-8 pt-6 border-t border-gray-300 flex items-center justify-between">
+                    <button class="btn-primary btn-check flex items-center gap-2" data-part="2">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd" /></svg>
+                        Check Answers
+                    </button>
+                    <span class="font-bold text-xl text-gray-700" id="score-part-2"></span>
+                </div>
+            </div>
+
+            <!-- Part 3 Questions -->
+            <div class="question-group tab-content" data-part="3">
+                <h2 class="text-2xl font-bold mb-6 text-blue-900">Part 3 Questions</h2>
+                
+                <div class="q-wrapper">
+                    <div class="flex mb-3">
+                        <span class="q-number">11</span>
+                        <p class="font-semibold text-lg m-0">What does Joanna say about her childhood?</p>
+                    </div>
+                    <label class="radio-custom"><input type="radio" name="q11" value="A"> <span><strong>A.</strong> Her parents made her become an actor.</span></label>
+                    <label class="radio-custom"><input type="radio" name="q11" value="B"> <span><strong>B.</strong> She grew up among entertainers.</span></label>
+                    <label class="radio-custom"><input type="radio" name="q11" value="C"> <span><strong>C.</strong> She did not want to perform for her family.</span></label>
+                    <label class="radio-custom"><input type="radio" name="q11" value="D"> <span><strong>D.</strong> She was too young to enjoy drama school.</span></label>
+                    <div class="explanation-box" id="exp-q11"></div>
+                </div>
+
+                <div class="q-wrapper">
+                    <div class="flex mb-3">
+                        <span class="q-number">12</span>
+                        <p class="font-semibold text-lg m-0">When Joanna finished school,</p>
+                    </div>
+                    <label class="radio-custom"><input type="radio" name="q12" value="A"> <span><strong>A.</strong> she had a break of about six months before going to drama school.</span></label>
+                    <label class="radio-custom"><input type="radio" name="q12" value="B"> <span><strong>B.</strong> she had to work full-time in order to pay for drama school.</span></label>
+                    <label class="radio-custom"><input type="radio" name="q12" value="C"> <span><strong>C.</strong> she realised she was under a lot of pressure and needed to relax.</span></label>
+                    <label class="radio-custom"><input type="radio" name="q12" value="D"> <span><strong>D.</strong> she had doubts as to whether she wanted to spend her adulthood acting.</span></label>
+                    <div class="explanation-box" id="exp-q12"></div>
+                </div>
+
+                <div class="q-wrapper">
+                    <div class="flex mb-3">
+                        <span class="q-number">13</span>
+                        <p class="font-semibold text-lg m-0">What happened when Joanna was a full-time drama student?</p>
+                    </div>
+                    <label class="radio-custom"><input type="radio" name="q13" value="A"> <span><strong>A.</strong> She was nearly told to leave the course.</span></label>
+                    <label class="radio-custom"><input type="radio" name="q13" value="B"> <span><strong>B.</strong> She had an argument with her personal tutor.</span></label>
+                    <label class="radio-custom"><input type="radio" name="q13" value="C"> <span><strong>C.</strong> She concentrated on developing as a serious dancer.</span></label>
+                    <label class="radio-custom"><input type="radio" name="q13" value="D"> <span><strong>D.</strong> She worked as a dancer in the evenings.</span></label>
+                    <div class="explanation-box" id="exp-q13"></div>
+                </div>
+
+                <div class="q-wrapper">
+                    <div class="flex mb-3">
+                        <span class="q-number">14</span>
+                        <p class="font-semibold text-lg m-0">What does Joanna say about working as a Shakespearean actor?</p>
+                    </div>
+                    <label class="radio-custom"><input type="radio" name="q14" value="A"> <span><strong>A.</strong> She found it boring after a while.</span></label>
+                    <label class="radio-custom"><input type="radio" name="q14" value="B"> <span><strong>B.</strong> It is what she is mostly known for.</span></label>
+                    <label class="radio-custom"><input type="radio" name="q14" value="C"> <span><strong>C.</strong> It was something she had to do to get into Hollywood.</span></label>
+                    <label class="radio-custom"><input type="radio" name="q14" value="D"> <span><strong>D.</strong> It gave her the chance to work with famous actors.</span></label>
+                    <div class="explanation-box" id="exp-q14"></div>
+                </div>
+
+                <div class="q-wrapper">
+                    <div class="flex mb-3">
+                        <span class="q-number">15</span>
+                        <p class="font-semibold text-lg m-0">Which of the following is the best description of Joanna?</p>
+                    </div>
+                    <label class="radio-custom"><input type="radio" name="q15" value="A"> <span><strong>A.</strong> The young actress who is developing a career.</span></label>
+                    <label class="radio-custom"><input type="radio" name="q15" value="B"> <span><strong>B.</strong> The actress who has followed in her parents' footsteps and went from Shakespeare to Hollywood.</span></label>
+                    <label class="radio-custom"><input type="radio" name="q15" value="C"> <span><strong>C.</strong> The actress who struggled through drama school and became a Hollywood director.</span></label>
+                    <label class="radio-custom"><input type="radio" name="q15" value="D"> <span><strong>D.</strong> The actress whose wild life is affecting her career but who is now trying to get serious.</span></label>
+                    <div class="explanation-box" id="exp-q15"></div>
+                </div>
+
+                <div class="mt-8 pt-6 border-t border-gray-300 flex items-center justify-between">
+                    <button class="btn-primary btn-check flex items-center gap-2" data-part="3">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd" /></svg>
+                        Check Answers
+                    </button>
+                    <span class="font-bold text-xl text-gray-700" id="score-part-3"></span>
+                </div>
+            </div>
+
+            <!-- Part 4 Questions -->
+            <div class="question-group tab-content" data-part="4">
+                <h2 class="text-2xl font-bold mb-4 text-blue-900">Part 4 Questions</h2>
+                <p class="mb-6 text-gray-600">Drag and drop the correct sentence (A-H) from the pool below into the gaps in the reading text on the left.</p>
+
+                <!-- The Pool -->
+                <div class="draggable-pool bg-slate-50 p-4 rounded-xl border-2 border-dashed border-slate-300 mb-8 min-h-[100px] transition-colors" id="pool-part-4">
+                    <span class="drag-item" draggable="true" id="drag-A" data-value="A"><strong class="letter">A.</strong> <span class="full-text">And all this is because there is no running water nearby.</span></span>
+                    <span class="drag-item" draggable="true" id="drag-B" data-value="B"><strong class="letter">B.</strong> <span class="full-text">It's not difficult to live without water.</span></span>
+                    <span class="drag-item" draggable="true" id="drag-C" data-value="C"><strong class="letter">C.</strong> <span class="full-text">Think about all those who don't have a tap to turn on.</span></span>
+                    <span class="drag-item" draggable="true" id="drag-D" data-value="D"><strong class="letter">D.</strong> <span class="full-text">And this refusal to drink is the problem.</span></span>
+                    <span class="drag-item" draggable="true" id="drag-E" data-value="E"><strong class="letter">E.</strong> <span class="full-text">These women cannot have a job because they have no time.</span></span>
+                    <span class="drag-item" draggable="true" id="drag-F" data-value="F"><strong class="letter">F.</strong> <span class="full-text">Scientists are not worried about the future.</span></span>
+                    <span class="drag-item" draggable="true" id="drag-G" data-value="G"><strong class="letter">G.</strong> <span class="full-text">Feeding this number of people means more water for farming, for example.</span></span>
+                    <span class="drag-item" draggable="true" id="drag-H" data-value="H"><strong class="letter">H.</strong> <span class="full-text">But do we really believe wars may be fought over water?</span></span>
+                </div>
+
+                <div class="q-wrapper">
+                    <div class="flex items-center mb-1">
+                        <span class="q-number">16</span> <span class="font-semibold text-lg text-gray-700">Gap 16</span>
+                    </div>
+                    <div class="text-sm text-gray-500">Drag answer into the text on the left.</div>
+                    <input type="hidden" name="q16" id="input-q16" value="">
+                    <div class="explanation-box w-full mt-3" id="exp-q16"></div>
+                </div>
+                <div class="q-wrapper">
+                    <div class="flex items-center mb-1">
+                        <span class="q-number">17</span> <span class="font-semibold text-lg text-gray-700">Gap 17</span>
+                    </div>
+                    <div class="text-sm text-gray-500">Drag answer into the text on the left.</div>
+                    <input type="hidden" name="q17" id="input-q17" value="">
+                    <div class="explanation-box w-full mt-3" id="exp-q17"></div>
+                </div>
+                <div class="q-wrapper">
+                    <div class="flex items-center mb-1">
+                        <span class="q-number">18</span> <span class="font-semibold text-lg text-gray-700">Gap 18</span>
+                    </div>
+                    <div class="text-sm text-gray-500">Drag answer into the text on the left.</div>
+                    <input type="hidden" name="q18" id="input-q18" value="">
+                    <div class="explanation-box w-full mt-3" id="exp-q18"></div>
+                </div>
+                <div class="q-wrapper">
+                    <div class="flex items-center mb-1">
+                        <span class="q-number">19</span> <span class="font-semibold text-lg text-gray-700">Gap 19</span>
+                    </div>
+                    <div class="text-sm text-gray-500">Drag answer into the text on the left.</div>
+                    <input type="hidden" name="q19" id="input-q19" value="">
+                    <div class="explanation-box w-full mt-3" id="exp-q19"></div>
+                </div>
+                <div class="q-wrapper">
+                    <div class="flex items-center mb-1">
+                        <span class="q-number">20</span> <span class="font-semibold text-lg text-gray-700">Gap 20</span>
+                    </div>
+                    <div class="text-sm text-gray-500">Drag answer into the text on the left.</div>
+                    <input type="hidden" name="q20" id="input-q20" value="">
+                    <div class="explanation-box w-full mt-3" id="exp-q20"></div>
+                </div>
+                
+                <div class="mt-8 pt-6 border-t border-gray-300 flex items-center justify-between">
+                    <button class="btn-primary btn-check flex items-center gap-2" data-part="4">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd" /></svg>
+                        Check Answers
+                    </button>
+                    <span class="font-bold text-xl text-gray-700" id="score-part-4"></span>
+                </div>
+            </div>
+
+            <!-- Part 5 Questions -->
+            <div class="question-group tab-content" data-part="5">
+                <h2 class="text-2xl font-bold mb-6 text-blue-900">Part 5 Questions</h2>
+                
+                <div class="q-wrapper">
+                    <div class="flex items-center gap-4">
+                        <span class="q-number">21</span> 
+                        <select class="select-custom" name="q21">
+                            <option value="">Select word</option>
+                            <option value="A">A. removes</option>
+                            <option value="B">B. appears</option>
+                            <option value="C">C. transfers</option>
+                            <option value="D">D. draws</option>
+                        </select>
+                    </div>
+                    <div class="explanation-box" id="exp-q21"></div>
+                </div>
+                <div class="q-wrapper">
+                    <div class="flex items-center gap-4">
+                        <span class="q-number">22</span> 
+                        <select class="select-custom" name="q22">
+                            <option value="">Select word</option>
+                            <option value="A">A. let</option>
+                            <option value="B">B. encourage</option>
+                            <option value="C">C. enable</option>
+                            <option value="D">D. provide</option>
+                        </select>
+                    </div>
+                    <div class="explanation-box" id="exp-q22"></div>
+                </div>
+                <div class="q-wrapper">
+                    <div class="flex items-center gap-4">
+                        <span class="q-number">23</span> 
+                        <select class="select-custom" name="q23">
+                            <option value="">Select word</option>
+                            <option value="A">A. time</option>
+                            <option value="B">B. decade</option>
+                            <option value="C">C. minute</option>
+                            <option value="D">D. day</option>
+                        </select>
+                    </div>
+                    <div class="explanation-box" id="exp-q23"></div>
+                </div>
+                <div class="q-wrapper">
+                    <div class="flex items-center gap-4">
+                        <span class="q-number">24</span> 
+                        <select class="select-custom" name="q24">
+                            <option value="">Select word</option>
+                            <option value="A">A. common</option>
+                            <option value="B">B. average</option>
+                            <option value="C">C. rare</option>
+                            <option value="D">D. popular</option>
+                        </select>
+                    </div>
+                    <div class="explanation-box" id="exp-q24"></div>
+                </div>
+                <div class="q-wrapper">
+                    <div class="flex items-center gap-4">
+                        <span class="q-number">25</span> 
+                        <select class="select-custom" name="q25">
+                            <option value="">Select word</option>
+                            <option value="A">A. insisted</option>
+                            <option value="B">B. noticed</option>
+                            <option value="C">C. proved</option>
+                            <option value="D">D. received</option>
+                        </select>
+                    </div>
+                    <div class="explanation-box" id="exp-q25"></div>
+                </div>
+                <div class="q-wrapper">
+                    <div class="flex items-center gap-4">
+                        <span class="q-number">26</span> 
+                        <select class="select-custom" name="q26">
+                            <option value="">Select word</option>
+                            <option value="A">A. next</option>
+                            <option value="B">B. near</option>
+                            <option value="C">C. nearby</option>
+                            <option value="D">D. close</option>
+                        </select>
+                    </div>
+                    <div class="explanation-box" id="exp-q26"></div>
+                </div>
+
+                <div class="mt-8 pt-6 border-t border-gray-300 flex items-center justify-between">
+                    <button class="btn-primary btn-check flex items-center gap-2" data-part="5">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd" /></svg>
+                        Check Answers
+                    </button>
+                    <span class="font-bold text-xl text-gray-700" id="score-part-5"></span>
+                </div>
+            </div>
+
+            <!-- Part 6 Questions -->
+            <div class="question-group tab-content" data-part="6">
+                <h2 class="text-2xl font-bold mb-6 text-blue-900">Part 6 Questions</h2>
+                
+                <div class="q-wrapper flex items-center gap-4">
+                    <span class="q-number">27</span> 
+                    <input type="text" class="input-text" name="q27" placeholder="Type one word...">
+                    <div class="explanation-box w-full" id="exp-q27"></div>
+                </div>
+                <div class="q-wrapper flex items-center gap-4">
+                    <span class="q-number">28</span> 
+                    <input type="text" class="input-text" name="q28" placeholder="Type one word...">
+                    <div class="explanation-box w-full" id="exp-q28"></div>
+                </div>
+                <div class="q-wrapper flex items-center gap-4">
+                    <span class="q-number">29</span> 
+                    <input type="text" class="input-text" name="q29" placeholder="Type one word...">
+                    <div class="explanation-box w-full" id="exp-q29"></div>
+                </div>
+                <div class="q-wrapper flex items-center gap-4">
+                    <span class="q-number">30</span> 
+                    <input type="text" class="input-text" name="q30" placeholder="Type one word...">
+                    <div class="explanation-box w-full" id="exp-q30"></div>
+                </div>
+                <div class="q-wrapper flex items-center gap-4">
+                    <span class="q-number">31</span> 
+                    <input type="text" class="input-text" name="q31" placeholder="Type one word...">
+                    <div class="explanation-box w-full" id="exp-q31"></div>
+                </div>
+                <div class="q-wrapper flex items-center gap-4">
+                    <span class="q-number">32</span> 
+                    <input type="text" class="input-text" name="q32" placeholder="Type one word...">
+                    <div class="explanation-box w-full" id="exp-q32"></div>
+                </div>
+                
+                <div class="mt-8 pt-6 border-t border-gray-300 flex items-center justify-between">
+                    <button class="btn-primary btn-check flex items-center gap-2" data-part="6">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd" /></svg>
+                        Check Answers
+                    </button>
+                    <span class="font-bold text-xl text-gray-700" id="score-part-6"></span>
+                </div>
+            </div>
+
+            <div style="height: 100px;"></div>
+        </div>
+    </div>
+
+    <!-- Highlight Tooltip Button -->
+    <button id="highlightTooltip">Highlight</button>
+    
+    <!-- Vocab Tooltip -->
+    <div id="vocabInfoTooltip">
+        <h4 id="v-word" class="font-bold text-blue-800 text-xl capitalize mb-1"></h4>
+        <p id="v-ipa" class="text-gray-500 italic font-medium mb-3"></p>
+        <p id="v-def" class="text-[0.95em] text-gray-700 mb-4 leading-relaxed"></p>
+        <button id="v-audio" class="w-full bg-blue-50 hover:bg-blue-100 text-blue-700 py-2.5 rounded-lg text-sm font-bold flex items-center justify-center gap-2 transition-colors border border-blue-200">
+            <span>🔊</span> Listen to Pronunciation
+        </button>
+    </div>
+</div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', () => {
+        // Detailed Answer Key and Explanations for TEST 6
+        const answerKey = {
+            q1: { ans: ['B'], exp: "Sue says 'I'll come and pick you up on Saturday at six if you like' meaning she wants to invite Brian to hang out with her." },
+            q2: { ans: ['B'], exp: "'As something unexpected happened, the shop will close at 4 pm instead of 5 pm' means they did not plan to close early." },
+            q3: { ans: ['A'], exp: "'20% deposit reserves any item' means you pay part of the price (20%) and they will keep an item for you." },
+            q4: { ans: ['B'], exp: "'FREE ADMISSION TO THE GALLERY AFTER 6.30 pm' means there is no entrance fee after that time." },
+            q5: { ans: ['C'], exp: "Tina says 'We need you to translate!' meaning she needs John's language skills to get around in a foreign country (Berlin)." },
+            
+            q6: { ans: ['C'], exp: "Brian likes history and real people who have done something exciting. 'Living with the Bushmen' is a true story about an impressive anthropologist." },
+            q7: { ans: ['B'], exp: "Marie wants another world/different life and romantic novels. 'The Enchanted April' is about a castle on the Italian Riviera helping women make discoveries about life and love." },
+            q8: { ans: ['G'], exp: "Bob wants puzzles and has an analytical mind. 'The Connection' is a mystery novel where the reader has to work out the common factor linking strange events." },
+            q9: { ans: ['A'], exp: "Angie wants a book she can read a little bit at a time about human relationships. 'Journeys with my Family' is a book of short stories showing how people are with their families." },
+            q10: { ans: ['D'], exp: "John wants an easy detective story. 'Trouble in the Suburbs' is a light-hearted crime story for those who don't want to be challenged too much." },
+
+            q11: { ans: ['B'], exp: "Joanna says 'my mother and my father are both actors, my grandfather was a theatre musician and my grandmother was a singer...' meaning she grew up among entertainers." },
+            q12: { ans: ['C'], exp: "She says 'I needed a break... So I started partying with friends... slept late most mornings'. This shows she felt pressured from missing out and needed to relax." },
+            q13: { ans: ['A'], exp: "Her personal tutor told her she was 'on my final warning', meaning she was nearly expelled or told to leave the course." },
+            q14: { ans: ['D'], exp: "She says The Royal Shakespeare Company gave her her first real role and she 'acted alongside some great names in the world of the stage' (famous actors)." },
+            q15: { ans: ['B'], exp: "She followed in her parents' footsteps (acting is in her blood), started as a Shakespearean actor, and is now known for Hollywood roles." },
+
+            q16: { ans: ['H'], exp: "'But do we really believe wars may be fought over water?' logically precedes the immediate response: 'Of course not!'" },
+            q17: { ans: ['G'], exp: "'Feeding this number of people means more water for farming...' links directly to the 'growing world population' making a demand on the planet's water." },
+            q18: { ans: ['E'], exp: "'These women cannot have a job because they have no time' logically follows the fact they have to walk for kilometres to get water." },
+            q19: { ans: ['A'], exp: "'And all this is because there is no running water nearby.' concludes the entire paragraph's point about lack of education and time caused by having to fetch water." },
+            q20: { ans: ['C'], exp: "'Think about all those who don't have a tap to turn on.' makes sense directly after asking people to 'think' when leaving the tap running." },
+
+            q21: { ans: ['C'], exp: "The eye 'transfers' these pictures to our brain." },
+            q22: { ans: ['C'], exp: "The complex processes that 'enable' us to see." },
+            q23: { ans: ['D'], exp: "Until one 'day' we realise we may have an eye problem." },
+            q24: { ans: ['A'], exp: "Several eye conditions are becoming more and more 'common'." },
+            q25: { ans: ['B'], exp: "Most people have 'noticed' that they cannot see as well as they once could." },
+            q26: { ans: ['D'], exp: "People who are far-sighted can't see things 'close' up." },
+
+            q27: { ans: ['which'], exp: "Relative pronoun connecting village: 'the village in which I grew up'." },
+            q28: { ans: ['by'], exp: "Preposition used for modes of transport: 'journey by plane'." },
+            q29: { ans: ['without', 'before'], exp: "'without' having a long rest contrasts perfectly with 'I was exhausted... but'." },
+            q30: { ans: ['when', 'as'], exp: "'My first shock came when I had to keep joining...'" },
+            q31: { ans: ['no'], exp: "'There was no village shop; instead, I could see a large, bright supermarket.'" },
+            q32: { ans: ['used'], exp: "Refers to a past habit: 'the open fields I used to walk through'." }
+        };
+
+        const vocabData = {
+            "depressed": { ipa: "/dɪˈprest/", def: "In a state of general unhappiness or despondency." },
+            "deposit": { ipa: "/dɪˈpɒzɪt/", def: "A sum of money paid into a bank or building society account, or as a first payment for something." },
+            "admission": { ipa: "/ədˈmɪʃn/", def: "The process or fact of entering or being allowed to enter a place, organization, or institution." },
+            "heartbreaking": { ipa: "/ˈhɑːtbreɪkɪŋ/", def: "Causing overwhelming distress; very sad." },
+            "anthropologist": { ipa: "/ˌænθrəˈpɒlədʒɪst/", def: "An expert in or student of anthropology (the study of human societies and cultures)." },
+            "gripping": { ipa: "/ˈɡrɪpɪŋ/", def: "Firmly holding the attention or interest; exciting." },
+            "sponsored": { ipa: "/ˈspɒnsərd/", def: "Supported financially by an organization or person." },
+            "realisation": { ipa: "/ˌriːəlaɪˈzeɪʃn/", def: "An act of becoming fully aware of something as a fact." },
+            "graduating": { ipa: "/ˈɡrædʒueɪtɪŋ/", def: "Successfully completing an academic degree, course of training, or high school." },
+            "role": { ipa: "/rəʊl/", def: "An actor's part in a play, movie, etc." },
+            "shortages": { ipa: "/ˈʃɔːtɪdʒɪz/", def: "Situations in which something needed cannot be obtained in sufficient amounts." },
+            "demand": { ipa: "/dɪˈmɑːnd/", def: "An insistent and peremptory request, made as if by right." },
+            "well": { ipa: "/wel/", def: "A shaft sunk into the ground to obtain water, oil, or gas." },
+            "complex": { ipa: "/ˈkɒmpleks/", def: "Consisting of many different and connected parts." },
+            "vision": { ipa: "/ˈvɪʒn/", def: "The faculty or state of being able to see." },
+            "exhausted": { ipa: "/ɪɡˈzɔːstɪd/", def: "Drained of one's physical or mental resources; very tired." },
+            "raced": { ipa: "/reɪst/", def: "Moved or progressed swiftly or at full speed." }
+        };
+
+        const app = {
+            fontSize: 16,
+            highlightTooltip: document.getElementById('highlightTooltip'),
+            vocabTooltip: document.getElementById('vocabInfoTooltip'),
+
+            init() {
+                this.initTabs();
+                this.initSplitter();
+                this.initFontResizer();
+                this.initHighlighter();
+                this.initCheckAnswers();
+                this.initVocabSystem();
+                this.initDragAndDrop();
+            },
+
+            initTabs() {
+                const tabs = document.querySelectorAll('.tab-btn');
+                tabs.forEach(tab => {
+                    tab.addEventListener('click', () => {
+                        tabs.forEach(t => t.classList.remove('active'));
+                        tab.classList.add('active');
+
+                        const targetPart = tab.getAttribute('data-target');
+                        document.querySelectorAll('.tab-content').forEach(content => {
+                            if (content.getAttribute('data-part') === targetPart) {
+                                content.classList.add('active');
+                            } else {
+                                content.classList.remove('active');
+                            }
+                        });
+                        
+                        document.getElementById('left-pane').scrollTop = 0;
+                        document.getElementById('right-pane').scrollTop = 0;
+                        this.vocabTooltip.style.display = 'none';
+                    });
+                });
+            },
+
+            initCheckAnswers() {
+                document.querySelectorAll('.btn-check').forEach(btn => {
+                    btn.addEventListener('click', (e) => {
+                        const targetBtn = e.target.closest('.btn-check');
+                        if(targetBtn) {
+                            const part = targetBtn.getAttribute('data-part');
+                            this.checkAnswersForPart(part);
+                        }
+                    });
+                });
+            },
+
+            checkAnswersForPart(part) {
+                const container = document.querySelector(`.question-group[data-part="${part}"]`);
+                if (!container) return;
+
+                const questionWrappers = container.querySelectorAll('.q-wrapper');
+                let score = 0;
+                let total = questionWrappers.length;
+
+                questionWrappers.forEach(wrapper => {
+                    const inputEl = wrapper.querySelector('input, select');
+                    if (!inputEl) return;
+
+                    const qName = inputEl.name;
+                    const correctData = answerKey[qName];
+                    const correctAnswers = correctData ? correctData.ans : [];
+                    
+                    let userAns = '';
+                    if (inputEl.type === 'radio') {
+                        const checked = wrapper.querySelector('input[type="radio"]:checked');
+                        if (checked) userAns = checked.value;
+                    } else if (inputEl.tagName === 'SELECT') {
+                        userAns = inputEl.value;
+                    } else if (inputEl.type === 'text' || inputEl.type === 'hidden') {
+                        userAns = inputEl.value.trim().toLowerCase();
+                    }
+
+                    const qNumBadge = wrapper.querySelector('.q-number');
+                    const expBox = wrapper.querySelector('.explanation-box');
+                    
+                    if (qNumBadge) {
+                        const isCorrect = correctAnswers.some(ans => ans.toLowerCase() === userAns.toLowerCase());
+
+                        if (userAns === '') {
+                            qNumBadge.style.backgroundColor = '#94a3b8'; // Slate for empty
+                        } else if (isCorrect) {
+                            qNumBadge.style.backgroundColor = '#16a34a'; // Green
+                            score++;
+                        } else {
+                            qNumBadge.style.backgroundColor = '#dc2626'; // Red
+                        }
+
+                        if (expBox && correctData) {
+                            expBox.style.display = 'block';
+                            
+                            const formattedCorrectAns = inputEl.type === 'text' || inputEl.type === 'hidden' 
+                                ? correctAnswers.join(' / ') 
+                                : correctAnswers[0];
+                            
+                            expBox.innerHTML = `
+                                <div class="mb-2 pb-2 border-b border-green-200">
+                                    <span class="font-bold text-green-800 uppercase tracking-wide text-[0.85em]">Correct Answer:</span> 
+                                    <span class="font-bold text-lg text-green-900 ml-1">${formattedCorrectAns}</span>
+                                </div>
+                                <div>
+                                    <span class="font-bold text-green-800">Explanation:</span> ${correctData.exp}
+                                </div>
+                            `;
+                            
+                            if(isCorrect) {
+                                wrapper.style.borderColor = '#bbf7d0';
+                                wrapper.style.backgroundColor = '#f0fdf4';
+                            } else if (userAns !== '') {
+                                wrapper.style.borderColor = '#fecaca';
+                                wrapper.style.backgroundColor = '#fef2f2';
+                            }
+                        }
+
+                        const textGap = document.querySelector(`.drop-zone.in-text[data-name="${qName}"]`);
+                        if (textGap) {
+                            textGap.classList.remove('correct', 'incorrect');
+                            if (userAns !== '') {
+                                if (isCorrect) {
+                                    textGap.classList.add('correct');
+                                } else {
+                                    textGap.classList.add('incorrect');
+                                }
+                            }
+                        }
+                    }
+                });
+
+                const scoreLabel = document.getElementById(`score-part-${part}`);
+                if (scoreLabel) {
+                    scoreLabel.textContent = `Score: ${score} / ${total}`;
+                    scoreLabel.style.color = score === total ? '#16a34a' : (score > 0 ? '#d97706' : '#dc2626');
+                }
+            },
+
+            initVocabSystem() {
+                document.querySelectorAll('.vocab-word').forEach(wordEl => {
+                    wordEl.addEventListener('click', (e) => {
+                        e.stopPropagation();
+                        const key = wordEl.getAttribute('data-word');
+                        const data = vocabData[key];
+                        if (!data) return;
+
+                        document.getElementById('v-word').textContent = key;
+                        document.getElementById('v-ipa').textContent = data.ipa;
+                        document.getElementById('v-def').textContent = data.def;
+
+                        this.vocabTooltip.style.display = 'block';
+                        
+                        const rect = wordEl.getBoundingClientRect();
+                        let leftPos = e.pageX;
+                        let topPos = e.pageY + 15;
+
+                        if (leftPos + 300 > window.innerWidth) {
+                            leftPos = window.innerWidth - 320;
+                        }
+
+                        this.vocabTooltip.style.left = `${leftPos}px`;
+                        this.vocabTooltip.style.top = `${topPos}px`;
+
+                        document.getElementById('v-audio').onclick = () => {
+                            const utterance = new SpeechSynthesisUtterance(key);
+                            utterance.lang = 'en-US';
+                            utterance.rate = 0.9;
+                            window.speechSynthesis.speak(utterance);
+                        };
+                    });
+                });
+
+                document.addEventListener('click', (e) => {
+                    if (!this.vocabTooltip.contains(e.target)) {
+                        this.vocabTooltip.style.display = 'none';
+                    }
+                });
+            },
+
+            initDragAndDrop() {
+                const dragItems = document.querySelectorAll('.drag-item');
+                const dropZones = document.querySelectorAll('.drop-zone.in-text');
+                const pool = document.getElementById('pool-part-4');
+
+                if (!pool) return;
+
+                let draggedItem = null;
+
+                dragItems.forEach(item => {
+                    item.addEventListener('dragstart', (e) => {
+                        draggedItem = item;
+                        e.dataTransfer.effectAllowed = 'move';
+                        e.dataTransfer.setData('text/plain', item.id); 
+                        setTimeout(() => item.classList.add('opacity-40'), 0);
+                    });
+                    item.addEventListener('dragend', () => {
+                        setTimeout(() => {
+                            item.classList.remove('opacity-40');
+                            draggedItem = null;
+                        }, 0);
+                    });
+                });
+
+                const updateAllHiddenInputs = () => {
+                    dropZones.forEach(z => {
+                        const item = z.querySelector('.drag-item');
+                        const input = document.getElementById(`input-${z.dataset.name}`);
+                        if (input) {
+                            input.value = item ? item.dataset.value : '';
+                        }
+                    });
+                };
+
+                dropZones.forEach(zone => {
+                    zone.addEventListener('dragover', (e) => {
+                        e.preventDefault();
+                        zone.classList.add('drag-over');
+                    });
+                    zone.addEventListener('dragleave', () => {
+                        zone.classList.remove('drag-over');
+                    });
+                    zone.addEventListener('drop', (e) => {
+                        e.preventDefault();
+                        zone.classList.remove('drag-over');
+                        if (draggedItem) {
+                            const existingItem = zone.querySelector('.drag-item');
+                            if (existingItem && existingItem !== draggedItem) {
+                                pool.appendChild(existingItem);
+                            }
+                            zone.appendChild(draggedItem);
+                            zone.classList.remove('correct', 'incorrect');
+                            updateAllHiddenInputs();
+                        }
+                    });
+                });
+
+                pool.addEventListener('dragover', (e) => {
+                    e.preventDefault();
+                    pool.classList.add('border-blue-400', 'bg-slate-100');
+                });
+                pool.addEventListener('dragleave', () => {
+                    pool.classList.remove('border-blue-400', 'bg-slate-100');
+                });
+                pool.addEventListener('drop', (e) => {
+                    e.preventDefault();
+                    pool.classList.remove('border-blue-400', 'bg-slate-100');
+                    if (draggedItem) {
+                        pool.appendChild(draggedItem);
+                        updateAllHiddenInputs();
+                        dropZones.forEach(z => z.classList.remove('correct', 'incorrect'));
+                    }
+                });
+            },
+
+            initSplitter() {
+                const splitter = document.getElementById('splitter');
+                const panesContainer = document.getElementById('panes-container');
+                let isDragging = false;
+
+                splitter.addEventListener('mousedown', () => {
+                    isDragging = true;
+                    document.body.style.cursor = 'col-resize';
+                });
+
+                document.addEventListener('mousemove', (e) => {
+                    if (!isDragging) return;
+                    const containerRect = panesContainer.getBoundingClientRect();
+                    let newLeftWidth = e.clientX - containerRect.left;
+                    if (newLeftWidth < 300) newLeftWidth = 300;
+                    if (newLeftWidth > containerRect.width - 300) newLeftWidth = containerRect.width - 300;
+                    const percentage = (newLeftWidth / containerRect.width) * 100;
+                    panesContainer.style.gridTemplateColumns = `${percentage}% 6px 1fr`;
+                });
+
+                document.addEventListener('mouseup', () => {
+                    if (isDragging) {
+                        isDragging = false;
+                        document.body.style.cursor = 'default';
+                    }
+                });
+            },
+
+            initFontResizer() {
+                document.getElementById('btn-increase-font').addEventListener('click', () => {
+                    if (this.fontSize < 24) {
+                        this.fontSize += 2;
+                        document.documentElement.style.setProperty('--app-font-size', `${this.fontSize}px`);
+                    }
+                });
+                document.getElementById('btn-decrease-font').addEventListener('click', () => {
+                    if (this.fontSize > 12) {
+                        this.fontSize -= 2;
+                        document.documentElement.style.setProperty('--app-font-size', `${this.fontSize}px`);
+                    }
+                });
+            },
+
+            initHighlighter() {
+                const leftPane = document.getElementById('left-pane');
+                leftPane.addEventListener('mouseup', (e) => {
+                    const selection = window.getSelection();
+                    const text = selection.toString().trim();
+                    if (text.length > 0) {
+                        const range = selection.getRangeAt(0);
+                        const rect = range.getBoundingClientRect();
+                        this.highlightTooltip.style.display = 'block';
+                        this.highlightTooltip.style.left = `${rect.left + (rect.width / 2) - (this.highlightTooltip.offsetWidth / 2)}px`;
+                        this.highlightTooltip.style.top = `${rect.top - 40}px`;
+                        this.highlightTooltip.onclick = () => {
+                            const mark = document.createElement('mark');
+                            try {
+                                range.surroundContents(mark);
+                            } catch (ex) {} 
+                            selection.removeAllRanges();
+                            this.highlightTooltip.style.display = 'none';
+                        };
+                    } else {
+                        this.highlightTooltip.style.display = 'none';
+                    }
+                });
+                document.body.addEventListener('mousedown', (e) => {
+                   if (e.target !== this.highlightTooltip && window.getSelection().toString().length === 0) {
+                        this.highlightTooltip.style.display = 'none';
+                   }
+                });
+            }
+        };
+
+        app.init();
+    });
+</script>
+
+</body>
+</html>
