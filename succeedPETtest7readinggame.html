@@ -1,0 +1,709 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Super Mystery Box Game</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Fredoka', sans-serif;
+            background-color: #5C94FC; /* Mario Sky Blue */
+            background-image: 
+                radial-gradient(circle at 20% 30%, rgba(255,255,255,0.8) 0%, rgba(255,255,255,0.8) 5%, transparent 6%),
+                radial-gradient(circle at 80% 20%, rgba(255,255,255,0.8) 0%, rgba(255,255,255,0.8) 4%, transparent 5%),
+                radial-gradient(circle at 50% 80%, rgba(255,255,255,0.6) 0%, rgba(255,255,255,0.6) 8%, transparent 9%);
+            background-attachment: fixed;
+            margin: 0;
+            padding: 0;
+            overflow-x: hidden;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* Chunky 3D Text Effect */
+        .text-3d {
+            text-shadow: 2px 2px 0 #000, -1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000, 1px 1px 0 #000, 0px 4px 0 #000;
+        }
+
+        .text-3d-light {
+            text-shadow: 2px 2px 0 #D9801D;
+        }
+
+        /* Mystery Box Styles */
+        .mystery-box {
+            background-color: #FBD000;
+            border: 4px solid #000;
+            box-shadow: inset -4px -4px 0px 0px #D9801D, inset 4px 4px 0px 0px #FFEFA6, 0 6px 0 #000;
+            transition: transform 0.1s, box-shadow 0.1s;
+            position: relative;
+        }
+        
+        .mystery-box::before {
+            content: '';
+            position: absolute;
+            top: 4px; left: 4px; width: 6px; height: 6px; background: #D9801D; border-radius: 50%;
+        }
+        .mystery-box::after {
+            content: '';
+            position: absolute;
+            top: 4px; right: 4px; width: 6px; height: 6px; background: #D9801D; border-radius: 50%;
+        }
+        .mystery-box .dot-bl {
+            position: absolute;
+            bottom: 4px; left: 4px; width: 6px; height: 6px; background: #D9801D; border-radius: 50%;
+        }
+        .mystery-box .dot-br {
+            position: absolute;
+            bottom: 4px; right: 4px; width: 6px; height: 6px; background: #D9801D; border-radius: 50%;
+        }
+
+        .mystery-box:hover:not(.opened) {
+            transform: translateY(-4px);
+            box-shadow: inset -4px -4px 0px 0px #D9801D, inset 4px 4px 0px 0px #FFEFA6, 0 10px 0 #000;
+            cursor: pointer;
+        }
+
+        .mystery-box:active:not(.opened) {
+            transform: translateY(2px);
+            box-shadow: inset -4px -4px 0px 0px #D9801D, inset 4px 4px 0px 0px #FFEFA6, 0 4px 0 #000;
+        }
+
+        .mystery-box.opened {
+            background-color: #C49A45;
+            box-shadow: inset -4px -4px 0px 0px #A0782E, inset 4px 4px 0px 0px #DBC38F, 0 6px 0 #000;
+            color: rgba(0,0,0,0.3);
+            cursor: not-allowed;
+        }
+
+        /* Big Button Styles */
+        .btn-mario {
+            background-color: #E52521;
+            color: white;
+            border: 4px solid #000;
+            box-shadow: inset -4px -4px 0px 0px rgba(0,0,0,0.3), inset 4px 4px 0px 0px rgba(255,255,255,0.4), 0 6px 0 #000;
+            transition: all 0.1s;
+        }
+        .btn-mario:hover { transform: translateY(-2px); box-shadow: inset -4px -4px 0px 0px rgba(0,0,0,0.3), inset 4px 4px 0px 0px rgba(255,255,255,0.4), 0 8px 0 #000; }
+        .btn-mario:active { transform: translateY(4px); box-shadow: inset -4px -4px 0px 0px rgba(0,0,0,0.3), inset 4px 4px 0px 0px rgba(255,255,255,0.4), 0 2px 0 #000; }
+
+        .btn-luigi { background-color: #43B047; color: white; border: 4px solid #000; box-shadow: inset -4px -4px 0px 0px rgba(0,0,0,0.3), inset 4px 4px 0px 0px rgba(255,255,255,0.4), 0 6px 0 #000; transition: all 0.1s; }
+        .btn-luigi:hover { transform: translateY(-2px); box-shadow: inset -4px -4px 0px 0px rgba(0,0,0,0.3), inset 4px 4px 0px 0px rgba(255,255,255,0.4), 0 8px 0 #000; }
+        .btn-luigi:active { transform: translateY(4px); box-shadow: inset -4px -4px 0px 0px rgba(0,0,0,0.3), inset 4px 4px 0px 0px rgba(255,255,255,0.4), 0 2px 0 #000; }
+
+        .btn-yellow { background-color: #FBD000; color: #000; border: 4px solid #000; box-shadow: inset -4px -4px 0px 0px rgba(0,0,0,0.2), inset 4px 4px 0px 0px rgba(255,255,255,0.6), 0 6px 0 #000; transition: all 0.1s; }
+        .btn-yellow:hover { transform: translateY(-2px); box-shadow: inset -4px -4px 0px 0px rgba(0,0,0,0.2), inset 4px 4px 0px 0px rgba(255,255,255,0.6), 0 8px 0 #000; }
+        .btn-yellow:active { transform: translateY(4px); box-shadow: inset -4px -4px 0px 0px rgba(0,0,0,0.2), inset 4px 4px 0px 0px rgba(255,255,255,0.6), 0 2px 0 #000; }
+
+        /* Animations */
+        @keyframes popIn {
+            0% { transform: scale(0.5); opacity: 0; }
+            80% { transform: scale(1.05); opacity: 1; }
+            100% { transform: scale(1); opacity: 1; }
+        }
+        .animate-pop { animation: popIn 0.4s ease-out forwards; }
+
+        @keyframes float {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-10px); }
+        }
+        .animate-float { animation: float 3s ease-in-out infinite; }
+
+        .card {
+            background-color: white;
+            border: 4px solid #000;
+            box-shadow: 8px 8px 0 rgba(0,0,0,0.2);
+            border-radius: 16px;
+        }
+
+        .grass-floor {
+            background-color: #43B047;
+            border-top: 8px solid #000;
+            box-shadow: inset 0 8px 0 #60E065;
+        }
+        
+        .team-input:focus { outline: none; border-color: #FBD000; box-shadow: 0 0 0 3px rgba(251, 208, 0, 0.4); }
+    </style>
+</head>
+<body class="text-gray-900 flex flex-col h-screen">
+
+    <!-- Header -->
+    <header class="p-2 md:p-4 text-center z-10">
+        <h1 class="text-3xl md:text-6xl font-bold text-white text-3d tracking-wider">MYSTERY BOX</h1>
+    </header>
+
+    <!-- Main Content Area -->
+    <main id="app" class="flex-grow flex flex-col items-center justify-center p-2 sm:p-4 z-10 overflow-y-auto w-full min-h-0">
+        <!-- Rendered via JS -->
+    </main>
+
+    <!-- Footer / Scoreboard -->
+    <footer id="scoreboard" class="grass-floor p-2 sm:p-4 z-20 hidden">
+        <div class="max-w-6xl mx-auto flex flex-wrap justify-center gap-2 sm:gap-4" id="team-scores">
+            <!-- Rendered via JS -->
+        </div>
+    </footer>
+
+    <script>
+        // --- GAME DATA & CONFIG ---
+        const REWARDS_POOL = [
+            { text: "+100 PTS", type: 'add', val: 100, color: 'text-green-500' },
+            { text: "+100 PTS", type: 'add', val: 100, color: 'text-green-500' },
+            { text: "+100 PTS", type: 'add', val: 100, color: 'text-green-500' },
+            { text: "+200 PTS", type: 'add', val: 200, color: 'text-green-500' },
+            { text: "+200 PTS", type: 'add', val: 200, color: 'text-green-500' },
+            { text: "+300 PTS", type: 'add', val: 300, color: 'text-green-500' },
+            { text: "+300 PTS", type: 'add', val: 300, color: 'text-green-500' },
+            { text: "+400 PTS", type: 'add', val: 400, color: 'text-green-500' },
+            { text: "+500 PTS", type: 'add', val: 500, color: 'text-green-500' },
+            { text: "+1000 PTS!", type: 'add', val: 1000, color: 'text-yellow-500' },
+            { text: "-100 PTS", type: 'sub', val: 100, color: 'text-red-500' },
+            { text: "-100 PTS", type: 'sub', val: 100, color: 'text-red-500' },
+            { text: "-100 PTS", type: 'sub', val: 100, color: 'text-red-500' },
+            { text: "-200 PTS", type: 'sub', val: 200, color: 'text-red-500' },
+            { text: "-200 PTS", type: 'sub', val: 200, color: 'text-red-500' },
+            { text: "-300 PTS", type: 'sub', val: 300, color: 'text-red-500' },
+            { text: "-300 PTS", type: 'sub', val: 300, color: 'text-red-500' },
+            { text: "-400 PTS", type: 'sub', val: 400, color: 'text-red-500' },
+            { text: "-500 PTS", type: 'sub', val: 500, color: 'text-red-500' },
+            { text: "LOSE ALL PTS!", type: 'zero', val: 0, color: 'text-red-600' },
+            { text: "PTS x2!", type: 'mult', val: 2, color: 'text-blue-500' },
+            { text: "PTS x2!", type: 'mult', val: 2, color: 'text-blue-500' },
+            { text: "PTS ÷2", type: 'div', val: 2, color: 'text-orange-500' },
+            { text: "SWAP SCORES", type: 'swap', val: 0, color: 'text-purple-500' } // Special action
+        ];
+
+        // Interactive Multiple Choice Data (Contextual Examples)
+        const TRIVIA_QUESTIONS = [
+            { q: "I bought some _____ peas from the supermarket and put them in the freezer.", options: ["A) wealthy", "B) frozen", "C) previous"], correctIndex: 1 },
+            { q: "The beautiful mountains are just _____ that thick forest. We can barely see them.", options: ["A) beyond", "B) within", "C) occasionally"], correctIndex: 0 },
+            { q: "We have a special _____ staying in the best room at our hotel tonight.", options: ["A) priority", "B) contestant", "C) guest"], correctIndex: 2 },
+            { q: "The security guard asked to see my _____ before letting me inside the building.", options: ["A) board", "B) identity card", "C) bill"], correctIndex: 1 },
+            { q: "Basil is a delicious _____ that we often use when making Italian pasta sauce.", options: ["A) case", "B) abuse", "C) herb"], correctIndex: 2 },
+            { q: "Please _____ the potatoes to remove the skin before you boil them for the soup.", options: ["A) peel", "B) defend", "C) transform"], correctIndex: 0 },
+            { q: "Children under 12 must have an adult _____ them to the swimming pool.", options: ["A) irritate", "B) accompany", "C) blame"], correctIndex: 1 },
+            { q: "You cannot park your car in this private lot without official _____.", options: ["A) exploration", "B) permission", "C) heartbreak"], correctIndex: 1 },
+            { q: "The children were absolutely _____ by the magician's incredible tricks.", options: ["A) guilty", "B) refreshed", "C) fascinated"], correctIndex: 2 },
+            { q: "We hired an _____ to help us choose the paint colours and furniture for our living room.", options: ["A) traffic warden", "B) interior designer", "C) judge"], correctIndex: 1 },
+            { q: "It is hard to _____ his problems because my life has been very different.", options: ["A) relate to", "B) end up", "C) misbehave"], correctIndex: 0 },
+            { q: "Camels can _____ for many days in the hot desert without drinking any water.", options: ["A) reveal", "B) survive", "C) dispatch"], correctIndex: 1 },
+            { q: "We sat on the beach and watched the sun go down over the _____.", options: ["A) justice", "B) board", "C) horizon"], correctIndex: 2 },
+            { q: "At the very end of the magic trick, he will _____ the card I picked from the deck.", options: ["A) reveal", "B) defend", "C) concentrate"], correctIndex: 0 },
+            { q: "The winning _____ on the television game show received a brand new car.", options: ["A) judge", "B) contestant", "C) murder"], correctIndex: 1 },
+            { q: "After his business became successful, he became a very _____ man and bought a mansion.", options: ["A) wealthy", "B) tough", "C) previous"], correctIndex: 0 },
+            { q: "In a few weeks, the small caterpillar will completely _____ into a beautiful butterfly.", options: ["A) peel", "B) transform", "C) accompany"], correctIndex: 1 },
+            { q: "I got a parking ticket from the _____ because I parked on a yellow line in the city.", options: ["A) traffic warden", "B) guest", "C) interior designer"], correctIndex: 0 },
+            { q: "It really starts to _____ me when my brother plays loud music while I am studying.", options: ["A) satisfy", "B) survive", "C) irritate"], correctIndex: 2 },
+            { q: "You can't _____ me for the broken window; I wasn't even at home when it happened!", options: ["A) defend", "B) blame", "C) relate to"], correctIndex: 1 },
+            { q: "He felt very _____ after he lied to his best friend and hid the truth.", options: ["A) guilty", "B) fascinated", "C) tough"], correctIndex: 0 },
+            { q: "My absolute first _____ right now is passing my final exams at university.", options: ["A) exploration", "B) priority", "C) board"], correctIndex: 1 },
+            { q: "If the students continue to _____ in class, they will have to stay inside during break time.", options: ["A) end up", "B) transform", "C) misbehave"], correctIndex: 2 },
+            { q: "After a long ten-hour sleep and a hot shower, I felt completely _____.", options: ["A) refreshed", "B) frozen", "C) challenging"], correctIndex: 0 },
+            { q: "The steak was overcooked and much too _____ for us to chew properly.", options: ["A) tough", "B) wealthy", "C) previous"], correctIndex: 0 },
+            { q: "I prefer reading _____ books because I enjoy learning about real history and science.", options: ["A) non-fiction", "B) documentary", "C) reality show"], correctIndex: 0 },
+            { q: "We only see our cousins _____, maybe once or twice a year during the holidays.", options: ["A) within", "B) beyond", "C) occasionally"], correctIndex: 2 }
+        ];
+
+        const BOX_LETTERS = "ABCDEFGHIJKLMNOPQRSTUVWX".split("");
+
+        const DEFAULT_TEAMS_CONFIG = [
+            { name: 'Mario', color: 'bg-red-500' },
+            { name: 'Luigi', color: 'bg-green-500' },
+            { name: 'Peach', color: 'bg-pink-400' },
+            { name: 'Toad', color: 'bg-blue-500' },
+            { name: 'Yoshi', color: 'bg-green-600' },
+            { name: 'Bowser', color: 'bg-orange-600' }
+        ];
+
+        // --- STATE MANAGEMENT ---
+        let state = {
+            screen: 'setup', // setup, pregame, board, question, target (if swap/give), reveal
+            teams: [
+                { id: 1, name: 'Mario', score: 0, color: 'bg-red-500' },
+                { id: 2, name: 'Luigi', score: 0, color: 'bg-green-500' },
+                { id: 3, name: 'Peach', score: 0, color: 'bg-pink-400' },
+                { id: 4, name: 'Toad', score: 0, color: 'bg-blue-500' }
+            ],
+            currentTeamIndex: 0,
+            boxes: [],
+            activeBox: null,
+            showAnswer: false,
+            selectedOptionIndex: null, // Tracks the multiple choice selection
+            decision: null, // 'keep' or 'give'
+            targetTeamIndex: null, // team receiving the box or swapping
+            
+            // Timer Settings
+            questionTimeLimit: 30, // 0 = off, value in seconds
+            preGameCountdown: 0,   // 0 = off, value in minutes
+            timeLeft: 0,
+            timerInterval: null
+        };
+
+        const appEl = document.getElementById('app');
+        const scoreboardEl = document.getElementById('scoreboard');
+        const teamScoresEl = document.getElementById('team-scores');
+
+        // --- UTILS ---
+        function shuffle(array) {
+            let currentIndex = array.length, randomIndex;
+            while (currentIndex !== 0) {
+                randomIndex = Math.floor(Math.random() * currentIndex);
+                currentIndex--;
+                [array[currentIndex], array[randomIndex]] = [array[randomIndex], array[currentIndex]];
+            }
+            return array;
+        }
+
+        function formatTime(seconds) {
+            let m = Math.floor(seconds / 60);
+            let s = seconds % 60;
+            return `${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
+        }
+
+        // --- INITIALIZATION ---
+        function adjustTeams(delta) {
+            let newCount = state.teams.length + delta;
+            if (newCount >= 2 && newCount <= 6) {
+                if (delta > 0) {
+                    let config = DEFAULT_TEAMS_CONFIG[newCount - 1] || { name: `Team ${newCount}`, color: 'bg-purple-500' };
+                    state.teams.push({ id: newCount, name: config.name, score: 0, color: config.color });
+                } else {
+                    state.teams.pop();
+                }
+                render();
+            }
+        }
+
+        function updateTeamName(index, newName) {
+            state.teams[index].name = newName || `Team ${index + 1}`;
+        }
+
+        function adjustQTimer(delta) {
+            state.questionTimeLimit = Math.max(0, state.questionTimeLimit + delta);
+            render();
+        }
+
+        function adjustPregameTimer(delta) {
+            state.preGameCountdown = Math.max(0, state.preGameCountdown + delta);
+            render();
+        }
+
+        function handleStartClick() {
+            if (state.preGameCountdown > 0) {
+                state.screen = 'pregame';
+                state.timeLeft = state.preGameCountdown * 60;
+                
+                render(); // Initial render to prevent pregame screen flickering
+
+                if (state.timerInterval) clearInterval(state.timerInterval);
+                state.timerInterval = setInterval(() => {
+                    state.timeLeft--;
+                    if (state.timeLeft <= 0) {
+                        clearInterval(state.timerInterval);
+                        initGame();
+                    } else {
+                        // Targeted DOM update: strictly update the timer text, do not re-render the screen
+                        const pregameTimerEl = document.getElementById('pregame-timer-text');
+                        if (pregameTimerEl) {
+                            pregameTimerEl.innerText = formatTime(state.timeLeft);
+                        }
+                    }
+                }, 1000);
+            } else {
+                initGame();
+            }
+        }
+
+        function skipPregame() {
+            if (state.timerInterval) clearInterval(state.timerInterval);
+            initGame();
+        }
+
+        function initGame() {
+            if (state.timerInterval) clearInterval(state.timerInterval);
+            
+            let shuffledRewards = shuffle([...REWARDS_POOL]);
+            let shuffledQuestions = shuffle([...TRIVIA_QUESTIONS]); // Randomize all questions
+            
+            state.boxes = BOX_LETTERS.map((letter, index) => ({
+                id: letter,
+                reward: shuffledRewards[index],
+                question: shuffledQuestions[index], // Pick 24 at random
+                opened: false
+            }));
+            state.currentTeamIndex = 0;
+            state.screen = 'board';
+            render();
+        }
+
+        // --- ACTIONS ---
+        function openBox(boxId) {
+            state.activeBox = state.boxes.find(b => b.id === boxId);
+            state.showAnswer = false;
+            state.selectedOptionIndex = null; // Reset selection
+            state.screen = 'question';
+            
+            if (state.questionTimeLimit > 0) {
+                state.timeLeft = state.questionTimeLimit;
+                if (state.timerInterval) clearInterval(state.timerInterval);
+                state.timerInterval = setInterval(() => {
+                    state.timeLeft--;
+                    if (state.timeLeft <= 0) {
+                        clearInterval(state.timerInterval);
+                        state.timeLeft = 0;
+                        state.selectedOptionIndex = -1; // Indicates time is up
+                        state.showAnswer = true;
+                        render(); // Redraw only once when time is completely up
+                    } else {
+                        // Targeted DOM update: strictly update the timer text, do not re-render the question box
+                        const timerEl = document.getElementById('q-timer-text');
+                        if (timerEl) {
+                            timerEl.innerText = `⏱️ ${state.timeLeft}s`;
+                            if (state.timeLeft <= 5) {
+                                timerEl.className = 'text-2xl sm:text-4xl font-bold text-red-600 animate-pulse';
+                            }
+                        }
+                    }
+                }, 1000);
+            }
+            
+            render();
+        }
+
+        // Triggered when a team clicks a multiple choice option
+        function selectAnswer(index) {
+            if (state.timerInterval) clearInterval(state.timerInterval);
+            state.selectedOptionIndex = index;
+            state.showAnswer = true;
+            render();
+        }
+
+        function makeDecision(choice) {
+            if (state.timerInterval) clearInterval(state.timerInterval);
+            state.decision = choice;
+            if (choice === 'give' || state.activeBox.reward.type === 'swap') {
+                state.screen = 'target'; // Need to select a team
+            } else {
+                state.targetTeamIndex = state.currentTeamIndex; // Keeping it
+                state.screen = 'reveal';
+            }
+            render();
+        }
+
+        function selectTargetTeam(index) {
+            state.targetTeamIndex = index;
+            state.screen = 'reveal';
+            render();
+        }
+
+        function applyRewardAndNext() {
+            const reward = state.activeBox.reward;
+            let targetTeam = state.teams[state.targetTeamIndex];
+            let currentTeam = state.teams[state.currentTeamIndex];
+
+            if (reward.type === 'swap') {
+                // Swap current team with target team
+                let temp = currentTeam.score;
+                currentTeam.score = targetTeam.score;
+                targetTeam.score = temp;
+            } else {
+                // Apply math to target team (could be current if kept, or other if given)
+                if (reward.type === 'add') targetTeam.score += reward.val;
+                if (reward.type === 'sub') targetTeam.score -= reward.val;
+                if (reward.type === 'mult') targetTeam.score *= reward.val;
+                if (reward.type === 'div') targetTeam.score = Math.floor(targetTeam.score / reward.val);
+                if (reward.type === 'zero') targetTeam.score = 0;
+            }
+
+            state.activeBox.opened = true;
+            state.activeBox = null;
+            state.decision = null;
+            state.targetTeamIndex = null;
+            state.showAnswer = false;
+            
+            // Next turn
+            state.currentTeamIndex = (state.currentTeamIndex + 1) % state.teams.length;
+            state.screen = 'board';
+            render();
+        }
+
+        // --- RENDERERS ---
+        function render() {
+            appEl.innerHTML = '';
+            
+            if (state.screen === 'setup' || state.screen === 'pregame') {
+                scoreboardEl.classList.add('hidden');
+                if (state.screen === 'setup') appEl.innerHTML = renderSetup();
+                else if (state.screen === 'pregame') appEl.innerHTML = renderPregame();
+            } else {
+                scoreboardEl.classList.remove('hidden');
+                renderScoreboard();
+                
+                if (state.screen === 'board') appEl.innerHTML = renderBoard();
+                else if (state.screen === 'question') appEl.innerHTML = renderQuestion();
+                else if (state.screen === 'target') appEl.innerHTML = renderTargetSelection();
+                else if (state.screen === 'reveal') appEl.innerHTML = renderReveal();
+            }
+        }
+
+        function renderSetup() {
+            return `
+                <div class="card p-5 sm:p-8 max-w-2xl w-full text-center animate-pop mx-auto">
+                    <h2 class="text-3xl sm:text-4xl font-bold mb-2 text-red-600 text-3d-light">Game Setup</h2>
+                    <p class="mb-4 sm:mb-6 text-gray-600 font-semibold text-base sm:text-lg">Configure your teams and timers!</p>
+                    
+                    <div class="flex items-center justify-center gap-4 sm:gap-6 mb-6">
+                        <button onclick="adjustTeams(-1)" class="w-10 h-10 sm:w-12 sm:h-12 flex items-center justify-center bg-red-500 hover:bg-red-600 text-white rounded-full font-bold text-xl sm:text-2xl border-2 border-black shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] transition-transform active:translate-y-1 active:shadow-none">&minus;</button>
+                        <span class="text-2xl sm:text-3xl font-bold text-gray-800 w-24 sm:w-32">${state.teams.length} Teams</span>
+                        <button onclick="adjustTeams(1)" class="w-10 h-10 sm:w-12 sm:h-12 flex items-center justify-center bg-green-500 hover:bg-green-600 text-white rounded-full font-bold text-xl sm:text-2xl border-2 border-black shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] transition-transform active:translate-y-1 active:shadow-none">&plus;</button>
+                    </div>
+
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4 mb-4 text-left">
+                        ${state.teams.map((t, i) => `
+                            <div class="flex flex-col">
+                                <label class="font-bold text-xs sm:text-sm mb-1 text-gray-600 ml-1">Team ${i + 1}</label>
+                                <input type="text" oninput="updateTeamName(${i}, this.value)" value="${t.name}" maxlength="12" class="team-input border-2 border-black p-2 sm:p-3 rounded-xl font-bold text-base sm:text-lg text-gray-800 shadow-[2px_2px_0px_0px_rgba(0,0,0,0.2)]">
+                            </div>
+                        `).join('')}
+                    </div>
+
+                    <!-- Timers Section -->
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-6 sm:mb-8 border-t-2 border-b-2 border-gray-100 py-4 sm:py-6">
+                        <div class="flex flex-col items-center">
+                            <label class="font-bold text-xs sm:text-sm text-gray-500 mb-2 uppercase tracking-wide">Question Timer</label>
+                            <div class="flex items-center gap-3">
+                                <button onclick="adjustQTimer(-15)" class="w-8 h-8 sm:w-10 sm:h-10 flex items-center justify-center bg-blue-500 hover:bg-blue-600 text-white rounded-full font-bold text-xl border-2 border-black shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] active:translate-y-1 active:shadow-none">&minus;</button>
+                                <span class="text-lg sm:text-xl font-bold text-gray-800 w-16 sm:w-20 text-center">${state.questionTimeLimit === 0 ? 'Off' : state.questionTimeLimit + 's'}</span>
+                                <button onclick="adjustQTimer(15)" class="w-8 h-8 sm:w-10 sm:h-10 flex items-center justify-center bg-blue-500 hover:bg-blue-600 text-white rounded-full font-bold text-xl border-2 border-black shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] active:translate-y-1 active:shadow-none">&plus;</button>
+                            </div>
+                        </div>
+                        <div class="flex flex-col items-center">
+                            <label class="font-bold text-xs sm:text-sm text-gray-500 mb-2 uppercase tracking-wide">Waiting Timer</label>
+                            <div class="flex items-center gap-3">
+                                <button onclick="adjustPregameTimer(-1)" class="w-8 h-8 sm:w-10 sm:h-10 flex items-center justify-center bg-purple-500 hover:bg-purple-600 text-white rounded-full font-bold text-xl border-2 border-black shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] active:translate-y-1 active:shadow-none">&minus;</button>
+                                <span class="text-lg sm:text-xl font-bold text-gray-800 w-16 sm:w-20 text-center">${state.preGameCountdown === 0 ? 'Off' : state.preGameCountdown + 'm'}</span>
+                                <button onclick="adjustPregameTimer(1)" class="w-8 h-8 sm:w-10 sm:h-10 flex items-center justify-center bg-purple-500 hover:bg-purple-600 text-white rounded-full font-bold text-xl border-2 border-black shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] active:translate-y-1 active:shadow-none">&plus;</button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <button onclick="handleStartClick()" class="btn-mario text-xl sm:text-3xl px-6 sm:px-8 py-4 sm:py-5 rounded-xl w-full font-bold uppercase tracking-wide text-3d-light">
+                        START GAME
+                    </button>
+                </div>
+            `;
+        }
+
+        function renderPregame() {
+            return `
+                <div class="card p-8 md:p-16 max-w-3xl w-full text-center animate-pop mx-auto flex flex-col items-center justify-center">
+                    <h2 class="text-3xl md:text-5xl font-bold mb-8 text-gray-700">Game starts in...</h2>
+                    <div id="pregame-timer-text" class="text-7xl sm:text-8xl md:text-9xl font-bold text-purple-600 mb-12 text-3d-light tracking-widest drop-shadow-md">
+                        ${formatTime(state.timeLeft)}
+                    </div>
+                    <button onclick="skipPregame()" class="btn-yellow text-lg sm:text-2xl px-6 sm:px-8 py-4 sm:py-5 rounded-xl font-bold uppercase tracking-wide shadow-[4px_4px_0px_0px_rgba(0,0,0,0.3)]">
+                        SKIP & START NOW
+                    </button>
+                </div>
+            `;
+        }
+
+        function renderBoard() {
+            const currentTeam = state.teams[state.currentTeamIndex];
+            let html = `
+                <div class="flex flex-col w-full h-full flex-grow max-w-6xl mx-auto min-h-0">
+                    <div class="mb-3 md:mb-5 text-center shrink-0 animate-pop">
+                        <span class="${currentTeam.color} text-white px-6 py-2 md:px-8 md:py-3 rounded-full border-2 border-black font-bold text-xl md:text-2xl shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]">
+                            It's ${currentTeam.name}'s Turn!
+                        </span>
+                    </div>
+                    <div class="grid grid-cols-4 grid-rows-6 md:grid-cols-6 md:grid-rows-4 gap-2 sm:gap-3 md:gap-4 flex-grow min-h-0 w-full">
+            `;
+
+            state.boxes.forEach(box => {
+                if (box.opened) {
+                    html += `
+                        <div class="mystery-box opened w-full h-full flex items-center justify-center text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold rounded-lg min-h-0">
+                            <div class="dot-bl"></div><div class="dot-br"></div>
+                        </div>
+                    `;
+                } else {
+                    html += `
+                        <button onclick="openBox('${box.id}')" class="mystery-box w-full h-full flex items-center justify-center text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold rounded-lg text-white text-3d-light animate-pop min-h-0" style="animation-delay: ${Math.random() * 0.2}s">
+                            ${box.id}
+                            <div class="dot-bl"></div><div class="dot-br"></div>
+                        </button>
+                    `;
+                }
+            });
+
+            html += `</div></div>`;
+            return html;
+        }
+
+        function renderQuestion() {
+            const currentTeam = state.teams[state.currentTeamIndex];
+            
+            let timerHTML = '';
+            if (state.questionTimeLimit > 0 && !state.showAnswer) {
+                timerHTML = `
+                    <div class="bg-white border-2 sm:border-4 border-black rounded-lg px-4 py-2 shadow-[4px_4px_0px_0px_rgba(0,0,0,0.3)] flex-shrink-0 mb-4 md:mb-0">
+                        <div id="q-timer-text" class="text-2xl sm:text-4xl font-bold ${state.timeLeft <= 5 && state.timeLeft > 0 ? 'text-red-600 animate-pulse' : state.timeLeft === 0 ? 'text-red-600' : 'text-blue-600'}">
+                            ⏱️ ${state.timeLeft}s
+                        </div>
+                    </div>
+                `;
+            }
+
+            // Generate Multiple Choice Buttons
+            let optionsHTML = '<div class="flex flex-col md:flex-row gap-2 sm:gap-4 w-full mb-6 max-w-5xl mx-auto">';
+            state.activeBox.question.options.forEach((opt, idx) => {
+                if (!state.showAnswer) {
+                    // Clickable state
+                    optionsHTML += `<button onclick="selectAnswer(${idx})" class="flex-1 text-left bg-white border-2 border-gray-300 hover:border-blue-500 hover:bg-blue-50 text-gray-800 font-bold py-3 px-4 rounded-xl text-base md:text-lg transition-all shadow-sm break-words">${opt}</button>`;
+                } else {
+                    // Revealed state
+                    const isCorrect = (idx === state.activeBox.question.correctIndex);
+                    const isSelected = (idx === state.selectedOptionIndex);
+                    
+                    let btnClass = "flex-1 text-left font-bold py-3 px-4 rounded-xl text-base md:text-lg border-2 flex items-center justify-between break-words ";
+                    
+                    if (isCorrect) {
+                        btnClass += "bg-green-100 border-green-500 text-green-800 shadow-[0_0_10px_rgba(34,197,94,0.3)]";
+                    } else if (isSelected && !isCorrect) {
+                        btnClass += "bg-red-100 border-red-500 text-red-800 opacity-80";
+                    } else {
+                        btnClass += "bg-gray-50 border-gray-200 text-gray-400 opacity-60";
+                    }
+
+                    let icon = isCorrect ? "✅" : (isSelected ? "❌" : "");
+                    optionsHTML += `<div class="${btnClass}"><span>${opt}</span><span class="ml-2 flex-shrink-0">${icon}</span></div>`;
+                }
+            });
+            optionsHTML += '</div>';
+
+            // Generate Feedback and Keep/Give buttons if answered
+            let feedbackHTML = '';
+            let keepGiveHTML = '';
+            
+            if (state.showAnswer) {
+                if (state.selectedOptionIndex === state.activeBox.question.correctIndex) {
+                    feedbackHTML = `<p class="text-2xl sm:text-3xl font-bold text-green-600 mb-4 animate-bounce">Correct!</p>`;
+                } else if (state.selectedOptionIndex === -1) {
+                    feedbackHTML = `<p class="text-2xl sm:text-3xl font-bold text-red-600 mb-4 animate-pulse">⏰ Time's Up!</p>`;
+                } else {
+                    feedbackHTML = `<p class="text-2xl sm:text-3xl font-bold text-red-600 mb-4">Incorrect!</p>`;
+                }
+
+                keepGiveHTML = `
+                    <h2 class="text-xl sm:text-2xl md:text-3xl font-bold mb-4 sm:mb-6 text-gray-800">What will <span class="${currentTeam.color.replace('bg-', 'text-')}">${currentTeam.name}</span> do?</h2>
+                    <div class="flex flex-col sm:flex-row gap-3 sm:gap-6 justify-center">
+                        <button onclick="makeDecision('keep')" class="btn-mario text-lg sm:text-xl md:text-2xl px-4 sm:px-8 py-3 sm:py-6 rounded-xl flex-1 font-bold flex flex-col items-center">
+                            <span class="text-3xl sm:text-5xl mb-1 sm:mb-2">📦</span>
+                            KEEP IT
+                        </button>
+                        <button onclick="makeDecision('give')" class="btn-luigi text-lg sm:text-xl md:text-2xl px-4 sm:px-8 py-3 sm:py-6 rounded-xl flex-1 font-bold flex flex-col items-center">
+                            <span class="text-3xl sm:text-5xl mb-1 sm:mb-2">🎁</span>
+                            GIVE IT
+                        </button>
+                    </div>
+                `;
+            }
+
+            return `
+                <div class="card p-5 sm:p-8 md:p-12 max-w-4xl w-full text-center animate-pop mx-2 sm:mx-4 relative">
+                    <div class="flex flex-col md:flex-row justify-center md:justify-between items-center mb-4 sm:mb-6 border-b-2 sm:border-b-4 border-gray-200 pb-3 sm:pb-6 gap-2 sm:gap-4">
+                        <div class="text-4xl sm:text-6xl md:text-7xl text-yellow-500 font-bold text-3d-light text-center md:text-left">BOX ${state.activeBox.id}</div>
+                        ${timerHTML}
+                    </div>
+                    
+                    <p class="text-gray-500 text-sm sm:text-xl mb-2 sm:mb-4 font-bold uppercase tracking-wider">Question for ${currentTeam.name}</p>
+                    <div class="text-xl sm:text-2xl md:text-3xl font-bold text-gray-800 mb-6 sm:mb-8 leading-snug">${state.activeBox.question.q}</div>
+                    
+                    ${optionsHTML}
+                    ${feedbackHTML}
+                    ${keepGiveHTML}
+                </div>
+            `;
+        }
+
+        function renderTargetSelection() {
+            let actionText = state.activeBox.reward.type === 'swap' ? "Swap scores with who?" : "Who will you give the box to?";
+            
+            let html = `
+                <div class="card p-5 sm:p-8 max-w-2xl w-full text-center animate-pop mx-2 sm:mx-4">
+                    <h2 class="text-xl sm:text-3xl font-bold mb-4 sm:mb-8 text-gray-800">${actionText}</h2>
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
+            `;
+
+            state.teams.forEach((team, index) => {
+                if (index !== state.currentTeamIndex) {
+                    html += `
+                        <button onclick="selectTargetTeam(${index})" class="${team.color} text-white btn-mario text-lg sm:text-2xl px-4 sm:px-6 py-4 sm:py-6 rounded-xl font-bold text-3d-light">
+                            ${team.name}
+                        </button>
+                    `;
+                }
+            });
+
+            html += `
+                    </div>
+                </div>
+            `;
+            return html;
+        }
+
+        function renderReveal() {
+            const reward = state.activeBox.reward;
+            let targetTeam = state.teams[state.targetTeamIndex];
+            let currentTeam = state.teams[state.currentTeamIndex];
+            
+            let actionDesc = "";
+            if (reward.type === 'swap') {
+                actionDesc = `${currentTeam.name} and ${targetTeam.name} swapped scores!`;
+            } else if (state.decision === 'give') {
+                actionDesc = `${currentTeam.name} gave the box to ${targetTeam.name}!`;
+            } else {
+                actionDesc = `${currentTeam.name} kept the box!`;
+            }
+
+            return `
+                <div class="card p-5 sm:p-8 md:p-12 max-w-2xl w-full text-center animate-pop mx-2 sm:mx-4 relative overflow-hidden">
+                    <p class="text-sm sm:text-xl font-bold text-gray-500 mb-4 sm:mb-6 uppercase tracking-widest border-b-2 border-gray-100 pb-3 sm:pb-4">${actionDesc}</p>
+                    
+                    <div class="text-5xl sm:text-6xl md:text-8xl font-bold mb-6 sm:mb-10 ${reward.color} animate-float text-3d py-2 sm:py-4">
+                        ${reward.text}
+                    </div>
+
+                    <button onclick="applyRewardAndNext()" class="btn-yellow text-lg sm:text-2xl px-4 sm:px-8 py-3 sm:py-5 rounded-xl w-full font-bold mt-2 sm:mt-4 shadow-[4px_4px_0px_0px_rgba(0,0,0,0.3)]">
+                        APPLY & NEXT TURN
+                    </button>
+                </div>
+            `;
+        }
+
+        function renderScoreboard() {
+            teamScoresEl.innerHTML = '';
+            state.teams.forEach((team, index) => {
+                const isActive = index === state.currentTeamIndex;
+                const activeClass = isActive ? 'scale-105 sm:scale-110 -translate-y-1 sm:-translate-y-2 ring-2 sm:ring-4 ring-yellow-400 z-10' : 'opacity-80 scale-95';
+                
+                teamScoresEl.innerHTML += `
+                    <div class="flex-1 min-w-[70px] sm:min-w-[90px] md:min-w-[120px] max-w-[160px] md:max-w-[200px] ${team.color} border-2 md:border-4 border-black rounded-lg p-1.5 sm:p-2 md:p-3 text-center transition-all duration-300 shadow-[2px_2px_0px_0px_rgba(0,0,0,0.5)] md:shadow-[4px_4px_0px_0px_rgba(0,0,0,0.5)] ${activeClass}">
+                        <div class="text-white font-bold text-xs sm:text-sm md:text-xl truncate text-3d-light">${team.name}</div>
+                        <div class="bg-white border md:border-2 border-black rounded mt-1 md:mt-2 py-0.5 sm:py-1 md:py-2 font-bold text-sm sm:text-lg md:text-3xl text-gray-800">
+                            ${team.score}
+                        </div>
+                    </div>
+                `;
+            });
+        }
+
+        // Start Initial Render
+        render();
+
+    </script>
+</body>
+</html>
