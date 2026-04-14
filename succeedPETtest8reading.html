@@ -1,0 +1,1508 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>B1 Preliminary Test Simulator - Test 8 Reading</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --app-font-size: 16px;
+            --primary: #1e40af;
+            --primary-hover: #1e3a8a;
+            --bg-main: #f1f5f9;
+            --text-main: #334155;
+            --text-dark: #0f172a;
+        }
+        body {
+            font-family: 'Inter', sans-serif;
+            overscroll-behavior: none;
+            background-color: var(--bg-main);
+            color: var(--text-main);
+            margin: 0;
+            padding: 0;
+        }
+        .ielts-container {
+            display: grid;
+            grid-template-rows: auto auto 1fr;
+            height: 100vh;
+        }
+        
+        /* Header */
+        .header {
+            background: linear-gradient(135deg, #1e3a8a 0%, #3b82f6 100%);
+            color: white;
+            padding: 1rem 2rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1);
+            z-index: 20;
+        }
+        .header h1 { color: white; font-weight: 700; letter-spacing: -0.025em; }
+        
+        /* Tabs Styles */
+        .tabs-nav {
+            display: flex;
+            background: #ffffff;
+            border-bottom: 1px solid #e2e8f0;
+            overflow-x: auto;
+            padding: 0 1rem;
+        }
+        .tab-btn {
+            padding: 1rem 1.5rem;
+            font-weight: 600;
+            font-size: 0.95rem;
+            color: #64748b;
+            background: transparent;
+            border: none;
+            cursor: pointer;
+            border-bottom: 3px solid transparent;
+            transition: all 0.2s ease;
+            white-space: nowrap;
+        }
+        .tab-btn:hover {
+            color: var(--primary);
+            background: #f8fafc;
+        }
+        .tab-btn.active {
+            color: var(--primary);
+            border-bottom-color: var(--primary);
+        }
+        .tab-content { display: none; }
+        .tab-content.active { display: block; animation: fadeIn 0.4s ease; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
+
+        /* Panes & Splitter */
+        .content-panes {
+            display: grid;
+            grid-template-columns: 1fr 6px 1fr;
+            overflow: hidden;
+            background-color: var(--bg-main);
+        }
+        .pane {
+            overflow-y: auto;
+            padding: 2.5rem;
+            font-size: var(--app-font-size);
+            line-height: 1.75;
+            scroll-behavior: smooth;
+        }
+        .pane-left { padding-right: 2rem; }
+        .pane-right { padding-left: 2rem; }
+        
+        .splitter {
+            background-color: #cbd5e1;
+            cursor: col-resize;
+            z-index: 10;
+            transition: background-color 0.2s;
+            position: relative;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .splitter::after {
+            content: "⋮";
+            color: #64748b;
+            font-size: 1.2rem;
+            font-weight: bold;
+        }
+        .splitter:hover, .splitter:active { background-color: #94a3b8; }
+        
+        /* Typography & Reading Text Styles */
+        h2, h3 { color: var(--text-dark); font-weight: 700; margin-top: 0; }
+        .part-title { 
+            font-size: 1.5em; 
+            margin-bottom: 1.5rem; 
+            color: var(--primary); 
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        
+        .instruction { 
+            background-color: #e0f2fe; 
+            color: #0369a1; 
+            padding: 1rem 1.25rem; 
+            border-radius: 0.5rem; 
+            border-left: 4px solid #0ea5e9;
+            font-weight: 500;
+            margin-bottom: 2rem;
+            font-size: 0.95em;
+        }
+        
+        .text-box { 
+            background-color: #ffffff; 
+            border: 1px solid #e2e8f0; 
+            padding: 2rem; 
+            border-radius: 0.75rem; 
+            margin-bottom: 2rem; 
+            box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05), 0 2px 4px -1px rgba(0,0,0,0.03);
+        }
+        .text-box p { margin-bottom: 1.25em; }
+        .text-box p:last-child { margin-bottom: 0; }
+        
+        /* Specific Box Styles (Part 1) */
+        .sign-box { 
+            border: 3px solid #334155; 
+            padding: 1.5rem; 
+            text-align: center; 
+            font-weight: 700; 
+            border-radius: 0.5rem; 
+            margin: 1rem auto; 
+            max-width: 80%;
+            background-color: #f8fafc;
+            color: #0f172a;
+            font-size: 1.1em;
+        }
+        .email-box { 
+            border: 1px solid #cbd5e1; 
+            border-radius: 0.5rem; 
+            margin: 1rem 0; 
+            background-color: #ffffff; 
+            font-family: 'Courier New', Courier, monospace; 
+            font-size: 0.95em;
+            box-shadow: inset 0 2px 4px 0 rgba(0, 0, 0, 0.02);
+            overflow: hidden;
+        }
+        .email-header {
+            background-color: #f1f5f9;
+            padding: 0.75rem 1rem;
+            border-bottom: 1px solid #cbd5e1;
+        }
+        .email-body {
+            padding: 1.25rem 1rem;
+        }
+        
+        /* Question Styles */
+        .question-group { margin-bottom: 3rem; }
+        .q-wrapper {
+            background-color: #ffffff;
+            border: 1px solid #e2e8f0;
+            border-radius: 0.75rem;
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+            transition: box-shadow 0.2s ease, border-color 0.2s ease;
+        }
+        .q-wrapper:hover {
+            box-shadow: 0 10px 15px -3px rgba(0,0,0,0.05);
+            border-color: #cbd5e1;
+        }
+        
+        .q-number { 
+            font-weight: 700; 
+            background-color: #3b82f6; 
+            color: white; 
+            width: 28px;
+            height: 28px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 50%; 
+            margin-right: 0.75rem; 
+            font-size: 0.9em; 
+            transition: background-color 0.3s ease; 
+            flex-shrink: 0;
+        }
+        
+        /* Inputs */
+        .radio-custom {
+            display: flex; 
+            align-items: flex-start; 
+            margin-bottom: 0.5rem; 
+            cursor: pointer; 
+            padding: 0.75rem 1rem; 
+            border-radius: 0.5rem; 
+            border: 1px solid transparent;
+            transition: all 0.2s ease;
+        }
+        .radio-custom:hover { 
+            background-color: #f8fafc; 
+            border-color: #cbd5e1;
+        }
+        .radio-custom input[type="radio"] { 
+            margin-top: 0.35em; 
+            margin-right: 1rem; 
+            accent-color: var(--primary); 
+            width: 1.15em; 
+            height: 1.15em; 
+            cursor: pointer;
+        }
+        
+        .select-custom {
+            padding: 0.5rem 1rem; 
+            border: 1px solid #cbd5e1; 
+            border-radius: 0.5rem; 
+            font-size: 1em; 
+            background-color: #f8fafc; 
+            outline: none; 
+            margin-left: 0.5rem;
+            cursor: pointer;
+            transition: all 0.2s;
+            color: var(--text-dark);
+            font-weight: 500;
+        }
+        .select-custom:focus { border-color: var(--primary); box-shadow: 0 0 0 3px rgba(30, 64, 175, 0.1); background-color: white;}
+        
+        .input-text {
+            border: 1px solid #cbd5e1; 
+            border-radius: 0.5rem; 
+            padding: 0.5rem 1rem; 
+            width: 160px; 
+            font-size: 1em; 
+            outline: none; 
+            transition: all 0.2s;
+            background-color: #f8fafc;
+            color: var(--text-dark);
+            font-weight: 500;
+        }
+        .input-text:focus { border-color: var(--primary); box-shadow: 0 0 0 3px rgba(30, 64, 175, 0.1); background-color: white;}
+        
+        /* Drag and Drop Styles */
+        .drop-zone.in-text {
+            display: inline;
+            background-color: #f1f5f9;
+            border: 2px dashed #94a3b8;
+            border-radius: 0.25rem;
+            padding: 0 0.5rem;
+            cursor: pointer;
+            transition: all 0.2s;
+            margin: 0 0.25rem;
+        }
+        .drop-zone.in-text:empty {
+            display: inline-block;
+            min-width: 40px;
+            height: 1.5em;
+            vertical-align: middle;
+            text-align: center;
+            padding: 0;
+        }
+        .drop-zone.in-text:empty::before {
+            content: attr(data-label);
+            color: #64748b;
+            font-weight: 700;
+            font-size: 0.9em;
+            line-height: 1.5em;
+        }
+        .drop-zone.in-text.drag-over {
+            background-color: #dbeafe;
+            border-color: #3b82f6;
+        }
+        
+        .draggable-pool {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+        .draggable-pool .drag-item {
+            display: flex;
+            align-items: flex-start;
+            background-color: #ffffff;
+            border: 1px solid #e2e8f0;
+            padding: 0.75rem 1rem;
+            border-radius: 0.5rem;
+            cursor: grab;
+            transition: all 0.2s ease;
+            box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+            font-size: 0.95em;
+        }
+        .draggable-pool .drag-item:hover {
+            border-color: #3b82f6;
+            box-shadow: 0 4px 6px -1px rgba(59, 130, 246, 0.1);
+        }
+        .draggable-pool .drag-item .letter {
+            color: #2563eb;
+            margin-right: 0.75rem;
+            flex-shrink: 0;
+            font-weight: 700;
+        }
+        
+        .drop-zone.in-text .drag-item {
+            display: inline;
+            color: #1d4ed8;
+            font-weight: 600;
+            background: transparent;
+            border: none;
+            padding: 0;
+            margin: 0;
+            box-shadow: none;
+            cursor: grab;
+        }
+        .drop-zone.in-text .drag-item .letter {
+            display: none;
+        }
+        .drop-zone.in-text .drag-item .full-text {
+            display: inline;
+        }
+
+        .drop-zone.in-text.correct { border-color: #22c55e; background-color: #dcfce7; }
+        .drop-zone.in-text.correct .drag-item { color: #166534; }
+        .drop-zone.in-text.incorrect { border-color: #ef4444; background-color: #fee2e2; }
+        .drop-zone.in-text.incorrect .drag-item { color: #991b1b; }
+        
+        /* Gap styles */
+        .gap { 
+            display: inline-block; 
+            font-weight: 700; 
+            margin: 0 0.3em; 
+            color: var(--primary); 
+            border-bottom: 2px dashed #93c5fd;
+            padding: 0 0.2em;
+        }
+
+        /* Vocabulary Highlight */
+        .vocab-word {
+            background-color: #dcfce7;
+            border-bottom: 2px solid #22c55e;
+            color: #166534;
+            font-weight: 500;
+            cursor: help;
+            padding: 0.1em 0.3em;
+            border-radius: 4px;
+            transition: all 0.2s ease;
+        }
+        .vocab-word:hover { 
+            background-color: #bbf7d0; 
+            box-shadow: 0 2px 4px rgba(34, 197, 94, 0.2);
+        }
+
+        /* Vocab Tooltip */
+        #vocabInfoTooltip {
+            position: absolute;
+            display: none;
+            background: white;
+            border: 1px solid #e2e8f0;
+            padding: 1.25rem;
+            border-radius: 0.75rem;
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+            z-index: 100;
+            width: 300px;
+        }
+        
+        #highlightTooltip {
+            position: absolute; display: none; background-color: #1e293b; color: white; padding: 6px 12px; border-radius: 6px; font-size: 14px; font-weight: 500; cursor: pointer; z-index: 1000; box-shadow: 0 4px 6px rgba(0,0,0,0.1); border: none; font-family: inherit;
+        }
+        #highlightTooltip::after { content: ''; position: absolute; top: 100%; left: 50%; margin-left: -6px; border-width: 6px; border-style: solid; border-color: #1e293b transparent transparent transparent; }
+        mark { background-color: #fef08a; color: inherit; padding: 0.2em 0; border-radius: 4px; }
+
+        /* Explanation Box */
+        .explanation-box {
+            display: none;
+            background-color: #f0fdf4;
+            border: 1px solid #bbf7d0;
+            border-left: 4px solid #22c55e;
+            padding: 1.25rem;
+            margin-top: 1.25rem;
+            border-radius: 0.5rem;
+            font-size: 0.95em;
+            color: #166534;
+            line-height: 1.6;
+        }
+
+        /* Controls & Buttons */
+        .controls { display: flex; gap: 0.75rem; align-items: center; }
+        .btn-icon { 
+            background: rgba(255,255,255,0.15); 
+            border: 1px solid rgba(255,255,255,0.3); 
+            color: white; 
+            padding: 0.5rem 1rem; 
+            border-radius: 0.5rem; 
+            cursor: pointer; 
+            font-weight: 600; 
+            transition: all 0.2s; 
+        }
+        .btn-icon:hover { background: rgba(255,255,255,0.25); transform: translateY(-1px); }
+        .btn-icon:active { transform: translateY(0); }
+        
+        .btn-primary { 
+            background-color: var(--primary); 
+            color: white; 
+            border: none; 
+            padding: 0.75rem 2rem; 
+            border-radius: 0.5rem; 
+            font-weight: 600; 
+            font-size: 1em;
+            cursor: pointer; 
+            transition: all 0.2s ease; 
+            box-shadow: 0 4px 6px -1px rgba(30, 64, 175, 0.2);
+        }
+        .btn-primary:hover { background-color: var(--primary-hover); transform: translateY(-1px); box-shadow: 0 6px 8px -1px rgba(30, 64, 175, 0.3); }
+        .btn-primary:active { transform: translateY(0); }
+        
+        /* Layout utility for questions */
+        .flex-row-center { display: flex; align-items: center; gap: 1rem; }
+    </style>
+</head>
+<body>
+
+<div class="ielts-container">
+    <!-- Header -->
+    <header class="header">
+        <div>
+            <h1 class="text-xl m-0">B1 Preliminary Practice Test</h1>
+            <div class="text-sm opacity-90 mt-1 font-medium">Reading - Test 8</div>
+        </div>
+        <div class="controls">
+            <button class="btn-icon" id="btn-decrease-font" title="Decrease Font Size">A-</button>
+            <button class="btn-icon" id="btn-increase-font" title="Increase Font Size">A+</button>
+        </div>
+    </header>
+
+    <!-- Tabs Navigation -->
+    <div class="tabs-nav" id="tabs-nav">
+        <button class="tab-btn active" data-target="1">Part 1</button>
+        <button class="tab-btn" data-target="2">Part 2</button>
+        <button class="tab-btn" data-target="3">Part 3</button>
+        <button class="tab-btn" data-target="4">Part 4</button>
+        <button class="tab-btn" data-target="5">Part 5</button>
+        <button class="tab-btn" data-target="6">Part 6</button>
+    </div>
+
+    <!-- Main Content -->
+    <div class="content-panes" id="panes-container">
+        
+        <!-- LEFT PANE: READING TEXTS -->
+        <div class="pane pane-left" id="left-pane">
+            
+            <div class="reading-text tab-content active" data-part="1">
+                <h2 class="part-title">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>
+                    Part 1
+                </h2>
+                <div class="instruction">Questions 1-5<br>For each question, choose the correct answer.</div>
+                
+                <div class="text-box">
+                    <div class="flex items-center gap-3 mb-4 text-gray-500 font-bold">
+                        <span class="q-number bg-gray-500">1</span> Text 1
+                    </div>
+                    <div class="sign-box" style="border: 3px solid #3b82f6; background-color: #eff6ff; color: #1e3a8a;">
+                        <span class="font-bold text-lg uppercase tracking-wider block mb-2">Memo</span>
+                        <span class="text-[0.95em] font-medium text-gray-800 block">All students should finish their reports by Wed for the Fri class.<br><br>Mr Jones will collect the finished reports.</span>
+                    </div>
+                </div>
+
+                <div class="text-box">
+                    <div class="flex items-center gap-3 mb-4 text-gray-500 font-bold">
+                        <span class="q-number bg-gray-500">2</span> Text 2
+                    </div>
+                    <div class="email-box">
+                        <div class="email-header">
+                            <div><strong>To:</strong> Jane</div>
+                        </div>
+                        <div class="email-body">
+                            Jane,<br><br>
+                            George phoned to say that he needs his camera back before Saturday for Bob's wedding.<br><br>
+                            Can you drop it at his place because he's too busy to collect it himself?<br><br>
+                            Sue
+                        </div>
+                    </div>
+                </div>
+
+                <div class="text-box">
+                    <div class="flex items-center gap-3 mb-4 text-gray-500 font-bold">
+                        <span class="q-number bg-gray-500">3</span> Text 3
+                    </div>
+                    <div class="sign-box" style="border: 3px solid #ef4444; background-color: #fef2f2; color: #991b1b; text-align: left;">
+                        <ul class="list-disc pl-5">
+                            <li class="mb-2">If red light flashes, check copier for paper jam.</li>
+                            <li class="mb-2">If there is no jam, turn off copier and restart it.</li>
+                            <li>If toner is low, red light will flash on and off.</li>
+                        </ul>
+                    </div>
+                </div>
+
+                <div class="text-box">
+                    <div class="flex items-center gap-3 mb-4 text-gray-500 font-bold">
+                        <span class="q-number bg-gray-500">4</span> Text 4
+                    </div>
+                    <div class="sign-box" style="border: 3px solid #f59e0b; background-color: #fffbeb;">
+                        <span class="font-bold text-xl uppercase tracking-widest text-amber-700 block mb-2">Please do not park in front of drive.</span>
+                        <span class="text-[0.85em] text-gray-700 font-medium">Access required at all times for lorries making deliveries.</span>
+                    </div>
+                </div>
+
+                <div class="text-box">
+                    <div class="flex items-center gap-3 mb-4 text-gray-500 font-bold">
+                        <span class="q-number bg-gray-500">5</span> Text 5
+                    </div>
+                    <div class="email-box" style="background-color: #f8fafc; text-align: center;">
+                        <div class="email-body font-sans">
+                            <span class="font-bold text-xl text-blue-800 block mb-3">Gift Voucher</span>
+                            <strong>Dear member,</strong><br><br>
+                            introduce a friend to the gym and receive a free health and beauty session including massage.<br><br>
+                            <em>Valid till 31st December.</em>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="reading-text tab-content" data-part="2">
+                <h2 class="part-title">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>
+                    Part 2
+                </h2>
+                <div class="instruction">Questions 6-10<br>The people below are looking for a holiday destination. There are eight resort reviews. Decide which resort would be the most suitable for the people below.</div>
+                
+                <div class="text-box">
+                    <h3 class="text-2xl mb-6 text-center text-blue-900">HOLIDAY CHOICES</h3>
+                    <div class="grid gap-6">
+                        <div class="p-4 bg-gray-50 rounded-lg border border-gray-200">
+                            <h4 class="text-lg font-bold text-blue-800 mb-2">A. Oceanview Village</h4>
+                            <p>Our beautiful holiday village offers self-catering accommodation in beautiful surroundings close to the beach. There is evening entertainment every night and an afternoon kids' club which is run by our team of trained staff. <span class="vocab-word" data-word="excursion">Excursions</span> are available three times a week.</p>
+                        </div>
+                        <div class="p-4 bg-gray-50 rounded-lg border border-gray-200">
+                            <h4 class="text-lg font-bold text-blue-800 mb-2">B. Oaktree Park Hotel</h4>
+                            <p>Situated in beautiful grounds in the countryside, Oaktree Park offers first-class accommodation with a delicious menu offered by our award-winning chef. The landscaped grounds include a stunning lake and nature reserve. A beautiful retreat for anyone who wants to get away from it all for a while.</p>
+                        </div>
+                        <div class="p-4 bg-gray-50 rounded-lg border border-gray-200">
+                            <h4 class="text-lg font-bold text-blue-800 mb-2">C. Kidsland Adventure Park</h4>
+                            <p>A child's heaven, Kidsland caters for children aged 11 to 18. Accommodation is in ten-bed chalets with adult <span class="vocab-word" data-word="supervision">supervision</span>. We offer sport, art and craft, computer technology, music, cookery lessons and lots more. Leave your children with us for a week or two and they will make friends for life. All meals included and entertainment provided every night.</p>
+                        </div>
+                        <div class="p-4 bg-gray-50 rounded-lg border border-gray-200">
+                            <h4 class="text-lg font-bold text-blue-800 mb-2">D. Bob's Diving Centre</h4>
+                            <p>We offer courses for both beginners and more advanced divers. Also on offer are various water sport activities including jetskis, surfing and water volleyball. Self-catering accommodation at affordable prices with a handy shop on-site for all your supplies. Evening entertainment arranged every night plus a weekly barbecue.</p>
+                        </div>
+                        <div class="p-4 bg-gray-50 rounded-lg border border-gray-200">
+                            <h4 class="text-lg font-bold text-blue-800 mb-2">E. Sandybeach Hotel</h4>
+                            <p>Sandybeach Hotel is only a two-minute walk from the beach. There are plenty of bars and restaurants nearby and a nightclub where you can dance until the early hours of the morning. Breakfast and evening meal are included in the price and two-day trips to local places of interest and historical sights are offered too.</p>
+                        </div>
+                        <div class="p-4 bg-gray-50 rounded-lg border border-gray-200">
+                            <h4 class="text-lg font-bold text-blue-800 mb-2">F. Desert Walking Holidays</h4>
+                            <p>Give yourself a challenge this year and cross a desert. Organised trips (camels to carry your bags, included). Professional guides will lead you through the sand. Campfire cooking and fantastic <span class="vocab-word" data-word="landscape">landscapes</span>. Trek all day and enjoy quiet nights round the campfire under starry skies.</p>
+                        </div>
+                        <div class="p-4 bg-gray-50 rounded-lg border border-gray-200">
+                            <h4 class="text-lg font-bold text-blue-800 mb-2">G. Scandinavian Cruises</h4>
+                            <p>Experience the beauty of the north. Watch the amazing Northern Lights in the Scandinavian sky. Double or single cabins available with full-board catering. Don't forget to bring your winter coat for those romantic walks on deck in the snow!</p>
+                        </div>
+                        <div class="p-4 bg-gray-50 rounded-lg border border-gray-200">
+                            <h4 class="text-lg font-bold text-blue-800 mb-2">H. Woodside House</h4>
+                            <p>A beautiful hotel in the heart of the city but surrounded by lovely gardens. Come and enjoy a relaxing holiday in luxury. Within walking distance of the main sights and places of culture. We also offer art classes and talks on cultural issues. Learn to make a ceramic pot or improve your painting or photography skills.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="reading-text tab-content" data-part="3">
+                <h2 class="part-title">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>
+                    Part 3
+                </h2>
+                <div class="instruction">Questions 11-15<br>For each question, choose the correct answer.</div>
+                
+                <div class="text-box">
+                    <h3 class="text-2xl font-bold mb-6 text-center">Getting fit and slim</h3>
+                    
+                    <p>I know that many people, myself included, each year make a promise to themselves to get fit and slim, join a gym and start a diet. But what happens to these gym visits and the lettuce diet? At least half of us who try to get fit and thinner give up after less than a month. Many people seem to blame their failure on lack of time. Lack of <span class="vocab-word" data-word="willpower">willpower</span> is even more important, though.</p>
+                    
+                    <p>Much of this has to do with the fact that we set <span class="vocab-word" data-word="unrealistic">unrealistic</span> fitness goals—a flat stomach in eight weeks and a celebrity diet plan - instead of doing what we know will have the best results in the long term: exercising a bit more and eating a bit less. Most fitness clubs get many new members from January to March, but their use of the gym tends to decline after that. So how can someone beat the temptation to give up? First, no one should expect to fail as soon as they start; we must stay positive, even if we've failed before.</p>
+
+                    <p>Many people are fooled into believing that they really need to follow an expensive fitness and eating plan. But this is simply not true. The only correct answer seems to be to search for the thing that really interests and <span class="vocab-word" data-word="motivate">motivates</span> you. It's fine to have many small motivations, but you should write them down and put them together to make a list of things to keep you going.</p>
+                    
+                    <p>You also need to change the way you think about things. Women, for example, feel particularly guilty about exercising two or three hours a week, thinking this is 'selfish time' that takes them away from responsibilities to family and friends. But it is much better to see this as vital 'self-care' time. Many people also think that three hours is a lot of time out of their ordinary week, but as we spend around 98 hours a week awake, that leaves us nearly 95 hours to do everything else that we need to do.</p>
+                </div>
+            </div>
+
+            <div class="reading-text tab-content" data-part="4">
+                <h2 class="part-title">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>
+                    Part 4
+                </h2>
+                <div class="instruction">Questions 16-20<br>Five sentences have been removed from the text below. For each question, choose the correct answer (A-H). There are three extra sentences.</div>
+                
+                <div class="text-box">
+                    <h3 class="text-2xl font-bold mb-6 text-center">Don't drink the water!</h3>
+                    <p>People often don't think about the water they drink. However, it's a very different story if we are travelling abroad. In some countries the water is simply not safe to drink. <span class="drop-zone in-text" data-name="q16" data-label="16"></span> Try to learn anything you can about the water situation of the place where you are travelling. The health problems from drinking unsafe water can often be really serious if you don't.</p>
+                    
+                    <p>The water you need to worry about is water that could be dirty. Unsafe water does not actually mean it will kill you. Local people can drink the water where they live and are fine because their bodies are used to it. <span class="drop-zone in-text" data-name="q17" data-label="17"></span> Even a tiny amount can have unpleasant results. On your travels it's best to ask the locals about the quality of the tap water. These are the people who are living there, so they are your best guide.</p>
+                    
+                    <p><span class="drop-zone in-text" data-name="q18" data-label="18"></span> If the water is unsafe, there will usually be a notice in your room. This also means you should not clean your teeth with tap water. And, of course, don't take any pills with it. Use bottled water instead.</p>
+                    
+                    <p>Another danger, of course, could be swimming. Check that natural water lakes and rivers are safe before you swim. And don't open your mouth when swimming! <span class="drop-zone in-text" data-name="q19" data-label="19"></span> It's the same tap water!</p>
+                    
+                    <p>What many people don't consider until it's too late is food which has not been cooked; salad or fruit, for example. <span class="drop-zone in-text" data-name="q20" data-label="20"></span> So only eat food which has been cooked or that has an outside peel or skin (like an orange or banana) which you can remove. And finally, don't have ice in your drinks! Remember, before it became ice, it was tap water!</p>
+                </div>
+            </div>
+
+            <div class="reading-text tab-content" data-part="5">
+                <h2 class="part-title">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>
+                    Part 5
+                </h2>
+                <div class="instruction">Questions 21-26<br>For each question, choose the correct answer.</div>
+                
+                <div class="text-box">
+                    <h3 class="text-2xl font-bold mb-6 text-center">Tomatoes - the whole truth</h3>
+                    <p>Leading scientists have <span class="gap">(21)</span> ............... that tomatoes can be of great benefit to our health. A lot of <span class="gap">(22)</span> ............... has been done in recent years, trying to understand why that is. It now seems that it's the whole tomato that may lower cancer risks, not parts of it, according to some new studies.</p>
+                    
+                    <p>Experts have <span class="gap">(23)</span> ............... that simply taking the <span class="vocab-word" data-word="antioxidant">antioxidant</span> lycopene - a substance which is found in tomatoes but is highly popular as a health food <span class="vocab-word" data-word="supplement">supplement</span> because of its link to a(n) <span class="gap">(24)</span> ............... risk of cancer - did not work as well as eating whole tomatoes.</p>
+
+                    <p>This is why scientists today believe that people should eat tomatoes in pastas, salads, tomato juice and pizza, rather than take supplements. Recent findings suggest that the risks of poor eating <span class="gap">(25)</span> ............... cannot simply be reversed with a pill.</p>
+                    
+                    <p>We shouldn't <span class="gap">(26)</span> ............... easy solutions to a complex problem.</p>
+                </div>
+            </div>
+
+            <div class="reading-text tab-content" data-part="6">
+                <h2 class="part-title">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>
+                    Part 6
+                </h2>
+                <div class="instruction">Questions 27-32<br>For each question, write the correct answer. Write <strong>ONE</strong> word for each gap.</div>
+                
+                <div class="text-box">
+                    <h3 class="text-2xl font-bold mb-6 text-center">Changing attitudes</h3>
+                    <p>Every culture has its own traditional ways of celebrating the birth of a child. In the Indian village of Piplantri, for instance, baby girls are an opportunity to plant 111 trees.</p>
+                    
+                    <p>In most Indian villages, daughters <span class="gap">(27)</span> ............... considered a problem. There still exists an old marriage system: this means the parents of the girl must give a '<span class="vocab-word" data-word="dowry">dowry</span>' when the time comes for a girl to marry. In <span class="gap">(28)</span> ............... words, property or money. This means the marriage of a girl costs a lot.</p>
+                    
+                    <p>However, the practice of planting trees completely goes against this idea. <span class="gap">(29)</span> ............... celebrating girls in this way, the villagers hope to change attitudes. When born, daughters are given money by the villagers <span class="gap">(30)</span> ............... that they can be <span class="vocab-word" data-word="independent">independent</span> when they grow up.</p>
+                    
+                    <p>The parents <span class="gap">(31)</span> ............... to agree that the girls will be educated and that they will not get married <span class="gap">(32)</span> ............... they are eighteen. And of course, the 111 trees have to be cared for! So, both the women of tomorrow and the local environment benefit to a great extent.</p>
+                </div>
+            </div>
+
+            <div style="height: 100px;"></div> <!-- Extra space for scrolling -->
+        </div>
+
+        <!-- SPLITTER -->
+        <div class="splitter" id="splitter"></div>
+
+        <!-- RIGHT PANE: QUESTIONS -->
+        <div class="pane pane-right" id="right-pane">
+            
+            <!-- Part 1 Questions -->
+            <div class="question-group tab-content active" data-part="1">
+                <h2 class="text-2xl font-bold mb-6 text-blue-900">Part 1 Questions</h2>
+                
+                <div class="q-wrapper">
+                    <div class="flex mb-3">
+                        <span class="q-number">1</span>
+                        <p class="font-semibold text-lg m-0">What does the memo say about the reports?</p>
+                    </div>
+                    <label class="radio-custom"><input type="radio" name="q1" value="A"> <span><strong>A.</strong> All reports must be collected at Fridays class.</span></label>
+                    <label class="radio-custom"><input type="radio" name="q1" value="B"> <span><strong>B.</strong> All reports are needed before Friday's class.</span></label>
+                    <label class="radio-custom"><input type="radio" name="q1" value="C"> <span><strong>C.</strong> Students will finish their reports at Friday's class.</span></label>
+                    <div class="explanation-box" id="exp-q1"></div>
+                </div>
+
+                <div class="q-wrapper">
+                    <div class="flex mb-3">
+                        <span class="q-number">2</span>
+                        <p class="font-semibold text-lg m-0">What is the purpose of Sue's message?</p>
+                    </div>
+                    <label class="radio-custom"><input type="radio" name="q2" value="A"> <span><strong>A.</strong> George is inviting Jane to Bob's wedding and he needs her camera.</span></label>
+                    <label class="radio-custom"><input type="radio" name="q2" value="B"> <span><strong>B.</strong> Sue will collect Jane's camera from George's place because he's very busy.</span></label>
+                    <label class="radio-custom"><input type="radio" name="q2" value="C"> <span><strong>C.</strong> Sue is letting Jane know that George is going to use his camera on Saturday.</span></label>
+                    <div class="explanation-box" id="exp-q2"></div>
+                </div>
+
+                <div class="q-wrapper">
+                    <div class="flex mb-3">
+                        <span class="q-number">3</span>
+                        <p class="font-semibold text-lg m-0">What should you do if the red light flashes?</p>
+                    </div>
+                    <label class="radio-custom"><input type="radio" name="q3" value="A"> <span><strong>A.</strong> If paper is stuck in the copier, the red light will come on.</span></label>
+                    <label class="radio-custom"><input type="radio" name="q3" value="B"> <span><strong>B.</strong> If the red light flashes, you must turn on the copier.</span></label>
+                    <label class="radio-custom"><input type="radio" name="q3" value="C"> <span><strong>C.</strong> If the red light flashes, replace the toner and paper.</span></label>
+                    <div class="explanation-box" id="exp-q3"></div>
+                </div>
+
+                <div class="q-wrapper">
+                    <div class="flex mb-3">
+                        <span class="q-number">4</span>
+                        <p class="font-semibold text-lg m-0">The sign...</p>
+                    </div>
+                    <label class="radio-custom"><input type="radio" name="q4" value="A"> <span><strong>A.</strong> warns vehicle owners that parking is only allowed at certain times.</span></label>
+                    <label class="radio-custom"><input type="radio" name="q4" value="B"> <span><strong>B.</strong> informs drivers that deliveries must be left just in front of the driveway.</span></label>
+                    <label class="radio-custom"><input type="radio" name="q4" value="C"> <span><strong>C.</strong> prohibits parking in this specific location at any time of day.</span></label>
+                    <div class="explanation-box" id="exp-q4"></div>
+                </div>
+
+                <div class="q-wrapper">
+                    <div class="flex mb-3">
+                        <span class="q-number">5</span>
+                        <p class="font-semibold text-lg m-0">What is true about the Gift Voucher?</p>
+                    </div>
+                    <label class="radio-custom"><input type="radio" name="q5" value="A"> <span><strong>A.</strong> This is an offer for people who already belong to the gym.</span></label>
+                    <label class="radio-custom"><input type="radio" name="q5" value="B"> <span><strong>B.</strong> This is a special package for people joining the gym before the end of the year.</span></label>
+                    <label class="radio-custom"><input type="radio" name="q5" value="C"> <span><strong>C.</strong> If you and a friend join the gym now, your friend will get a free massage.</span></label>
+                    <div class="explanation-box" id="exp-q5"></div>
+                </div>
+
+                <div class="mt-8 pt-6 border-t border-gray-300 flex items-center justify-between">
+                    <button class="btn-primary btn-check flex items-center gap-2" data-part="1">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd" /></svg>
+                        Check Answers
+                    </button>
+                    <span class="font-bold text-xl text-gray-700" id="score-part-1"></span>
+                </div>
+            </div>
+
+            <!-- Part 2 Questions -->
+            <div class="question-group tab-content" data-part="2">
+                <h2 class="text-2xl font-bold mb-6 text-blue-900">Part 2 Questions</h2>
+                
+                <div class="q-wrapper">
+                    <div class="flex items-start justify-between gap-4">
+                        <div class="flex-1">
+                            <span class="q-number float-left mt-1">6</span> 
+                            <p class="m-0 leading-relaxed"><strong>Jackie</strong> is 18 and wants to go on holiday with her best friend Sarah. They are starting university in September to study archaeology. They want to relax, swim and go on some excursions.</p>
+                        </div>
+                        <select class="select-custom" name="q6">
+                            <option value="">Select</option>
+                            <option value="A">A</option><option value="B">B</option><option value="C">C</option><option value="D">D</option><option value="E">E</option><option value="F">F</option><option value="G">G</option><option value="H">H</option>
+                        </select>
+                    </div>
+                    <div class="explanation-box" id="exp-q6"></div>
+                </div>
+
+                <div class="q-wrapper">
+                    <div class="flex items-start justify-between gap-4">
+                        <div class="flex-1">
+                            <span class="q-number float-left mt-1">7</span> 
+                            <p class="m-0 leading-relaxed"><strong>John</strong> is retired. He loves birdwatching. He and his wife would like to go somewhere beautiful. They don't want to cook on holiday and they would prefer to stay in a place that is not noisy.</p>
+                        </div>
+                        <select class="select-custom" name="q7">
+                            <option value="">Select</option>
+                            <option value="A">A</option><option value="B">B</option><option value="C">C</option><option value="D">D</option><option value="E">E</option><option value="F">F</option><option value="G">G</option><option value="H">H</option>
+                        </select>
+                    </div>
+                    <div class="explanation-box" id="exp-q7"></div>
+                </div>
+
+                <div class="q-wrapper">
+                    <div class="flex items-start justify-between gap-4">
+                        <div class="flex-1">
+                            <span class="q-number float-left mt-1">8</span> 
+                            <p class="m-0 leading-relaxed"><strong>Stephen</strong> is very sporty. He doesn't enjoy sitting on the beach all day. He likes meeting new people on holiday and enjoys lively, late nights out. He'd prefer accommodation without meals included.</p>
+                        </div>
+                        <select class="select-custom" name="q8">
+                            <option value="">Select</option>
+                            <option value="A">A</option><option value="B">B</option><option value="C">C</option><option value="D">D</option><option value="E">E</option><option value="F">F</option><option value="G">G</option><option value="H">H</option>
+                        </select>
+                    </div>
+                    <div class="explanation-box" id="exp-q8"></div>
+                </div>
+
+                <div class="q-wrapper">
+                    <div class="flex items-start justify-between gap-4">
+                        <div class="flex-1">
+                            <span class="q-number float-left mt-1">9</span> 
+                            <p class="m-0 leading-relaxed"><strong>Sandra and Dave</strong> have two young children aged six and eight. They like to go to places where there are facilities for children. Dave quite enjoys short trips but Sandra prefers to play on the beach with the children.</p>
+                        </div>
+                        <select class="select-custom" name="q9">
+                            <option value="">Select</option>
+                            <option value="A">A</option><option value="B">B</option><option value="C">C</option><option value="D">D</option><option value="E">E</option><option value="F">F</option><option value="G">G</option><option value="H">H</option>
+                        </select>
+                    </div>
+                    <div class="explanation-box" id="exp-q9"></div>
+                </div>
+
+                <div class="q-wrapper">
+                    <div class="flex items-start justify-between gap-4">
+                        <div class="flex-1">
+                            <span class="q-number float-left mt-1">10</span> 
+                            <p class="m-0 leading-relaxed"><strong>Mary</strong> is 68. She's travelling alone. She is very interested in history, art and culture. She doesn't want to cook on holiday and likes to meet new people. She doesn't enjoy being in warm countries.</p>
+                        </div>
+                        <select class="select-custom" name="q10">
+                            <option value="">Select</option>
+                            <option value="A">A</option><option value="B">B</option><option value="C">C</option><option value="D">D</option><option value="E">E</option><option value="F">F</option><option value="G">G</option><option value="H">H</option>
+                        </select>
+                    </div>
+                    <div class="explanation-box" id="exp-q10"></div>
+                </div>
+
+                <div class="mt-8 pt-6 border-t border-gray-300 flex items-center justify-between">
+                    <button class="btn-primary btn-check flex items-center gap-2" data-part="2">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd" /></svg>
+                        Check Answers
+                    </button>
+                    <span class="font-bold text-xl text-gray-700" id="score-part-2"></span>
+                </div>
+            </div>
+
+            <!-- Part 3 Questions -->
+            <div class="question-group tab-content" data-part="3">
+                <h2 class="text-2xl font-bold mb-6 text-blue-900">Part 3 Questions</h2>
+                
+                <div class="q-wrapper">
+                    <div class="flex mb-3">
+                        <span class="q-number">11</span>
+                        <p class="font-semibold text-lg m-0">What is true of most people at the start of the year?</p>
+                    </div>
+                    <label class="radio-custom"><input type="radio" name="q11" value="A"> <span><strong>A.</strong> They have already given up getting fit.</span></label>
+                    <label class="radio-custom"><input type="radio" name="q11" value="B"> <span><strong>B.</strong> They are not sure whether they'll continue exercising.</span></label>
+                    <label class="radio-custom"><input type="radio" name="q11" value="C"> <span><strong>C.</strong> They decide to make an effort to get fit.</span></label>
+                    <label class="radio-custom"><input type="radio" name="q11" value="D"> <span><strong>D.</strong> They are too bored to start exercising.</span></label>
+                    <div class="explanation-box" id="exp-q11"></div>
+                </div>
+
+                <div class="q-wrapper">
+                    <div class="flex mb-3">
+                        <span class="q-number">12</span>
+                        <p class="font-semibold text-lg m-0">What is the main reason why people give up exercising?</p>
+                    </div>
+                    <label class="radio-custom"><input type="radio" name="q12" value="A"> <span><strong>A.</strong> They haven't got enough time.</span></label>
+                    <label class="radio-custom"><input type="radio" name="q12" value="B"> <span><strong>B.</strong> They have no one to exercise with them.</span></label>
+                    <label class="radio-custom"><input type="radio" name="q12" value="C"> <span><strong>C.</strong> They do not really want to do it.</span></label>
+                    <label class="radio-custom"><input type="radio" name="q12" value="D"> <span><strong>D.</strong> They have tried too many times before.</span></label>
+                    <div class="explanation-box" id="exp-q12"></div>
+                </div>
+
+                <div class="q-wrapper">
+                    <div class="flex mb-3">
+                        <span class="q-number">13</span>
+                        <p class="font-semibold text-lg m-0">Another reason why people quit a fitness programme is that</p>
+                    </div>
+                    <label class="radio-custom"><input type="radio" name="q13" value="A"> <span><strong>A.</strong> they have achieved their goals.</span></label>
+                    <label class="radio-custom"><input type="radio" name="q13" value="B"> <span><strong>B.</strong> they expect too much of themselves.</span></label>
+                    <label class="radio-custom"><input type="radio" name="q13" value="C"> <span><strong>C.</strong> they become too tired.</span></label>
+                    <label class="radio-custom"><input type="radio" name="q13" value="D"> <span><strong>D.</strong> they can't afford to continue.</span></label>
+                    <div class="explanation-box" id="exp-q13"></div>
+                </div>
+
+                <div class="q-wrapper">
+                    <div class="flex mb-3">
+                        <span class="q-number">14</span>
+                        <p class="font-semibold text-lg m-0">In order to continue a successful fitness programme</p>
+                    </div>
+                    <label class="radio-custom"><input type="radio" name="q14" value="A"> <span><strong>A.</strong> you need to find a strong and lasting reason.</span></label>
+                    <label class="radio-custom"><input type="radio" name="q14" value="B"> <span><strong>B.</strong> you need a friend to exercise with.</span></label>
+                    <label class="radio-custom"><input type="radio" name="q14" value="C"> <span><strong>C.</strong> you can't avoid suffering for many hours.</span></label>
+                    <label class="radio-custom"><input type="radio" name="q14" value="D"> <span><strong>D.</strong> your friends and family will have to suffer.</span></label>
+                    <div class="explanation-box" id="exp-q14"></div>
+                </div>
+
+                <div class="q-wrapper">
+                    <div class="flex mb-3">
+                        <span class="q-number">15</span>
+                        <p class="font-semibold text-lg m-0">What would the writer say about exercise?</p>
+                    </div>
+                    <label class="radio-custom"><input type="radio" name="q15" value="A"> <span><strong>A.</strong> It isn't actually worth of all this effort because of how slow the results are.</span></label>
+                    <label class="radio-custom"><input type="radio" name="q15" value="B"> <span><strong>B.</strong> No one should overtire themselves because it does not make much difference.</span></label>
+                    <label class="radio-custom"><input type="radio" name="q15" value="C"> <span><strong>C.</strong> Going to the gym is a waste of time and very boring.</span></label>
+                    <label class="radio-custom"><input type="radio" name="q15" value="D"> <span><strong>D.</strong> If you really want to get fit, you need to find the time and a reason why and then commit to it.</span></label>
+                    <div class="explanation-box" id="exp-q15"></div>
+                </div>
+
+                <div class="mt-8 pt-6 border-t border-gray-300 flex items-center justify-between">
+                    <button class="btn-primary btn-check flex items-center gap-2" data-part="3">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd" /></svg>
+                        Check Answers
+                    </button>
+                    <span class="font-bold text-xl text-gray-700" id="score-part-3"></span>
+                </div>
+            </div>
+
+            <!-- Part 4 Questions -->
+            <div class="question-group tab-content" data-part="4">
+                <h2 class="text-2xl font-bold mb-4 text-blue-900">Part 4 Questions</h2>
+                <p class="mb-6 text-gray-600">Drag and drop the correct sentence (A-H) from the pool below into the gaps in the reading text on the left.</p>
+
+                <!-- The Pool -->
+                <div class="draggable-pool bg-slate-50 p-4 rounded-xl border-2 border-dashed border-slate-300 mb-8 min-h-[100px] transition-colors" id="pool-part-4">
+                    <span class="drag-item" draggable="true" id="drag-A" data-value="A"><strong class="letter">A.</strong> <span class="full-text">It will have been washed in water.</span></span>
+                    <span class="drag-item" draggable="true" id="drag-B" data-value="B"><strong class="letter">B.</strong> <span class="full-text">Of course, food in other countries can be delicious.</span></span>
+                    <span class="drag-item" draggable="true" id="drag-C" data-value="C"><strong class="letter">C.</strong> <span class="full-text">So you must get all the relevant information.</span></span>
+                    <span class="drag-item" draggable="true" id="drag-D" data-value="D"><strong class="letter">D.</strong> <span class="full-text">They can't eat and drink without worrying.</span></span>
+                    <span class="drag-item" draggable="true" id="drag-E" data-value="E"><strong class="letter">E.</strong> <span class="full-text">Of course, your hotel will let you know if the water isn't safe to drink.</span></span>
+                    <span class="drag-item" draggable="true" id="drag-F" data-value="F"><strong class="letter">F.</strong> <span class="full-text">Also remember to keep it closed in the shower, too.</span></span>
+                    <span class="drag-item" draggable="true" id="drag-G" data-value="G"><strong class="letter">G.</strong> <span class="full-text">Drinking from rivers and lakes by mistake cannot cause any serious harm.</span></span>
+                    <span class="drag-item" draggable="true" id="drag-H" data-value="H"><strong class="letter">H.</strong> <span class="full-text">But yours is not, so you could get seriously ill.</span></span>
+                </div>
+
+                <div class="q-wrapper">
+                    <div class="flex items-center mb-1">
+                        <span class="q-number">16</span> <span class="font-semibold text-lg text-gray-700">Gap 16</span>
+                    </div>
+                    <div class="text-sm text-gray-500">Drag answer into the text on the left.</div>
+                    <input type="hidden" name="q16" id="input-q16" value="">
+                    <div class="explanation-box w-full mt-3" id="exp-q16"></div>
+                </div>
+                <div class="q-wrapper">
+                    <div class="flex items-center mb-1">
+                        <span class="q-number">17</span> <span class="font-semibold text-lg text-gray-700">Gap 17</span>
+                    </div>
+                    <div class="text-sm text-gray-500">Drag answer into the text on the left.</div>
+                    <input type="hidden" name="q17" id="input-q17" value="">
+                    <div class="explanation-box w-full mt-3" id="exp-q17"></div>
+                </div>
+                <div class="q-wrapper">
+                    <div class="flex items-center mb-1">
+                        <span class="q-number">18</span> <span class="font-semibold text-lg text-gray-700">Gap 18</span>
+                    </div>
+                    <div class="text-sm text-gray-500">Drag answer into the text on the left.</div>
+                    <input type="hidden" name="q18" id="input-q18" value="">
+                    <div class="explanation-box w-full mt-3" id="exp-q18"></div>
+                </div>
+                <div class="q-wrapper">
+                    <div class="flex items-center mb-1">
+                        <span class="q-number">19</span> <span class="font-semibold text-lg text-gray-700">Gap 19</span>
+                    </div>
+                    <div class="text-sm text-gray-500">Drag answer into the text on the left.</div>
+                    <input type="hidden" name="q19" id="input-q19" value="">
+                    <div class="explanation-box w-full mt-3" id="exp-q19"></div>
+                </div>
+                <div class="q-wrapper">
+                    <div class="flex items-center mb-1">
+                        <span class="q-number">20</span> <span class="font-semibold text-lg text-gray-700">Gap 20</span>
+                    </div>
+                    <div class="text-sm text-gray-500">Drag answer into the text on the left.</div>
+                    <input type="hidden" name="q20" id="input-q20" value="">
+                    <div class="explanation-box w-full mt-3" id="exp-q20"></div>
+                </div>
+                
+                <div class="mt-8 pt-6 border-t border-gray-300 flex items-center justify-between">
+                    <button class="btn-primary btn-check flex items-center gap-2" data-part="4">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd" /></svg>
+                        Check Answers
+                    </button>
+                    <span class="font-bold text-xl text-gray-700" id="score-part-4"></span>
+                </div>
+            </div>
+
+            <!-- Part 5 Questions -->
+            <div class="question-group tab-content" data-part="5">
+                <h2 class="text-2xl font-bold mb-6 text-blue-900">Part 5 Questions</h2>
+                
+                <div class="q-wrapper">
+                    <div class="flex items-center gap-4">
+                        <span class="q-number">21</span> 
+                        <select class="select-custom" name="q21">
+                            <option value="">Select word</option>
+                            <option value="A">A. announced</option>
+                            <option value="B">B. promoted</option>
+                            <option value="C">C. considered</option>
+                            <option value="D">D. convinced</option>
+                        </select>
+                    </div>
+                    <div class="explanation-box" id="exp-q21"></div>
+                </div>
+                <div class="q-wrapper">
+                    <div class="flex items-center gap-4">
+                        <span class="q-number">22</span> 
+                        <select class="select-custom" name="q22">
+                            <option value="">Select word</option>
+                            <option value="A">A. approach</option>
+                            <option value="B">B. investigation</option>
+                            <option value="C">C. improvement</option>
+                            <option value="D">D. research</option>
+                        </select>
+                    </div>
+                    <div class="explanation-box" id="exp-q22"></div>
+                </div>
+                <div class="q-wrapper">
+                    <div class="flex items-center gap-4">
+                        <span class="q-number">23</span> 
+                        <select class="select-custom" name="q23">
+                            <option value="">Select word</option>
+                            <option value="A">A. discovered</option>
+                            <option value="B">B. invented</option>
+                            <option value="C">C. developed</option>
+                            <option value="D">D. inspired</option>
+                        </select>
+                    </div>
+                    <div class="explanation-box" id="exp-q23"></div>
+                </div>
+                <div class="q-wrapper">
+                    <div class="flex items-center gap-4">
+                        <span class="q-number">24</span> 
+                        <select class="select-custom" name="q24">
+                            <option value="">Select word</option>
+                            <option value="A">A. increased</option>
+                            <option value="B">B. divided</option>
+                            <option value="C">C. reduced</option>
+                            <option value="D">D. measured</option>
+                        </select>
+                    </div>
+                    <div class="explanation-box" id="exp-q24"></div>
+                </div>
+                <div class="q-wrapper">
+                    <div class="flex items-center gap-4">
+                        <span class="q-number">25</span> 
+                        <select class="select-custom" name="q25">
+                            <option value="">Select word</option>
+                            <option value="A">A. customs</option>
+                            <option value="B">B. habits</option>
+                            <option value="C">C. manners</option>
+                            <option value="D">D. procedures</option>
+                        </select>
+                    </div>
+                    <div class="explanation-box" id="exp-q25"></div>
+                </div>
+                <div class="q-wrapper">
+                    <div class="flex items-center gap-4">
+                        <span class="q-number">26</span> 
+                        <select class="select-custom" name="q26">
+                            <option value="">Select word</option>
+                            <option value="A">A. insist</option>
+                            <option value="B">B. agree</option>
+                            <option value="C">C. expect</option>
+                            <option value="D">D. mention</option>
+                        </select>
+                    </div>
+                    <div class="explanation-box" id="exp-q26"></div>
+                </div>
+
+                <div class="mt-8 pt-6 border-t border-gray-300 flex items-center justify-between">
+                    <button class="btn-primary btn-check flex items-center gap-2" data-part="5">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd" /></svg>
+                        Check Answers
+                    </button>
+                    <span class="font-bold text-xl text-gray-700" id="score-part-5"></span>
+                </div>
+            </div>
+
+            <!-- Part 6 Questions -->
+            <div class="question-group tab-content" data-part="6">
+                <h2 class="text-2xl font-bold mb-6 text-blue-900">Part 6 Questions</h2>
+                
+                <div class="q-wrapper flex items-center gap-4">
+                    <span class="q-number">27</span> 
+                    <input type="text" class="input-text" name="q27" placeholder="Type one word...">
+                    <div class="explanation-box w-full" id="exp-q27"></div>
+                </div>
+                <div class="q-wrapper flex items-center gap-4">
+                    <span class="q-number">28</span> 
+                    <input type="text" class="input-text" name="q28" placeholder="Type one word...">
+                    <div class="explanation-box w-full" id="exp-q28"></div>
+                </div>
+                <div class="q-wrapper flex items-center gap-4">
+                    <span class="q-number">29</span> 
+                    <input type="text" class="input-text" name="q29" placeholder="Type one word...">
+                    <div class="explanation-box w-full" id="exp-q29"></div>
+                </div>
+                <div class="q-wrapper flex items-center gap-4">
+                    <span class="q-number">30</span> 
+                    <input type="text" class="input-text" name="q30" placeholder="Type one word...">
+                    <div class="explanation-box w-full" id="exp-q30"></div>
+                </div>
+                <div class="q-wrapper flex items-center gap-4">
+                    <span class="q-number">31</span> 
+                    <input type="text" class="input-text" name="q31" placeholder="Type one word...">
+                    <div class="explanation-box w-full" id="exp-q31"></div>
+                </div>
+                <div class="q-wrapper flex items-center gap-4">
+                    <span class="q-number">32</span> 
+                    <input type="text" class="input-text" name="q32" placeholder="Type one word...">
+                    <div class="explanation-box w-full" id="exp-q32"></div>
+                </div>
+                
+                <div class="mt-8 pt-6 border-t border-gray-300 flex items-center justify-between">
+                    <button class="btn-primary btn-check flex items-center gap-2" data-part="6">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd" /></svg>
+                        Check Answers
+                    </button>
+                    <span class="font-bold text-xl text-gray-700" id="score-part-6"></span>
+                </div>
+            </div>
+
+            <div style="height: 100px;"></div>
+        </div>
+    </div>
+
+    <!-- Highlight Tooltip Button -->
+    <button id="highlightTooltip">Highlight</button>
+    
+    <!-- Vocab Tooltip -->
+    <div id="vocabInfoTooltip">
+        <h4 id="v-word" class="font-bold text-blue-800 text-xl capitalize mb-1"></h4>
+        <p id="v-ipa" class="text-gray-500 italic font-medium mb-3"></p>
+        <p id="v-def" class="text-[0.95em] text-gray-700 mb-4 leading-relaxed"></p>
+        <button id="v-audio" class="w-full bg-blue-50 hover:bg-blue-100 text-blue-700 py-2.5 rounded-lg text-sm font-bold flex items-center justify-center gap-2 transition-colors border border-blue-200">
+            <span>🔊</span> Listen to Pronunciation
+        </button>
+    </div>
+</div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', () => {
+        // Detailed Answer Key and Explanations for TEST 8
+        const answerKey = {
+            q1: { ans: ['B'], exp: "The notice states that 'All students should finish their reports by Wed for the Fri class'. Mr. Jones will collect them, students don't collect them." },
+            q2: { ans: ['C'], exp: "The note states that 'George ... needs his camera back before Saturday for Bob's wedding', letting Jane know he's going to use his camera." },
+            q3: { ans: ['A'], exp: "The notice states 'If red light flashes, check copier for paper jam', which matches A: If paper is stuck in the copier, the red light will come on." },
+            q4: { ans: ['C'], exp: "Since 'Access ... is required at all times' to the driveway, this means that parking here is never possible at any time of day." },
+            q5: { ans: ['A'], exp: "The offer, in the form of a 'Gift Voucher', is addressed to existing members ('Dear member') to receive a free health and beauty session." },
+            
+            q6: { ans: ['E'], exp: "Sandybeach Hotel is only a two-minute walk from the beach with plenty of bars and a nightclub. It also offers two-day trips to historical sights for their archaeology interest." },
+            q7: { ans: ['B'], exp: "Oaktree Park Hotel is a beautiful retreat with a nature reserve (good for birdwatching) and a delicious menu prepared by an award-winning chef (so no cooking, and not noisy)." },
+            q8: { ans: ['D'], exp: "Bob's Diving Centre offers various water sport activities. It has evening entertainment every night and a weekly barbecue, plus self-catering accommodation." },
+            q9: { ans: ['A'], exp: "Oceanview Village has an afternoon kids' club, is close to the beach (for Sandra), and offers excursions three times a week for Dave." },
+            q10: { ans: ['H'], exp: "Woodside House is near places of culture, offers art classes and talks on cultural issues, and since it is a hotel, food is provided. It's not in a warm country because it's a general choice." },
+
+            q11: { ans: ['C'], exp: "In paragraph 1, the writer states 'many people, myself included, each year make a promise to themselves to get fit and slim', meaning they decide to make an effort." },
+            q12: { ans: ['C'], exp: "Paragraph 1 explicitly states 'Lack of willpower is even more important, though.' meaning they do not really have the drive or want to do it." },
+            q13: { ans: ['B'], exp: "The writer states in paragraph 2 that people give up because 'we set unrealistic fitness goals', expecting too much of themselves." },
+            q14: { ans: ['A'], exp: "The writer states in paragraph 3 that to continue 'The only correct answer seems to be to search for the thing that really interests and motivates you', a strong lasting reason." },
+            q15: { ans: ['D'], exp: "The writer suggests that despite obstacles, you can get fit by finding the right motivation, changing your mindset, making time, and committing to self-care." },
+
+            q16: { ans: ['C'], exp: "The preceding sentence warns about unsafe water, and C logically advises: 'So you must get all the relevant information.'" },
+            q17: { ans: ['H'], exp: "'But yours is not' directly contrasts with 'their bodies are used to it' in the preceding sentence, leading to getting ill." },
+            q18: { ans: ['E'], exp: "'This also means you should not clean your teeth with tap water' follows logically from the hotel notice mentioned in E." },
+            q19: { ans: ['F'], exp: "'Also remember to keep it closed in the shower, too' connects to the previous instruction: 'don't open your mouth when swimming!'" },
+            q20: { ans: ['A'], exp: "Sentence A refers to 'It' which describes uncooked food (salad or fruit) being washed in water." },
+
+            q21: { ans: ['A'], exp: "'Announced' means that something was made public knowledge, namely, how tomatoes benefit our health." },
+            q22: { ans: ['D'], exp: "'Research' is the only correct option as it collocates with the verb 'done' ('a lot of research has been done')." },
+            q23: { ans: ['A'], exp: "'Discovered' means found something out, referring to the findings about lycopene vs whole tomatoes." },
+            q24: { ans: ['C'], exp: "'Reduced' means decreased, which fits the context of a lowered risk of cancer." },
+            q25: { ans: ['B'], exp: "'Habits' are usual ways of doing something, which fits perfectly with 'poor eating habits'." },
+            q26: { ans: ['C'], exp: "'Expect' means to wait for something you think is likely to happen ('expect easy solutions')." },
+
+            q27: { ans: ['are'], exp: "The verb 'be' is needed here, specifically 3rd person plural to agree with 'daughters'." },
+            q28: { ans: ['other'], exp: "'In other words' is a set phrase meaning 'to explain this in another way'." },
+            q29: { ans: ['By'], exp: "'By' + present participle ('By celebrating') is used to describe an action which produces a result." },
+            q30: { ans: ['so'], exp: "'so that' is a result clause used to show the purpose of an action." },
+            q31: { ans: ['have'], exp: "A present obligation is expressed by 'have to' (the parents have to agree)." },
+            q32: { ans: ['before', 'until', 'till'], exp: "'before' or 'until' indicates the period of time leading up to a future event (being eighteen)." }
+        };
+
+        const vocabData = {
+            "willpower": { ipa: "/ˈwɪlpaʊər/", def: "Control exerted to do something or restrain impulses." },
+            "motivate": { ipa: "/ˈməʊtɪveɪt/", def: "Provide (someone) with a motive for doing something." },
+            "unrealistic": { ipa: "/ˌʌnrɪəˈlɪstɪk/", def: "Not matching the real world; impractical." },
+            "supplement": { ipa: "/ˈsʌplɪmənt/", def: "Something added to complete a thing, supply a deficiency, or reinforce or extend a whole." },
+            "antioxidant": { ipa: "/ˌæntiˈɒksɪdənt/", def: "A substance that inhibits oxidation, especially one used to counteract the deterioration of stored food products." },
+            "dowry": { ipa: "/ˈdaʊri/", def: "Property or money brought by a bride to her husband on their marriage." },
+            "independent": { ipa: "/ˌɪndɪˈpendənt/", def: "Free from outside control; not depending on another's authority." },
+            "landscape": { ipa: "/ˈlændskeɪp/", def: "All the visible features of an area of countryside or land." },
+            "excursion": { ipa: "/ɪkˈskɜːʃn/", def: "A short journey or trip, especially one engaged in as a leisure activity." },
+            "supervision": { ipa: "/ˌsuːpəˈvɪʒn/", def: "The action of supervising someone or something." }
+        };
+
+        const app = {
+            fontSize: 16,
+            highlightTooltip: document.getElementById('highlightTooltip'),
+            vocabTooltip: document.getElementById('vocabInfoTooltip'),
+
+            init() {
+                this.initTabs();
+                this.initSplitter();
+                this.initFontResizer();
+                this.initHighlighter();
+                this.initCheckAnswers();
+                this.initVocabSystem();
+                this.initDragAndDrop();
+            },
+
+            initTabs() {
+                const tabs = document.querySelectorAll('.tab-btn');
+                tabs.forEach(tab => {
+                    tab.addEventListener('click', () => {
+                        tabs.forEach(t => t.classList.remove('active'));
+                        tab.classList.add('active');
+
+                        const targetPart = tab.getAttribute('data-target');
+                        document.querySelectorAll('.tab-content').forEach(content => {
+                            if (content.getAttribute('data-part') === targetPart) {
+                                content.classList.add('active');
+                            } else {
+                                content.classList.remove('active');
+                            }
+                        });
+                        
+                        document.getElementById('left-pane').scrollTop = 0;
+                        document.getElementById('right-pane').scrollTop = 0;
+                        this.vocabTooltip.style.display = 'none';
+                    });
+                });
+            },
+
+            initCheckAnswers() {
+                document.querySelectorAll('.btn-check').forEach(btn => {
+                    btn.addEventListener('click', (e) => {
+                        const targetBtn = e.target.closest('.btn-check');
+                        if(targetBtn) {
+                            const part = targetBtn.getAttribute('data-part');
+                            this.checkAnswersForPart(part);
+                        }
+                    });
+                });
+            },
+
+            checkAnswersForPart(part) {
+                const container = document.querySelector(`.question-group[data-part="${part}"]`);
+                if (!container) return;
+
+                const questionWrappers = container.querySelectorAll('.q-wrapper');
+                let score = 0;
+                let total = questionWrappers.length;
+
+                questionWrappers.forEach(wrapper => {
+                    const inputEl = wrapper.querySelector('input, select');
+                    if (!inputEl) return;
+
+                    const qName = inputEl.name;
+                    const correctData = answerKey[qName];
+                    const correctAnswers = correctData ? correctData.ans : [];
+                    
+                    let userAns = '';
+                    if (inputEl.type === 'radio') {
+                        const checked = wrapper.querySelector('input[type="radio"]:checked');
+                        if (checked) userAns = checked.value;
+                    } else if (inputEl.tagName === 'SELECT') {
+                        userAns = inputEl.value;
+                    } else if (inputEl.type === 'text' || inputEl.type === 'hidden') {
+                        userAns = inputEl.value.trim().toLowerCase();
+                    }
+
+                    const qNumBadge = wrapper.querySelector('.q-number');
+                    const expBox = wrapper.querySelector('.explanation-box');
+                    
+                    if (qNumBadge) {
+                        const isCorrect = correctAnswers.some(ans => ans.toLowerCase() === userAns.toLowerCase());
+
+                        if (userAns === '') {
+                            qNumBadge.style.backgroundColor = '#94a3b8'; // Slate for empty
+                        } else if (isCorrect) {
+                            qNumBadge.style.backgroundColor = '#16a34a'; // Green
+                            score++;
+                        } else {
+                            qNumBadge.style.backgroundColor = '#dc2626'; // Red
+                        }
+
+                        if (expBox && correctData) {
+                            expBox.style.display = 'block';
+                            
+                            const formattedCorrectAns = inputEl.type === 'text' || inputEl.type === 'hidden' 
+                                ? correctAnswers.join(' / ') 
+                                : correctAnswers[0];
+                            
+                            expBox.innerHTML = `
+                                <div class="mb-2 pb-2 border-b border-green-200">
+                                    <span class="font-bold text-green-800 uppercase tracking-wide text-[0.85em]">Correct Answer:</span> 
+                                    <span class="font-bold text-lg text-green-900 ml-1">${formattedCorrectAns}</span>
+                                </div>
+                                <div>
+                                    <span class="font-bold text-green-800">Explanation:</span> ${correctData.exp}
+                                </div>
+                            `;
+                            
+                            if(isCorrect) {
+                                wrapper.style.borderColor = '#bbf7d0';
+                                wrapper.style.backgroundColor = '#f0fdf4';
+                            } else if (userAns !== '') {
+                                wrapper.style.borderColor = '#fecaca';
+                                wrapper.style.backgroundColor = '#fef2f2';
+                            }
+                        }
+
+                        const textGap = document.querySelector(`.drop-zone.in-text[data-name="${qName}"]`);
+                        if (textGap) {
+                            textGap.classList.remove('correct', 'incorrect');
+                            if (userAns !== '') {
+                                if (isCorrect) {
+                                    textGap.classList.add('correct');
+                                } else {
+                                    textGap.classList.add('incorrect');
+                                }
+                            }
+                        }
+                    }
+                });
+
+                const scoreLabel = document.getElementById(`score-part-${part}`);
+                if (scoreLabel) {
+                    scoreLabel.textContent = `Score: ${score} / ${total}`;
+                    scoreLabel.style.color = score === total ? '#16a34a' : (score > 0 ? '#d97706' : '#dc2626');
+                }
+            },
+
+            initVocabSystem() {
+                document.querySelectorAll('.vocab-word').forEach(wordEl => {
+                    wordEl.addEventListener('click', (e) => {
+                        e.stopPropagation();
+                        const key = wordEl.getAttribute('data-word');
+                        const data = vocabData[key];
+                        if (!data) return;
+
+                        document.getElementById('v-word').textContent = key;
+                        document.getElementById('v-ipa').textContent = data.ipa;
+                        document.getElementById('v-def').textContent = data.def;
+
+                        this.vocabTooltip.style.display = 'block';
+                        
+                        const rect = wordEl.getBoundingClientRect();
+                        let leftPos = e.pageX;
+                        let topPos = e.pageY + 15;
+
+                        if (leftPos + 300 > window.innerWidth) {
+                            leftPos = window.innerWidth - 320;
+                        }
+
+                        this.vocabTooltip.style.left = `${leftPos}px`;
+                        this.vocabTooltip.style.top = `${topPos}px`;
+
+                        document.getElementById('v-audio').onclick = () => {
+                            const utterance = new SpeechSynthesisUtterance(key);
+                            utterance.lang = 'en-US';
+                            utterance.rate = 0.9;
+                            window.speechSynthesis.speak(utterance);
+                        };
+                    });
+                });
+
+                document.addEventListener('click', (e) => {
+                    if (!this.vocabTooltip.contains(e.target)) {
+                        this.vocabTooltip.style.display = 'none';
+                    }
+                });
+            },
+
+            initDragAndDrop() {
+                const dragItems = document.querySelectorAll('.drag-item');
+                const dropZones = document.querySelectorAll('.drop-zone.in-text');
+                const pool = document.getElementById('pool-part-4');
+
+                if (!pool) return;
+
+                let draggedItem = null;
+
+                dragItems.forEach(item => {
+                    item.addEventListener('dragstart', (e) => {
+                        draggedItem = item;
+                        e.dataTransfer.effectAllowed = 'move';
+                        e.dataTransfer.setData('text/plain', item.id); 
+                        setTimeout(() => item.classList.add('opacity-40'), 0);
+                    });
+                    item.addEventListener('dragend', () => {
+                        setTimeout(() => {
+                            item.classList.remove('opacity-40');
+                            draggedItem = null;
+                        }, 0);
+                    });
+                });
+
+                const updateAllHiddenInputs = () => {
+                    dropZones.forEach(z => {
+                        const item = z.querySelector('.drag-item');
+                        const input = document.getElementById(`input-${z.dataset.name}`);
+                        if (input) {
+                            input.value = item ? item.dataset.value : '';
+                        }
+                    });
+                };
+
+                dropZones.forEach(zone => {
+                    zone.addEventListener('dragover', (e) => {
+                        e.preventDefault();
+                        zone.classList.add('drag-over');
+                    });
+                    zone.addEventListener('dragleave', () => {
+                        zone.classList.remove('drag-over');
+                    });
+                    zone.addEventListener('drop', (e) => {
+                        e.preventDefault();
+                        zone.classList.remove('drag-over');
+                        if (draggedItem) {
+                            const existingItem = zone.querySelector('.drag-item');
+                            if (existingItem && existingItem !== draggedItem) {
+                                pool.appendChild(existingItem);
+                            }
+                            zone.appendChild(draggedItem);
+                            zone.classList.remove('correct', 'incorrect');
+                            updateAllHiddenInputs();
+                        }
+                    });
+                });
+
+                pool.addEventListener('dragover', (e) => {
+                    e.preventDefault();
+                    pool.classList.add('border-blue-400', 'bg-slate-100');
+                });
+                pool.addEventListener('dragleave', () => {
+                    pool.classList.remove('border-blue-400', 'bg-slate-100');
+                });
+                pool.addEventListener('drop', (e) => {
+                    e.preventDefault();
+                    pool.classList.remove('border-blue-400', 'bg-slate-100');
+                    if (draggedItem) {
+                        pool.appendChild(draggedItem);
+                        updateAllHiddenInputs();
+                        dropZones.forEach(z => z.classList.remove('correct', 'incorrect'));
+                    }
+                });
+            },
+
+            initSplitter() {
+                const splitter = document.getElementById('splitter');
+                const panesContainer = document.getElementById('panes-container');
+                let isDragging = false;
+
+                splitter.addEventListener('mousedown', () => {
+                    isDragging = true;
+                    document.body.style.cursor = 'col-resize';
+                });
+
+                document.addEventListener('mousemove', (e) => {
+                    if (!isDragging) return;
+                    const containerRect = panesContainer.getBoundingClientRect();
+                    let newLeftWidth = e.clientX - containerRect.left;
+                    if (newLeftWidth < 300) newLeftWidth = 300;
+                    if (newLeftWidth > containerRect.width - 300) newLeftWidth = containerRect.width - 300;
+                    const percentage = (newLeftWidth / containerRect.width) * 100;
+                    panesContainer.style.gridTemplateColumns = `${percentage}% 6px 1fr`;
+                });
+
+                document.addEventListener('mouseup', () => {
+                    if (isDragging) {
+                        isDragging = false;
+                        document.body.style.cursor = 'default';
+                    }
+                });
+            },
+
+            initFontResizer() {
+                document.getElementById('btn-increase-font').addEventListener('click', () => {
+                    if (this.fontSize < 24) {
+                        this.fontSize += 2;
+                        document.documentElement.style.setProperty('--app-font-size', `${this.fontSize}px`);
+                    }
+                });
+                document.getElementById('btn-decrease-font').addEventListener('click', () => {
+                    if (this.fontSize > 12) {
+                        this.fontSize -= 2;
+                        document.documentElement.style.setProperty('--app-font-size', `${this.fontSize}px`);
+                    }
+                });
+            },
+
+            initHighlighter() {
+                const leftPane = document.getElementById('left-pane');
+                leftPane.addEventListener('mouseup', (e) => {
+                    const selection = window.getSelection();
+                    const text = selection.toString().trim();
+                    if (text.length > 0) {
+                        const range = selection.getRangeAt(0);
+                        const rect = range.getBoundingClientRect();
+                        this.highlightTooltip.style.display = 'block';
+                        this.highlightTooltip.style.left = `${rect.left + (rect.width / 2) - (this.highlightTooltip.offsetWidth / 2)}px`;
+                        this.highlightTooltip.style.top = `${rect.top - 40}px`;
+                        this.highlightTooltip.onclick = () => {
+                            const mark = document.createElement('mark');
+                            try {
+                                range.surroundContents(mark);
+                            } catch (ex) {} 
+                            selection.removeAllRanges();
+                            this.highlightTooltip.style.display = 'none';
+                        };
+                    } else {
+                        this.highlightTooltip.style.display = 'none';
+                    }
+                });
+                document.body.addEventListener('mousedown', (e) => {
+                   if (e.target !== this.highlightTooltip && window.getSelection().toString().length === 0) {
+                        this.highlightTooltip.style.display = 'none';
+                   }
+                });
+            }
+        };
+
+        app.init();
+    });
+</script>
+
+</body>
+</html>

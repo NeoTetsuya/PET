@@ -1,0 +1,497 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bet On It! - Grammar Game</title>
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- FontAwesome for Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <!-- React & ReactDOM -->
+    <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    
+    <!-- Babel for JSX -->
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+
+    <style>
+        body {
+            background-color: #f0fdf4;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        .pop-in {
+            animation: popIn 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+        }
+        @keyframes popIn {
+            0% { transform: scale(0.8); opacity: 0; }
+            100% { transform: scale(1); opacity: 1; }
+        }
+        .team-card {
+            transition: all 0.2s ease;
+        }
+        .team-card:hover {
+            transform: translateY(-2px);
+        }
+    </style>
+</head>
+<body>
+    <div id="root"></div>
+
+    <script type="text/babel">
+        const { useState, useEffect } = React;
+
+        // PET Vocabulary Sentence Bank (B1 Level)
+        const SENTENCES = [
+            { text: "You need a valid ticket to get access to the concert.", isCorrect: true, correction: "", topic: "Vocabulary", vocab: ["valid", "access"] },
+            { text: "I need to buy some toner because my car engine is making a strange noise.", isCorrect: false, correction: "Toner is ink for a printer. You put oil in a car engine.", topic: "Vocabulary", vocab: ["toner"] },
+            { text: "We booked self-catering accommodation, so we enjoyed the meals cooked by the hotel chef.", isCorrect: false, correction: "Self-catering means you have to cook the meals for yourself.", topic: "Vocabulary", vocab: ["self-catering accommodation"] },
+            { text: "The new nature reserve caters for tourists who want to hunt wild animals.", isCorrect: false, correction: "A nature reserve protects animals; you cannot hunt them.", topic: "Vocabulary", vocab: ["nature reserve", "caters for"] },
+            { text: "You need a lot of willpower to fight the temptation of eating the whole cake.", isCorrect: true, correction: "", topic: "Vocabulary", vocab: ["willpower", "temptation"] },
+            { text: "If the temperature continues to decline, it will be a very hot day tomorrow.", isCorrect: false, correction: "Decline means to go down or become less. It would be a cold day.", topic: "Vocabulary", vocab: ["decline"] },
+            { text: "A tiny amount of water is enough to cause lasting damage to your computer.", isCorrect: true, correction: "", topic: "Vocabulary", vocab: ["tiny", "amount", "lasting"] },
+            { text: "Eating traditional food on New Year's Day is a common habit in my country.", isCorrect: false, correction: "It is a common custom. A habit is something you do personally, like biting your nails.", topic: "Vocabulary", vocab: ["habit"] },
+            { text: "His selfish attitude motivated everyone on the team to help each other.", isCorrect: false, correction: "Selfish means only caring about yourself. A selfish person does not motivate teamwork.", topic: "Vocabulary", vocab: ["selfish", "attitude", "motivated"] },
+            { text: "To stay healthy in the long term, it is vital that you avoid eating too much fast food.", isCorrect: true, correction: "", topic: "Vocabulary", vocab: ["long term", "vital", "avoid"] },
+            { text: "She has a very independent approach to learning; she always asks her teacher for the answers.", isCorrect: false, correction: "Independent means you can do things by yourself without help.", topic: "Vocabulary", vocab: ["independent", "approach"] },
+            { text: "The teacher explained the procedure to divide the students into four equal groups.", isCorrect: true, correction: "", topic: "Vocabulary", vocab: ["procedure", "divide"] },
+            { text: "Saying 'please' and 'thank you' is an example of good manners.", isCorrect: true, correction: "", topic: "Vocabulary", vocab: ["manners"] },
+            { text: "There is a paper jam in the printer, so the machine is completely stuck.", isCorrect: true, correction: "", topic: "Vocabulary", vocab: ["jam", "stuck"] },
+            { text: "We went on a weekend excursion to the mountains to improve our fitness.", isCorrect: true, correction: "", topic: "Vocabulary", vocab: ["excursion", "improve"] },
+            { text: "That movie was so boring and long; it is definitely worth watching!", isCorrect: false, correction: "If something is boring, it is not worth your time or money.", topic: "Vocabulary", vocab: ["worth"] }
+        ];
+
+        // Team Colors
+        const TEAM_COLORS = [
+            { bg: 'bg-red-500', text: 'text-red-700', border: 'border-red-500', lightBg: 'bg-red-50' },
+            { bg: 'bg-blue-500', text: 'text-blue-700', border: 'border-blue-500', lightBg: 'bg-blue-50' },
+            { bg: 'bg-green-500', text: 'text-green-700', border: 'border-green-500', lightBg: 'bg-green-50' },
+            { bg: 'bg-yellow-500', text: 'text-yellow-700', border: 'border-yellow-500', lightBg: 'bg-yellow-50' },
+            { bg: 'bg-purple-500', text: 'text-purple-700', border: 'border-purple-500', lightBg: 'bg-purple-50' },
+            { bg: 'bg-pink-500', text: 'text-pink-700', border: 'border-pink-500', lightBg: 'bg-pink-50' },
+            { bg: 'bg-indigo-500', text: 'text-indigo-700', border: 'border-indigo-500', lightBg: 'bg-indigo-50' },
+            { bg: 'bg-teal-500', text: 'text-teal-700', border: 'border-teal-500', lightBg: 'bg-teal-50' },
+        ];
+
+        function App() {
+            const [gameState, setGameState] = useState('setup'); // setup, playing, result, gameover
+            const [numTeams, setNumTeams] = useState(2);
+            const [teams, setTeams] = useState([]);
+            const [questionIndex, setQuestionIndex] = useState(0);
+            
+            // State for holding randomized sentences
+            const [activeSentences, setActiveSentences] = useState(SENTENCES);
+            
+            // Current round bets state: { teamId: { guess: true/false/null, bet: number } }
+            const [currentBets, setCurrentBets] = useState({});
+            
+            // History: [ { sentence, isCorrect, teamResults: [ {teamId, name, guess, bet, won, moneyChange, newTotal} ] } ]
+            const [history, setHistory] = useState([]);
+            const [roundResult, setRoundResult] = useState(null);
+
+            const currentSentence = activeSentences[questionIndex];
+
+            // Helper function to highlight vocabulary
+            const renderHighlightedText = (text, vocab) => {
+                if (!vocab || vocab.length === 0) return text;
+                const sortedVocab = [...vocab].sort((a, b) => b.length - a.length);
+                const escapeRegExp = (string) => string.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+                const pattern = new RegExp(`(${sortedVocab.map(escapeRegExp).join('|')})`, 'gi');
+                
+                const parts = text.split(pattern);
+                return parts.map((part, i) => {
+                    const isMatch = sortedVocab.some(w => w.toLowerCase() === part.toLowerCase());
+                    return isMatch ? (
+                        <mark key={i} className="bg-yellow-300 text-gray-900 font-bold px-1 rounded shadow-sm">{part}</mark>
+                    ) : (
+                        part
+                    );
+                });
+            };
+
+            // Setup Phase
+            const handleNumTeamsChange = (delta) => {
+                const newNum = numTeams + delta;
+                if (newNum >= 1 && newNum <= 8) {
+                    setNumTeams(newNum);
+                }
+            };
+
+            const startGame = () => {
+                const initialTeams = Array.from({ length: numTeams }, (_, i) => ({
+                    id: i,
+                    name: `Team ${i + 1}`,
+                    money: 10,
+                    color: TEAM_COLORS[i % TEAM_COLORS.length]
+                }));
+                setTeams(initialTeams);
+                setQuestionIndex(0);
+                setHistory([]);
+                
+                // Randomize sentences for this game session
+                const shuffledSentences = [...SENTENCES].sort(() => Math.random() - 0.5);
+                setActiveSentences(shuffledSentences);
+                
+                initRoundBets(initialTeams);
+                setGameState('playing');
+            };
+
+            const initRoundBets = (currentTeams) => {
+                const initialBets = {};
+                currentTeams.forEach(t => {
+                    initialBets[t.id] = { guess: null, bet: 1 };
+                });
+                setCurrentBets(initialBets);
+            };
+
+            // Betting Phase
+            const handleTeamBetChange = (teamId, field, value) => {
+                setCurrentBets(prev => {
+                    const newBets = { ...prev };
+                    
+                    if (field === 'bet') {
+                        let val = parseInt(value);
+                        if (isNaN(val)) val = 1;
+                        const team = teams.find(t => t.id === teamId);
+                        const maxBet = Math.max(1, team.money);
+                        if (val > maxBet) val = maxBet;
+                        if (val < 1) val = 1;
+                        newBets[teamId] = { ...newBets[teamId], bet: val };
+                    } else if (field === 'guess') {
+                        newBets[teamId] = { ...newBets[teamId], guess: value };
+                    }
+                    
+                    return newBets;
+                });
+            };
+
+            const lockBetsAndReveal = () => {
+                const teamResults = [];
+                const updatedTeams = [...teams];
+
+                updatedTeams.forEach(team => {
+                    // Skip bankrupt teams
+                    if (team.money <= 0) {
+                        teamResults.push({
+                            teamId: team.id,
+                            name: team.name,
+                            guess: null,
+                            bet: 0,
+                            won: false,
+                            moneyChange: 0,
+                            newTotal: 0
+                        });
+                        return;
+                    }
+
+                    const teamBet = currentBets[team.id];
+                    const isPlayerRight = teamBet.guess === currentSentence.isCorrect;
+                    const moneyChange = isPlayerRight ? teamBet.bet : -teamBet.bet;
+                    const newMoney = team.money + moneyChange;
+
+                    teamResults.push({
+                        teamId: team.id,
+                        name: team.name,
+                        guess: teamBet.guess,
+                        bet: teamBet.bet,
+                        won: isPlayerRight,
+                        moneyChange: moneyChange,
+                        newTotal: newMoney
+                    });
+
+                    team.money = newMoney;
+                });
+
+                const roundData = {
+                    sentence: currentSentence.text,
+                    vocab: currentSentence.vocab,
+                    isCorrect: currentSentence.isCorrect,
+                    correction: currentSentence.correction,
+                    teamResults: teamResults
+                };
+
+                setTeams(updatedTeams);
+                setHistory([...history, roundData]);
+                setRoundResult(roundData);
+                setGameState('result');
+            };
+
+            const nextRound = () => {
+                // Check if all teams are bankrupt
+                const allBankrupt = teams.every(t => t.money <= 0);
+                
+                if (allBankrupt || questionIndex + 1 >= activeSentences.length) {
+                    setGameState('gameover');
+                } else {
+                    setQuestionIndex(questionIndex + 1);
+                    initRoundBets(teams);
+                    setGameState('playing');
+                }
+            };
+
+            // Check if all active teams have placed a guess
+            const allBetsPlaced = teams.every(t => t.money <= 0 || currentBets[t.id]?.guess !== null);
+
+            return (
+                <div className="min-h-screen py-10 px-4">
+                    <div className="max-w-5xl mx-auto bg-white rounded-2xl shadow-xl overflow-hidden border-2 border-green-600">
+                        
+                        {/* Header */}
+                        <div className="bg-green-600 text-white p-4 flex justify-between items-center shadow-md">
+                            <h1 className="text-2xl font-bold tracking-wider"><i className="fa-solid fa-sack-dollar mr-2"></i> BET ON IT!</h1>
+                            {gameState !== 'setup' && (
+                                <div className="text-lg font-bold bg-green-800 px-4 py-1 rounded-full border border-green-400 shadow-inner flex items-center gap-3">
+                                    {teams.map(t => (
+                                        <span key={t.id} className={t.money <= 0 ? 'opacity-50 line-through text-red-300' : ''}>
+                                            <span className="text-xs uppercase mr-1 opacity-75">{t.name}:</span>${t.money}
+                                        </span>
+                                    ))}
+                                </div>
+                            )}
+                        </div>
+
+                        <div className="p-6 md:p-8">
+                            
+                            {/* --- SETUP SCREEN --- */}
+                            {gameState === 'setup' && (
+                                <div className="text-center pop-in max-w-lg mx-auto">
+                                    <div className="text-6xl text-yellow-500 mb-6 drop-shadow-md">
+                                        <i className="fa-solid fa-users"></i>
+                                    </div>
+                                    <h2 className="text-3xl font-bold text-gray-800 mb-6">Game Setup</h2>
+                                    
+                                    <div className="bg-gray-100 p-8 rounded-xl border border-gray-300 mb-8">
+                                        <p className="text-xl font-medium text-gray-700 mb-4">How many teams are playing?</p>
+                                        <div className="flex items-center justify-center gap-6">
+                                            <button 
+                                                onClick={() => handleNumTeamsChange(-1)}
+                                                className="w-12 h-12 rounded-full bg-red-500 text-white text-2xl font-bold hover:bg-red-600 transition disabled:opacity-50"
+                                                disabled={numTeams <= 1}
+                                            >
+                                                <i className="fa-solid fa-minus"></i>
+                                            </button>
+                                            <span className="text-5xl font-black text-gray-800 w-16 text-center">{numTeams}</span>
+                                            <button 
+                                                onClick={() => handleNumTeamsChange(1)}
+                                                className="w-12 h-12 rounded-full bg-green-500 text-white text-2xl font-bold hover:bg-green-600 transition disabled:opacity-50"
+                                                disabled={numTeams >= 8}
+                                            >
+                                                <i className="fa-solid fa-plus"></i>
+                                            </button>
+                                        </div>
+                                    </div>
+
+                                    <ul className="text-left text-base text-gray-600 space-y-2 mb-8 bg-green-50 p-6 rounded-lg border border-green-200">
+                                        <li><i className="fa-solid fa-check text-green-500 mr-2"></i> Each team starts with <b>$10</b>.</li>
+                                        <li><i className="fa-solid fa-check text-green-500 mr-2"></i> Teams announce their guess and bet amount.</li>
+                                        <li><i className="fa-solid fa-check text-green-500 mr-2"></i> The host locks in the answers to reveal the results.</li>
+                                        <li><i className="fa-solid fa-check text-green-500 mr-2"></i> If a team hits $0, they are eliminated!</li>
+                                    </ul>
+
+                                    <button 
+                                        onClick={startGame}
+                                        className="bg-green-600 hover:bg-green-700 text-white font-bold py-4 px-12 rounded-full text-2xl transition transform hover:scale-105 shadow-lg w-full"
+                                    >
+                                        Start Game!
+                                    </button>
+                                </div>
+                            )}
+
+                            {/* --- PLAYING SCREEN (BETTING) --- */}
+                            {gameState === 'playing' && (
+                                <div className="pop-in">
+                                    <div className="mb-2 text-sm font-bold text-green-600 uppercase tracking-wide text-center">
+                                        Sentence {questionIndex + 1} of {activeSentences.length}
+                                    </div>
+                                    
+                                    <div className="bg-gray-100 p-8 rounded-xl text-center mb-8 shadow-inner border border-gray-300">
+                                        <h3 className="text-3xl text-gray-800 font-medium">
+                                            "{renderHighlightedText(currentSentence.text, currentSentence.vocab)}"
+                                        </h3>
+                                    </div>
+
+                                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
+                                        {teams.map(team => {
+                                            const isBankrupt = team.money <= 0;
+                                            const tBet = currentBets[team.id];
+
+                                            return (
+                                                <div key={team.id} className={`team-card rounded-xl border-4 overflow-hidden shadow-sm ${isBankrupt ? 'border-gray-300 opacity-70' : team.color.border}`}>
+                                                    <div className={`${isBankrupt ? 'bg-gray-300 text-gray-600' : `${team.color.bg} text-white`} p-3 font-bold flex justify-between items-center`}>
+                                                        <span className="text-lg">{team.name}</span>
+                                                        <span className="text-xl">${team.money}</span>
+                                                    </div>
+                                                    
+                                                    <div className={`p-4 ${isBankrupt ? 'bg-gray-100' : team.color.lightBg}`}>
+                                                        {isBankrupt ? (
+                                                            <div className="text-center py-8 text-red-500 font-bold text-xl uppercase tracking-widest">
+                                                                <i className="fa-solid fa-skull-crossbones block text-4xl mb-2"></i>
+                                                                Bankrupt
+                                                            </div>
+                                                        ) : (
+                                                            <>
+                                                                <div className="flex gap-2 mb-4">
+                                                                    <button 
+                                                                        onClick={() => handleTeamBetChange(team.id, 'guess', true)}
+                                                                        className={`flex-1 py-2 rounded-lg font-bold border-2 transition ${tBet?.guess === true ? 'bg-green-500 text-white border-green-600 shadow-inner' : 'bg-white text-gray-500 border-gray-300 hover:border-green-400'}`}
+                                                                    >
+                                                                        <i className="fa-solid fa-check mb-1 block"></i> Correct
+                                                                    </button>
+                                                                    <button 
+                                                                        onClick={() => handleTeamBetChange(team.id, 'guess', false)}
+                                                                        className={`flex-1 py-2 rounded-lg font-bold border-2 transition ${tBet?.guess === false ? 'bg-red-500 text-white border-red-600 shadow-inner' : 'bg-white text-gray-500 border-gray-300 hover:border-red-400'}`}
+                                                                    >
+                                                                        <i className="fa-solid fa-xmark mb-1 block"></i> Wrong
+                                                                    </button>
+                                                                </div>
+                                                                
+                                                                <div className="flex items-center justify-between bg-white rounded-lg p-2 border border-gray-300">
+                                                                    <span className="font-bold text-gray-600 text-sm uppercase">Bet:</span>
+                                                                    <div className="flex items-center">
+                                                                        <span className="text-lg font-bold text-gray-500 mr-1">$</span>
+                                                                        <input 
+                                                                            type="number" 
+                                                                            min="1" 
+                                                                            max={team.money}
+                                                                            value={tBet?.bet || ''}
+                                                                            onChange={(e) => handleTeamBetChange(team.id, 'bet', e.target.value)}
+                                                                            className="w-16 text-xl font-bold text-center border-b-2 border-gray-300 focus:outline-none focus:border-blue-500 bg-transparent"
+                                                                        />
+                                                                    </div>
+                                                                </div>
+                                                            </>
+                                                        )}
+                                                    </div>
+                                                </div>
+                                            );
+                                        })}
+                                    </div>
+
+                                    <div className="text-center">
+                                        <button 
+                                            onClick={lockBetsAndReveal}
+                                            disabled={!allBetsPlaced}
+                                            className={`py-4 px-12 rounded-full text-2xl font-bold shadow-lg transition transform ${allBetsPlaced ? 'bg-blue-600 hover:bg-blue-700 text-white hover:scale-105' : 'bg-gray-300 text-gray-500 cursor-not-allowed'}`}
+                                        >
+                                            <i className="fa-solid fa-lock mr-2"></i> Lock Bets & Reveal
+                                        </button>
+                                        {!allBetsPlaced && (
+                                            <p className="text-red-500 font-bold mt-3 text-sm animate-pulse">Wait for all active teams to select a guess!</p>
+                                        )}
+                                    </div>
+                                </div>
+                            )}
+
+                            {/* --- RESULT SCREEN --- */}
+                            {gameState === 'result' && roundResult && (
+                                <div className="pop-in">
+                                    <div className="text-center mb-8 border-b-2 border-gray-200 pb-8">
+                                        <h3 className="text-2xl text-gray-500 mb-2 font-medium line-through">
+                                            "{renderHighlightedText(roundResult.sentence, roundResult.vocab)}"
+                                        </h3>
+                                        
+                                        {!roundResult.isCorrect ? (
+                                            <div className="text-3xl text-green-600 font-bold mb-2">
+                                                "{roundResult.correction}"
+                                            </div>
+                                        ) : (
+                                            <div className="text-3xl text-green-600 font-bold mb-2">
+                                                (The sentence was correct!)
+                                            </div>
+                                        )}
+                                    </div>
+
+                                    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 mb-8">
+                                        {roundResult.teamResults.map(tr => {
+                                            const teamInfo = teams.find(t => t.id === tr.teamId);
+                                            if (tr.guess === null) {
+                                                return (
+                                                    <div key={tr.teamId} className="bg-gray-100 p-4 rounded-xl border-2 border-gray-300 text-center opacity-70">
+                                                        <h4 className="font-bold text-gray-600 text-lg">{tr.name}</h4>
+                                                        <p className="text-red-500 font-bold mt-2">Bankrupt</p>
+                                                    </div>
+                                                );
+                                            }
+
+                                            return (
+                                                <div key={tr.teamId} className={`p-4 rounded-xl border-4 text-center ${tr.won ? 'bg-green-50 border-green-400' : 'bg-red-50 border-red-400'}`}>
+                                                    <h4 className={`font-bold text-lg mb-1 ${tr.won ? 'text-green-700' : 'text-red-700'}`}>{tr.name}</h4>
+                                                    <p className="text-sm text-gray-600 mb-2">
+                                                        Guessed: {tr.guess ? <i className="fa-solid fa-check text-green-600 font-bold"></i> : <i className="fa-solid fa-xmark text-red-600 font-bold"></i>}
+                                                    </p>
+                                                    <div className={`text-3xl font-black ${tr.won ? 'text-green-600' : 'text-red-600'}`}>
+                                                        {tr.won ? '+' : '-'}${tr.bet}
+                                                    </div>
+                                                    <div className="mt-2 pt-2 border-t border-gray-300 font-bold text-gray-700">
+                                                        Total: ${tr.newTotal}
+                                                    </div>
+                                                </div>
+                                            );
+                                        })}
+                                    </div>
+
+                                    <div className="text-center">
+                                        <button 
+                                            onClick={nextRound}
+                                            className="bg-gray-800 hover:bg-gray-900 text-white font-bold py-3 px-10 rounded-full text-xl shadow-lg transition transform hover:scale-105"
+                                        >
+                                            {teams.every(t => t.money <= 0) || questionIndex + 1 >= activeSentences.length 
+                                                ? 'See Final Scores' 
+                                                : 'Next Sentence'}
+                                        </button>
+                                    </div>
+                                </div>
+                            )}
+
+                            {/* --- GAME OVER SCREEN --- */}
+                            {gameState === 'gameover' && (
+                                <div className="pop-in">
+                                    <div className="text-center mb-10">
+                                        <div className="text-6xl text-yellow-500 mb-4"><i className="fa-solid fa-trophy"></i></div>
+                                        <h2 className="text-4xl font-black text-gray-800 mb-2">GAME FINISHED!</h2>
+                                        <p className="text-xl text-gray-600">Final Standings</p>
+                                    </div>
+
+                                    {/* Final Standings Podium/List */}
+                                    <div className="max-w-2xl mx-auto mb-10">
+                                        {[...teams].sort((a, b) => b.money - a.money).map((team, index) => (
+                                            <div key={team.id} className={`flex items-center justify-between p-4 mb-3 rounded-xl border-2 ${index === 0 && team.money > 0 ? 'bg-yellow-50 border-yellow-400 transform scale-105 shadow-md' : 'bg-white border-gray-200'}`}>
+                                                <div className="flex items-center gap-4">
+                                                    <div className={`w-10 h-10 rounded-full flex items-center justify-center font-bold text-white ${index === 0 ? 'bg-yellow-500 text-xl' : index === 1 ? 'bg-gray-400' : index === 2 ? 'bg-amber-700' : 'bg-gray-200 text-gray-600'}`}>
+                                                        {index + 1}
+                                                    </div>
+                                                    <span className={`text-2xl font-bold ${team.color.text}`}>{team.name}</span>
+                                                    {team.money <= 0 && <span className="bg-red-100 text-red-600 text-xs font-bold px-2 py-1 rounded uppercase">Bankrupt</span>}
+                                                </div>
+                                                <div className="text-3xl font-black text-gray-800">
+                                                    ${team.money}
+                                                </div>
+                                            </div>
+                                        ))}
+                                    </div>
+
+                                    <div className="text-center">
+                                        <button 
+                                            onClick={() => setGameState('setup')}
+                                            className="bg-green-600 hover:bg-green-700 text-white font-bold py-4 px-12 rounded-full text-xl shadow-lg transition transform hover:scale-105"
+                                        >
+                                            <i className="fa-solid fa-rotate-right mr-2"></i> Play Again
+                                        </button>
+                                    </div>
+                                </div>
+                            )}
+
+                        </div>
+                    </div>
+                </div>
+            );
+        }
+
+        const root = ReactDOM.createRoot(document.getElementById('root'));
+        root.render(<App />);
+    </script>
+</body>
+</html>
