@@ -147,7 +147,41 @@
     </footer>
 
     <script>
+        // --- UTILS ---
+        function shuffle(array) {
+            let currentIndex = array.length, randomIndex;
+            while (currentIndex !== 0) {
+                randomIndex = Math.floor(Math.random() * currentIndex);
+                currentIndex--;
+                [array[currentIndex], array[randomIndex]] = [array[randomIndex], array[currentIndex]];
+            }
+            return array;
+        }
+
+        function formatTime(seconds) {
+            let m = Math.floor(seconds / 60);
+            let s = seconds % 60;
+            return `${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
+        }
+
+        function escapeHTML(str) {
+            if (!str) return '';
+            return String(str).replace(/[&<>'"]/g, tag => ({
+                '&': '&amp;',
+                '<': '&lt;',
+                '>': '&gt;',
+                "'": '&#39;',
+                '"': '&quot;'
+            }[tag]));
+        }
+
+        function getTeamName(team) {
+            return team.name.trim() !== '' ? escapeHTML(team.name) : `Team ${team.id}`;
+        }
+
         // --- GAME DATA & CONFIG ---
+        const CORRECT_ANSWER_POINTS = 50; // Guaranteed points for a correct answer
+
         const REWARDS_POOL = [
             { text: "+100 PTS", type: 'add', val: 100, color: 'text-green-500' },
             { text: "+100 PTS", type: 'add', val: 100, color: 'text-green-500' },
@@ -172,10 +206,10 @@
             { text: "PTS x2!", type: 'mult', val: 2, color: 'text-blue-500' },
             { text: "PTS x2!", type: 'mult', val: 2, color: 'text-blue-500' },
             { text: "PTS ÷2", type: 'div', val: 2, color: 'text-orange-500' },
-            { text: "SWAP SCORES", type: 'swap', val: 0, color: 'text-purple-500' } // Special action
+            { text: "SWAP SCORES", type: 'swap', val: 0, color: 'text-purple-500' }
         ];
 
-        // Interactive Multiple Choice Data (Contextual Examples)
+        // Interactive Multiple Choice Data
         const TRIVIA_QUESTIONS = [
             { q: "I bought some _____ peas from the supermarket and put them in the freezer.", options: ["A) wealthy", "B) frozen", "C) previous"], correctIndex: 1 },
             { q: "The beautiful mountains are just _____ that thick forest. We can barely see them.", options: ["A) beyond", "B) within", "C) occasionally"], correctIndex: 0 },
@@ -219,7 +253,7 @@
 
         // --- STATE MANAGEMENT ---
         let state = {
-            screen: 'setup', // setup, pregame, board, question, target (if swap/give), reveal
+            screen: 'setup', // setup, pregame, board, question, target (if swap/give), reveal, reveal_wrong
             teams: [
                 { id: 1, name: 'Mario', score: 0, color: 'bg-red-500' },
                 { id: 2, name: 'Luigi', score: 0, color: 'bg-green-500' },
@@ -245,23 +279,6 @@
         const scoreboardEl = document.getElementById('scoreboard');
         const teamScoresEl = document.getElementById('team-scores');
 
-        // --- UTILS ---
-        function shuffle(array) {
-            let currentIndex = array.length, randomIndex;
-            while (currentIndex !== 0) {
-                randomIndex = Math.floor(Math.random() * currentIndex);
-                currentIndex--;
-                [array[currentIndex], array[randomIndex]] = [array[randomIndex], array[currentIndex]];
-            }
-            return array;
-        }
-
-        function formatTime(seconds) {
-            let m = Math.floor(seconds / 60);
-            let s = seconds % 60;
-            return `${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
-        }
-
         // --- INITIALIZATION ---
         function adjustTeams(delta) {
             let newCount = state.teams.length + delta;
@@ -277,7 +294,8 @@
         }
 
         function updateTeamName(index, newName) {
-            state.teams[index].name = newName || `Team ${index + 1}`;
+            state.teams[index].name = newName;
+            // No need to re-render here to preserve input focus
         }
 
         function adjustQTimer(delta) {
@@ -295,7 +313,7 @@
                 state.screen = 'pregame';
                 state.timeLeft = state.preGameCountdown * 60;
                 
-                render(); // Initial render to prevent pregame screen flickering
+                render();
 
                 if (state.timerInterval) clearInterval(state.timerInterval);
                 state.timerInterval = setInterval(() => {
@@ -304,7 +322,6 @@
                         clearInterval(state.timerInterval);
                         initGame();
                     } else {
-                        // Targeted DOM update: strictly update the timer text, do not re-render the screen
                         const pregameTimerEl = document.getElementById('pregame-timer-text');
                         if (pregameTimerEl) {
                             pregameTimerEl.innerText = formatTime(state.timeLeft);
@@ -325,12 +342,13 @@
             if (state.timerInterval) clearInterval(state.timerInterval);
             
             let shuffledRewards = shuffle([...REWARDS_POOL]);
-            let shuffledQuestions = shuffle([...TRIVIA_QUESTIONS]); // Randomize all questions
+            let shuffledQuestions = shuffle([...TRIVIA_QUESTIONS]);
             
             state.boxes = BOX_LETTERS.map((letter, index) => ({
                 id: letter,
-                reward: shuffledRewards[index],
-                question: shuffledQuestions[index], // Pick 24 at random
+                // Fallbacks added for data safety in case customization misses exactly 24 items
+                reward: shuffledRewards[index] || { text: "+0 PTS", type: 'add', val: 0, color: 'text-gray-500' },
+                question: shuffledQuestions[index] || { q: "Free Pass! No question here.", options: ["A) Take It", "B) Take It", "C) Take It"], correctIndex: 0 },
                 opened: false
             }));
             state.currentTeamIndex = 0;
@@ -342,7 +360,7 @@
         function openBox(boxId) {
             state.activeBox = state.boxes.find(b => b.id === boxId);
             state.showAnswer = false;
-            state.selectedOptionIndex = null; // Reset selection
+            state.selectedOptionIndex = null;
             state.screen = 'question';
             
             if (state.questionTimeLimit > 0) {
@@ -355,9 +373,8 @@
                         state.timeLeft = 0;
                         state.selectedOptionIndex = -1; // Indicates time is up
                         state.showAnswer = true;
-                        render(); // Redraw only once when time is completely up
+                        render();
                     } else {
-                        // Targeted DOM update: strictly update the timer text, do not re-render the question box
                         const timerEl = document.getElementById('q-timer-text');
                         if (timerEl) {
                             timerEl.innerText = `⏱️ ${state.timeLeft}s`;
@@ -372,11 +389,33 @@
             render();
         }
 
-        // Triggered when a team clicks a multiple choice option
         function selectAnswer(index) {
             if (state.timerInterval) clearInterval(state.timerInterval);
             state.selectedOptionIndex = index;
             state.showAnswer = true;
+
+            // Apply base points for correct answer to make it balanced
+            if (index === state.activeBox.question.correctIndex) {
+                state.teams[state.currentTeamIndex].score += CORRECT_ANSWER_POINTS;
+            }
+
+            render();
+        }
+
+        function revealMissedBox() {
+            state.screen = 'reveal_wrong';
+            render();
+        }
+
+        function endTurnWrong() {
+            state.activeBox.opened = true;
+            state.activeBox = null;
+            state.decision = null;
+            state.showAnswer = false;
+            
+            // Next turn
+            state.currentTeamIndex = (state.currentTeamIndex + 1) % state.teams.length;
+            state.screen = 'board';
             render();
         }
 
@@ -404,12 +443,10 @@
             let currentTeam = state.teams[state.currentTeamIndex];
 
             if (reward.type === 'swap') {
-                // Swap current team with target team
                 let temp = currentTeam.score;
                 currentTeam.score = targetTeam.score;
                 targetTeam.score = temp;
             } else {
-                // Apply math to target team (could be current if kept, or other if given)
                 if (reward.type === 'add') targetTeam.score += reward.val;
                 if (reward.type === 'sub') targetTeam.score -= reward.val;
                 if (reward.type === 'mult') targetTeam.score *= reward.val;
@@ -445,6 +482,7 @@
                 else if (state.screen === 'question') appEl.innerHTML = renderQuestion();
                 else if (state.screen === 'target') appEl.innerHTML = renderTargetSelection();
                 else if (state.screen === 'reveal') appEl.innerHTML = renderReveal();
+                else if (state.screen === 'reveal_wrong') appEl.innerHTML = renderRevealWrong();
             }
         }
 
@@ -464,7 +502,7 @@
                         ${state.teams.map((t, i) => `
                             <div class="flex flex-col">
                                 <label class="font-bold text-xs sm:text-sm mb-1 text-gray-600 ml-1">Team ${i + 1}</label>
-                                <input type="text" oninput="updateTeamName(${i}, this.value)" value="${t.name}" maxlength="12" class="team-input border-2 border-black p-2 sm:p-3 rounded-xl font-bold text-base sm:text-lg text-gray-800 shadow-[2px_2px_0px_0px_rgba(0,0,0,0.2)]">
+                                <input type="text" oninput="updateTeamName(${i}, this.value)" value="${escapeHTML(t.name)}" maxlength="12" class="team-input border-2 border-black p-2 sm:p-3 rounded-xl font-bold text-base sm:text-lg text-gray-800 shadow-[2px_2px_0px_0px_rgba(0,0,0,0.2)]">
                             </div>
                         `).join('')}
                     </div>
@@ -512,11 +550,12 @@
 
         function renderBoard() {
             const currentTeam = state.teams[state.currentTeamIndex];
+            const safeTeamName = getTeamName(currentTeam);
             let html = `
                 <div class="flex flex-col w-full h-full flex-grow max-w-6xl mx-auto min-h-0">
                     <div class="mb-3 md:mb-5 text-center shrink-0 animate-pop">
                         <span class="${currentTeam.color} text-white px-6 py-2 md:px-8 md:py-3 rounded-full border-2 border-black font-bold text-xl md:text-2xl shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]">
-                            It's ${currentTeam.name}'s Turn!
+                            It's ${safeTeamName}'s Turn!
                         </span>
                     </div>
                     <div class="grid grid-cols-4 grid-rows-6 md:grid-cols-6 md:grid-rows-4 gap-2 sm:gap-3 md:gap-4 flex-grow min-h-0 w-full">
@@ -545,6 +584,7 @@
 
         function renderQuestion() {
             const currentTeam = state.teams[state.currentTeamIndex];
+            const safeTeamName = getTeamName(currentTeam);
             
             let timerHTML = '';
             if (state.questionTimeLimit > 0 && !state.showAnswer) {
@@ -560,9 +600,10 @@
             // Generate Multiple Choice Buttons
             let optionsHTML = '<div class="flex flex-col md:flex-row gap-2 sm:gap-4 w-full mb-6 max-w-5xl mx-auto">';
             state.activeBox.question.options.forEach((opt, idx) => {
+                const safeOpt = escapeHTML(opt);
                 if (!state.showAnswer) {
                     // Clickable state
-                    optionsHTML += `<button onclick="selectAnswer(${idx})" class="flex-1 text-left bg-white border-2 border-gray-300 hover:border-blue-500 hover:bg-blue-50 text-gray-800 font-bold py-3 px-4 rounded-xl text-base md:text-lg transition-all shadow-sm break-words">${opt}</button>`;
+                    optionsHTML += `<button onclick="selectAnswer(${idx})" class="flex-1 text-left bg-white border-2 border-gray-300 hover:border-blue-500 hover:bg-blue-50 text-gray-800 font-bold py-3 px-4 rounded-xl text-base md:text-lg transition-all shadow-sm break-words">${safeOpt}</button>`;
                 } else {
                     // Revealed state
                     const isCorrect = (idx === state.activeBox.question.correctIndex);
@@ -579,37 +620,47 @@
                     }
 
                     let icon = isCorrect ? "✅" : (isSelected ? "❌" : "");
-                    optionsHTML += `<div class="${btnClass}"><span>${opt}</span><span class="ml-2 flex-shrink-0">${icon}</span></div>`;
+                    optionsHTML += `<div class="${btnClass}"><span>${safeOpt}</span><span class="ml-2 flex-shrink-0">${icon}</span></div>`;
                 }
             });
             optionsHTML += '</div>';
 
             // Generate Feedback and Keep/Give buttons if answered
             let feedbackHTML = '';
-            let keepGiveHTML = '';
+            let actionHTML = '';
             
             if (state.showAnswer) {
-                if (state.selectedOptionIndex === state.activeBox.question.correctIndex) {
-                    feedbackHTML = `<p class="text-2xl sm:text-3xl font-bold text-green-600 mb-4 animate-bounce">Correct!</p>`;
-                } else if (state.selectedOptionIndex === -1) {
-                    feedbackHTML = `<p class="text-2xl sm:text-3xl font-bold text-red-600 mb-4 animate-pulse">⏰ Time's Up!</p>`;
+                const isCorrect = state.selectedOptionIndex === state.activeBox.question.correctIndex;
+                
+                if (isCorrect) {
+                    feedbackHTML = `<p class="text-2xl sm:text-3xl font-bold text-green-600 mb-4 animate-bounce">Correct! +${CORRECT_ANSWER_POINTS} Points!</p>`;
+                    actionHTML = `
+                        <h2 class="text-xl sm:text-2xl md:text-3xl font-bold mb-4 sm:mb-6 text-gray-800">What will <span class="${currentTeam.color.replace('bg-', 'text-')}">${safeTeamName}</span> do?</h2>
+                        <div class="flex flex-col sm:flex-row gap-3 sm:gap-6 justify-center">
+                            <button onclick="makeDecision('keep')" class="btn-mario text-lg sm:text-xl md:text-2xl px-4 sm:px-8 py-3 sm:py-6 rounded-xl flex-1 font-bold flex flex-col items-center">
+                                <span class="text-3xl sm:text-5xl mb-1 sm:mb-2">📦</span>
+                                KEEP IT
+                            </button>
+                            <button onclick="makeDecision('give')" class="btn-luigi text-lg sm:text-xl md:text-2xl px-4 sm:px-8 py-3 sm:py-6 rounded-xl flex-1 font-bold flex flex-col items-center">
+                                <span class="text-3xl sm:text-5xl mb-1 sm:mb-2">🎁</span>
+                                GIVE IT
+                            </button>
+                        </div>
+                    `;
                 } else {
-                    feedbackHTML = `<p class="text-2xl sm:text-3xl font-bold text-red-600 mb-4">Incorrect!</p>`;
+                    if (state.selectedOptionIndex === -1) {
+                        feedbackHTML = `<p class="text-2xl sm:text-3xl font-bold text-red-600 mb-4 animate-pulse">⏰ Time's Up!</p>`;
+                    } else {
+                        feedbackHTML = `<p class="text-2xl sm:text-3xl font-bold text-red-600 mb-4">Incorrect!</p>`;
+                    }
+                    actionHTML = `
+                        <div class="mt-6">
+                            <button onclick="revealMissedBox()" class="btn-yellow text-lg sm:text-2xl px-4 sm:px-8 py-3 sm:py-5 rounded-xl font-bold w-full sm:w-auto shadow-[4px_4px_0px_0px_rgba(0,0,0,0.3)]">
+                                REVEAL BOX & END TURN
+                            </button>
+                        </div>
+                    `;
                 }
-
-                keepGiveHTML = `
-                    <h2 class="text-xl sm:text-2xl md:text-3xl font-bold mb-4 sm:mb-6 text-gray-800">What will <span class="${currentTeam.color.replace('bg-', 'text-')}">${currentTeam.name}</span> do?</h2>
-                    <div class="flex flex-col sm:flex-row gap-3 sm:gap-6 justify-center">
-                        <button onclick="makeDecision('keep')" class="btn-mario text-lg sm:text-xl md:text-2xl px-4 sm:px-8 py-3 sm:py-6 rounded-xl flex-1 font-bold flex flex-col items-center">
-                            <span class="text-3xl sm:text-5xl mb-1 sm:mb-2">📦</span>
-                            KEEP IT
-                        </button>
-                        <button onclick="makeDecision('give')" class="btn-luigi text-lg sm:text-xl md:text-2xl px-4 sm:px-8 py-3 sm:py-6 rounded-xl flex-1 font-bold flex flex-col items-center">
-                            <span class="text-3xl sm:text-5xl mb-1 sm:mb-2">🎁</span>
-                            GIVE IT
-                        </button>
-                    </div>
-                `;
             }
 
             return `
@@ -619,12 +670,37 @@
                         ${timerHTML}
                     </div>
                     
-                    <p class="text-gray-500 text-sm sm:text-xl mb-2 sm:mb-4 font-bold uppercase tracking-wider">Question for ${currentTeam.name}</p>
-                    <div class="text-xl sm:text-2xl md:text-3xl font-bold text-gray-800 mb-6 sm:mb-8 leading-snug">${state.activeBox.question.q}</div>
+                    <p class="text-gray-500 text-sm sm:text-xl mb-2 sm:mb-4 font-bold uppercase tracking-wider">Question for ${safeTeamName}</p>
+                    <div class="text-xl sm:text-2xl md:text-3xl font-bold text-gray-800 mb-6 sm:mb-8 leading-snug">${escapeHTML(state.activeBox.question.q)}</div>
                     
                     ${optionsHTML}
                     ${feedbackHTML}
-                    ${keepGiveHTML}
+                    ${actionHTML}
+                </div>
+            `;
+        }
+
+        function renderRevealWrong() {
+            const reward = state.activeBox.reward;
+            
+            // Generate a message based on whether it was a good or bad box to miss
+            let message = reward.type === 'sub' || reward.type === 'div' || reward.type === 'zero' 
+                ? "Phew! You dodged a bad box!" 
+                : "Too bad! You missed out!";
+
+            return `
+                <div class="card p-5 sm:p-8 md:p-12 max-w-2xl w-full text-center animate-pop mx-2 sm:mx-4 relative overflow-hidden">
+                    <p class="text-sm sm:text-xl font-bold text-gray-500 mb-4 sm:mb-6 uppercase tracking-widest border-b-2 border-gray-100 pb-3 sm:pb-4">Let's see what was inside...</p>
+                    
+                    <div class="text-5xl sm:text-6xl md:text-8xl font-bold mb-6 sm:mb-10 ${reward.color} animate-float text-3d py-2 sm:py-4 opacity-75">
+                        ${escapeHTML(reward.text)}
+                    </div>
+
+                    <p class="text-xl sm:text-2xl font-bold text-gray-700 mb-6">${message}</p>
+
+                    <button onclick="endTurnWrong()" class="btn-yellow text-lg sm:text-2xl px-4 sm:px-8 py-3 sm:py-5 rounded-xl w-full font-bold mt-2 sm:mt-4 shadow-[4px_4px_0px_0px_rgba(0,0,0,0.3)]">
+                        BACK TO BOARD
+                    </button>
                 </div>
             `;
         }
@@ -642,7 +718,7 @@
                 if (index !== state.currentTeamIndex) {
                     html += `
                         <button onclick="selectTargetTeam(${index})" class="${team.color} text-white btn-mario text-lg sm:text-2xl px-4 sm:px-6 py-4 sm:py-6 rounded-xl font-bold text-3d-light">
-                            ${team.name}
+                            ${getTeamName(team)}
                         </button>
                     `;
                 }
@@ -660,13 +736,16 @@
             let targetTeam = state.teams[state.targetTeamIndex];
             let currentTeam = state.teams[state.currentTeamIndex];
             
+            const safeCurrentName = getTeamName(currentTeam);
+            const safeTargetName = getTeamName(targetTeam);
+
             let actionDesc = "";
             if (reward.type === 'swap') {
-                actionDesc = `${currentTeam.name} and ${targetTeam.name} swapped scores!`;
+                actionDesc = `${safeCurrentName} and ${safeTargetName} swapped scores!`;
             } else if (state.decision === 'give') {
-                actionDesc = `${currentTeam.name} gave the box to ${targetTeam.name}!`;
+                actionDesc = `${safeCurrentName} gave the box to ${safeTargetName}!`;
             } else {
-                actionDesc = `${currentTeam.name} kept the box!`;
+                actionDesc = `${safeCurrentName} kept the box!`;
             }
 
             return `
@@ -674,7 +753,7 @@
                     <p class="text-sm sm:text-xl font-bold text-gray-500 mb-4 sm:mb-6 uppercase tracking-widest border-b-2 border-gray-100 pb-3 sm:pb-4">${actionDesc}</p>
                     
                     <div class="text-5xl sm:text-6xl md:text-8xl font-bold mb-6 sm:mb-10 ${reward.color} animate-float text-3d py-2 sm:py-4">
-                        ${reward.text}
+                        ${escapeHTML(reward.text)}
                     </div>
 
                     <button onclick="applyRewardAndNext()" class="btn-yellow text-lg sm:text-2xl px-4 sm:px-8 py-3 sm:py-5 rounded-xl w-full font-bold mt-2 sm:mt-4 shadow-[4px_4px_0px_0px_rgba(0,0,0,0.3)]">
@@ -685,20 +764,24 @@
         }
 
         function renderScoreboard() {
-            teamScoresEl.innerHTML = '';
+            // Optimized: We construct the full HTML string first to minimize DOM reflows
+            let scoreHtml = '';
+            
             state.teams.forEach((team, index) => {
                 const isActive = index === state.currentTeamIndex;
                 const activeClass = isActive ? 'scale-105 sm:scale-110 -translate-y-1 sm:-translate-y-2 ring-2 sm:ring-4 ring-yellow-400 z-10' : 'opacity-80 scale-95';
                 
-                teamScoresEl.innerHTML += `
+                scoreHtml += `
                     <div class="flex-1 min-w-[70px] sm:min-w-[90px] md:min-w-[120px] max-w-[160px] md:max-w-[200px] ${team.color} border-2 md:border-4 border-black rounded-lg p-1.5 sm:p-2 md:p-3 text-center transition-all duration-300 shadow-[2px_2px_0px_0px_rgba(0,0,0,0.5)] md:shadow-[4px_4px_0px_0px_rgba(0,0,0,0.5)] ${activeClass}">
-                        <div class="text-white font-bold text-xs sm:text-sm md:text-xl truncate text-3d-light">${team.name}</div>
+                        <div class="text-white font-bold text-xs sm:text-sm md:text-xl truncate text-3d-light">${getTeamName(team)}</div>
                         <div class="bg-white border md:border-2 border-black rounded mt-1 md:mt-2 py-0.5 sm:py-1 md:py-2 font-bold text-sm sm:text-lg md:text-3xl text-gray-800">
                             ${team.score}
                         </div>
                     </div>
                 `;
             });
+            
+            teamScoresEl.innerHTML = scoreHtml;
         }
 
         // Start Initial Render
