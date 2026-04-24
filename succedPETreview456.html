@@ -1,0 +1,548 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PET Vocabulary Advice Game</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        /* Custom styles for precise and responsive tile scaling */
+        #board-grid {
+            display: grid;
+            grid-template-columns: repeat(6, minmax(0, 1fr));
+            grid-template-rows: repeat(6, minmax(0, 1fr));
+            gap: 2px;
+            width: 100%;
+            height: 100%;
+        }
+        
+        @media (min-width: 768px) {
+            #board-grid {
+                gap: 4px;
+            }
+        }
+
+        .player-token {
+            /* Fluid sizing for tokens so they don't break on small screens */
+            width: clamp(12px, 2.5vw, 20px);
+            height: clamp(12px, 2.5vw, 20px);
+            border-radius: 50%;
+            color: white;
+            font-weight: bold;
+            font-size: clamp(7px, 1.2vw, 11px);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border: 2px solid rgba(255,255,255,0.8);
+            box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+            transition: all 0.3s ease;
+        }
+
+        /* Aspect ratio utility for the board container */
+        .aspect-square-board {
+            aspect-ratio: 1 / 1;
+            max-width: 100%;
+            max-height: 100%;
+        }
+
+        /* Highlight styles for the vocabulary words */
+        b {
+            background-color: #fef08a; /* Tailwind yellow-200 */
+            color: #713f12; /* Tailwind yellow-900 */
+            padding: 0.1em 0.3em;
+            border-radius: 0.2rem;
+            font-weight: 800;
+        }
+    </style>
+</head>
+<body class="min-h-screen w-screen overflow-x-hidden md:h-screen md:overflow-hidden bg-slate-100 text-slate-800 font-sans select-none flex flex-col">
+
+    <!-- SETUP VIEW -->
+    <div id="view-setup" class="min-h-screen md:min-h-0 md:h-full w-full flex items-center justify-center p-4">
+        <div class="max-w-4xl w-full bg-white rounded-2xl shadow-xl overflow-hidden flex flex-col md:flex-row h-auto md:h-[90%] md:max-h-[600px]">
+            <!-- Instructions Panel -->
+            <div class="bg-indigo-600 text-white p-6 md:p-10 md:w-2/5 flex flex-col justify-center">
+                <h1 class="text-2xl md:text-3xl font-black mb-4 flex items-center gap-2">
+                    <svg class="w-7 h-7 md:w-8 md:h-8 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                    PET Vocab Game
+                </h1>
+                <p class="text-indigo-100 mb-6 leading-relaxed text-sm">
+                    A board game to practice PET vocabulary. Roll the dice, read the sentence, and decide if the highlighted words are used CORRECTLY or INCORRECTLY before the timer runs out. Guess right to move!
+                </p>
+            </div>
+
+            <!-- Form Panel -->
+            <div class="p-6 md:p-10 md:w-3/5 flex flex-col">
+                <h2 class="text-xl md:text-2xl font-bold text-slate-800 mb-4 md:mb-6 shrink-0">Game Setup</h2>
+                
+                <div class="flex-1 overflow-y-auto mb-4 pr-2">
+                    <label class="block text-sm font-semibold text-slate-600 mb-3">
+                        Teams / Players (Clear to remove)
+                    </label>
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3" id="setup-team-inputs">
+                        <input type="text" id="t0" class="team-input w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none" value="Team Alpha" oninput="checkSetup()">
+                        <input type="text" id="t1" class="team-input w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none" value="Team Beta" oninput="checkSetup()">
+                        <input type="text" id="t2" class="team-input w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none" value="Team Gamma" oninput="checkSetup()">
+                        <input type="text" id="t3" class="team-input w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none" value="Team Delta" oninput="checkSetup()">
+                        <input type="text" id="t4" class="team-input w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none" placeholder="Team 5 (Optional)" oninput="checkSetup()">
+                        <input type="text" id="t5" class="team-input w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none" placeholder="Team 6 (Optional)" oninput="checkSetup()">
+                    </div>
+
+                    <label class="block text-sm font-semibold text-slate-600 mt-6 mb-2">
+                        Time per turn (Seconds)
+                    </label>
+                    <input type="number" id="timer-setting" min="10" max="300" value="60" class="w-full sm:w-1/2 px-4 py-2 border rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none">
+                </div>
+
+                <button id="start-btn" onclick="startGame()" class="shrink-0 w-full bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 disabled:from-slate-400 disabled:to-slate-400 text-white font-bold py-3 md:py-4 rounded-xl shadow-lg transition-all text-lg focus:outline-none">
+                    Start Game
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- PLAYING VIEW -->
+    <div id="view-playing" class="hidden min-h-screen md:min-h-0 md:h-full w-full p-2 md:p-4 flex flex-col md:flex-row gap-2 md:gap-4 box-border">
+        
+        <!-- Left: Board Grid -->
+        <div class="flex-[2] bg-white rounded-xl shadow border p-2 flex items-center justify-center min-w-0 relative min-h-[50vh] md:min-h-0">
+            <!-- Ensure this container always stays square and doesn't exceed bounds -->
+            <div class="w-full aspect-square-board max-w-[85vh] bg-indigo-950 rounded-lg p-1.5 md:p-3 relative flex items-center justify-center box-border mx-auto shadow-inner">
+                <div id="board-grid"></div>
+            </div>
+        </div>
+
+        <!-- Right: Controls & Info -->
+        <div class="w-full md:w-80 lg:w-96 shrink-0 flex flex-col gap-2 md:gap-3 md:h-full pb-4 md:pb-0 min-h-0">
+            
+            <!-- Current Turn & Dice/Prompt Box -->
+            <div class="bg-white rounded-xl shadow border p-3 flex flex-col items-center min-h-[260px] md:flex-[1.5]">
+                <div class="w-full flex justify-between items-center mb-2 shrink-0">
+                    <span class="text-[10px] lg:text-xs font-bold text-slate-400 uppercase tracking-wider">Current Turn</span>
+                    <span id="turn-badge" class="text-[10px] font-bold text-white px-2 py-0.5 rounded-full uppercase shadow-sm truncate max-w-[120px]"></span>
+                </div>
+                
+                <!-- Dice State -->
+                <div id="action-dice" class="flex-1 flex flex-col items-center justify-center w-full">
+                    <button id="dice-btn" onclick="rollDice()" class="w-20 h-20 bg-indigo-600 text-white rounded-2xl shadow-lg flex items-center justify-center text-4xl font-black hover:bg-indigo-700 hover:scale-105 active:scale-95 transition-all focus:outline-none">
+                        ?
+                    </button>
+                    <p class="text-[10px] text-slate-400 mt-3 font-medium uppercase tracking-wider">Click to roll!</p>
+                </div>
+
+                <!-- Prompt & Timer State -->
+                <div id="action-prompt" class="hidden flex-1 flex flex-col w-full h-full">
+                    <div class="bg-amber-50 rounded-lg p-3 text-sm lg:text-base font-medium text-slate-800 shadow-inner flex-1 border border-amber-200 flex items-center justify-center text-center relative overflow-y-auto min-h-0">
+                        <span class="absolute top-2 left-2 w-auto px-2 h-5 bg-amber-400 text-amber-900 rounded-full flex items-center justify-center text-[10px] font-bold shadow-sm shrink-0">Target Tile <span id="prompt-badge" class="ml-1"></span></span>
+                        <span id="prompt-text" class="pt-4 md:pt-0 leading-snug"></span>
+                    </div>
+                    
+                    <div class="mt-3 shrink-0 flex flex-col items-center w-full">
+                        <div id="timer-display" class="text-4xl font-black text-slate-800 tabular-nums leading-none mb-3 transition-colors duration-300">
+                            00:00
+                        </div>
+                        <div class="flex w-full gap-2">
+                            <button onclick="resolveTurn(true)" class="flex-1 bg-green-600 hover:bg-green-700 text-white font-bold py-2.5 rounded-lg transition-colors flex items-center justify-center gap-1.5 text-xs focus:outline-none shadow">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
+                                Correct Usage
+                            </button>
+                            <button onclick="resolveTurn(false)" class="flex-1 bg-red-500 hover:bg-red-600 text-white font-bold py-2.5 rounded-lg transition-colors flex items-center justify-center gap-1.5 text-xs focus:outline-none shadow">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+                                Incorrect Usage
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Scoreboard Box -->
+            <div class="bg-white rounded-xl shadow border p-3 flex flex-col min-h-[140px] md:flex-1 shrink-0">
+                <h3 class="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-2 shrink-0">Scoreboard</h3>
+                <div id="scoreboard" class="flex-1 overflow-y-auto flex flex-col gap-1 pr-1">
+                    <!-- Filled by JS -->
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- WIN VIEW -->
+    <div id="view-win" class="hidden h-full min-h-screen w-full flex items-center justify-center p-4 bg-slate-900">
+        <div class="bg-white p-8 md:p-12 rounded-2xl shadow-2xl text-center max-w-lg w-full">
+            <div class="text-6xl mb-6">🎉</div>
+            <h1 class="text-3xl md:text-4xl font-black text-slate-800 mb-2">Congratulations!</h1>
+            <p class="text-lg md:text-xl text-slate-600 mb-8">
+                <span id="winner-name" class="font-bold text-indigo-600"></span> has reached HOME and won the game!
+            </p>
+            <button onclick="resetGame()" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3 px-6 rounded-xl transition-all flex items-center justify-center gap-2 focus:outline-none">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path></svg>
+                Play Again
+            </button>
+        </div>
+    </div>
+
+    <script>
+        let BOARD_SPACES = []; // Will be populated dynamically on start
+        let drawDeck = []; // Holds unasked questions
+
+        // Balanced bank of 40 unique questions (20 Correct, 20 Incorrect)
+        const QUESTION_BANK = [
+            // 20 CORRECT USAGES
+            { text: "My car tends to <b>break down</b> on my way to work.", isCorrect: true },
+            { text: "I want to <b>graduate</b> with top marks, but I can't <b>concentrate</b>.", isCorrect: true },
+            { text: "I am currently <b>unemployed</b> and facing some serious <b>financial</b> problems.", isCorrect: true },
+            { text: "The hikers might <b>go off course</b> if they don't follow the map.", isCorrect: true },
+            { text: "She wants to enter a new <b>profession</b>, but lacks the <b>qualifications</b>.", isCorrect: true },
+            { text: "I <b>suspect</b> my neighbors are doing something <b>illegal</b> in their garden.", isCorrect: true },
+            { text: "I am <b>struggling</b> to learn Spanish and I just want to <b>give up</b>.", isCorrect: true },
+            { text: "I have a major <b>conflict</b> with my boss, and the mood is very <b>tense</b>.", isCorrect: true },
+            { text: "He is terrified of the upcoming medical <b>surgery</b>.", isCorrect: true },
+            { text: "The couple decided to adopt an <b>orphan</b> from the local shelter.", isCorrect: true },
+            { text: "I want to <b>escape</b> this boring routine and try something <b>unexpected</b>.", isCorrect: true },
+            { text: "The city centre is always too <b>crowded</b>, making my commute stressful.", isCorrect: true },
+            { text: "It's easy to <b>take things for granted</b> and forget to appreciate your family.", isCorrect: true },
+            { text: "I am <b>determined</b> to <b>solve</b> this complex math problem.", isCorrect: true },
+            { text: "Stealing a car is considered a serious <b>crime</b>.", isCorrect: true },
+            { text: "We need to <b>hire</b> a plumber because the pipe is leaking.", isCorrect: true },
+            { text: "I need to <b>make an informed decision</b> before buying a house.", isCorrect: true },
+            { text: "The animal <b>sanctuary</b> provides a safe home for injured wildlife.", isCorrect: true },
+            { text: "After graduating, he will <b>set off</b> on a journey across the <b>continent</b>.", isCorrect: true },
+            { text: "Reading the <b>chapter</b> will give you a good <b>clue</b> to solve the puzzle.", isCorrect: true },
+
+            // 20 INCORRECT USAGES
+            { text: "I feel very <b>predictable</b> after running the 10km marathon.", isCorrect: false },
+            { text: "We should <b>pollute</b> the river to keep the fish healthy and safe.", isCorrect: false },
+            { text: "A toaster is a very useful kitchen <b>property</b>.", isCorrect: false },
+            { text: "I want to donate old clothes to a local <b>surgery</b>.", isCorrect: false },
+            { text: "We need to increase <b>global warming</b> to stop the ice from melting.", isCorrect: false },
+            { text: "There is a severe water <b>shortage</b> due to the heavy and continuous rain.", isCorrect: false },
+            { text: "The horror movie was so <b>gripping</b> that I fell asleep halfway through.", isCorrect: false },
+            { text: "My parents <b>forbid</b> me from cleaning my room, so it's very messy.", isCorrect: false },
+            { text: "The ending of the book was entirely <b>predictable</b>; it completely surprised me!", isCorrect: false },
+            { text: "They bought a new <b>appliance</b>, but the roof of the house needs repairs.", isCorrect: false },
+            { text: "You should <b>rely</b> on a paper umbrella when there is a heavy storm.", isCorrect: false },
+            { text: "He failed the exam easily because he made a <b>huge effort</b>.", isCorrect: false },
+            { text: "I want to <b>complain</b> a good restaurant for my parents' <b>anniversary</b>.", isCorrect: false },
+            { text: "I want to be more <b>exhausted</b> when speaking in front of the public.", isCorrect: false },
+            { text: "He always <b>recommends</b> about his soup being too cold.", isCorrect: false },
+            { text: "She felt very <b>light-hearted</b> because she received a <b>heart-breaking</b> letter.", isCorrect: false },
+            { text: "The <b>region</b> is completely <b>untouched</b>, so it is always very noisy and busy.", isCorrect: false },
+            { text: "You should wear warm <b>clothing</b> because the weather is extremely hot.", isCorrect: false },
+            { text: "The <b>scientist</b> used a complex <b>diagram</b> to confuse his students on purpose.", isCorrect: false },
+            { text: "They decided to <b>split up</b> because they were deeply in love and happy.", isCorrect: false }
+        ];
+
+        const TEAM_COLORS = [
+            { bg: "bg-red-500", text: "text-red-500", border: "border-red-500" },
+            { bg: "bg-blue-500", text: "text-blue-500", border: "border-blue-500" },
+            { bg: "bg-green-500", text: "text-green-500", border: "border-green-500" },
+            { bg: "bg-yellow-500", text: "text-yellow-500", border: "border-yellow-500" },
+            { bg: "bg-purple-500", text: "text-purple-500", border: "border-purple-500" },
+            { bg: "bg-pink-500", text: "text-pink-500", border: "border-pink-500" },
+        ];
+
+        let state = {
+            view: 'setup', // setup, playing, win
+            teams: [],
+            timerSetting: 60,
+            currentPlayer: 0,
+            rolling: false,
+            showPrompt: false,
+            targetPosition: null, // Track where they are trying to move
+            timeLeft: 0,
+            timerInterval: null
+        };
+
+        const el = id => document.getElementById(id);
+
+        // --- UTILITIES ---
+        function shuffleArray(array) {
+            let currentIndex = array.length, randomIndex;
+            while (currentIndex !== 0) {
+                randomIndex = Math.floor(Math.random() * currentIndex);
+                currentIndex--;
+                [array[currentIndex], array[randomIndex]] = [array[randomIndex], array[currentIndex]];
+            }
+            return array;
+        }
+
+        function drawQuestion() {
+            if (drawDeck.length === 0) {
+                // Get texts currently visible on the board to avoid immediate duplicates
+                const onBoardTexts = BOARD_SPACES.map(space => space ? space.text : "");
+                let available = QUESTION_BANK.filter(q => !onBoardTexts.includes(q.text));
+                
+                // Fallback in case of unexpected empty state
+                if (available.length === 0) available = [...QUESTION_BANK];
+                drawDeck = shuffleArray(available);
+            }
+            return drawDeck.pop();
+        }
+
+        // --- INIT & SETUP ---
+        function init() {
+            checkSetup();
+        }
+
+        function checkSetup() {
+            const inputs = document.querySelectorAll('.team-input');
+            const hasValid = Array.from(inputs).some(inp => inp.value.trim() !== '');
+            el('start-btn').disabled = !hasValid;
+        }
+
+        function startGame() {
+            const inputs = document.querySelectorAll('.team-input');
+            const validTeams = Array.from(inputs).map(i => i.value.trim()).filter(v => v !== '');
+            
+            if (validTeams.length === 0) return;
+
+            state.teams = validTeams.map((name, i) => ({
+                id: i,
+                name: name,
+                position: 0,
+                colorIndex: i % TEAM_COLORS.length
+            }));
+
+            state.timerSetting = parseInt(el('timer-setting').value) || 60;
+            state.view = 'playing';
+            state.currentPlayer = 0;
+            state.showPrompt = false;
+            state.targetPosition = null;
+            
+            // Generate randomized board of 34 unique questions for this round
+            drawDeck = []; // Reset deck
+            BOARD_SPACES = [{ text: "START", isCorrect: null }];
+            
+            for (let i = 0; i < 34; i++) {
+                BOARD_SPACES.push(drawQuestion());
+            }
+            BOARD_SPACES.push({ text: "HOME", isCorrect: null });
+
+            renderView();
+            buildBoard();
+            renderTokens();
+            updateControls();
+        }
+
+        function resetGame() {
+            state.view = 'setup';
+            clearInterval(state.timerInterval);
+            renderView();
+        }
+
+        // --- RENDER VIEWS ---
+        function renderView() {
+            el('view-setup').classList.add('hidden');
+            el('view-playing').classList.add('hidden');
+            el('view-win').classList.add('hidden');
+            el(`view-${state.view}`).classList.remove('hidden');
+        }
+
+        // --- BOARD LOGIC ---
+        function getGridPos(index) {
+            const row = Math.floor(index / 6);
+            let col = index % 6;
+            if (row % 2 !== 0) col = 5 - col; // snake logic
+            return { r: row + 1, c: col + 1 };
+        }
+
+        function buildBoard() {
+            const boardEl = el('board-grid');
+            boardEl.innerHTML = '';
+
+            // Using 36 to perfectly fill the 6x6 grid
+            for (let i = 0; i < 36; i++) {
+                const isValid = i < BOARD_SPACES.length;
+                const isStart = i === 0;
+                const isHome = i === BOARD_SPACES.length - 1;
+                
+                const pos = getGridPos(i);
+                let bgClass = 'bg-transparent border-transparent';
+                
+                if (isValid) {
+                    bgClass = isStart ? 'bg-green-100 border-green-400' : isHome ? 'bg-purple-100 border-purple-400' : 'bg-slate-50 border-slate-200';
+                }
+
+                const tile = document.createElement('div');
+                tile.className = `border flex flex-col items-center justify-between p-1 md:p-1.5 relative overflow-hidden rounded shadow-sm ${bgClass}`;
+                tile.style.gridRow = pos.r;
+                tile.style.gridColumn = pos.c;
+
+                if (isValid) {
+                    // Flex column layout for tile guarantees text and tokens don't overlap wildly
+                    tile.innerHTML = `
+                        <div class="absolute inset-0 opacity-[0.15] pointer-events-none text-center flex items-center justify-center font-black text-xl sm:text-3xl lg:text-4xl text-slate-900 select-none">${isStart ? 'START' : isHome ? 'HOME' : i}</div>
+                        
+                        <div class="relative z-10 text-[6px] sm:text-[8px] lg:text-[10px] text-slate-800 text-center leading-[1.1] font-medium px-0.5 flex-1 flex items-center overflow-hidden w-full ${isStart || isHome ? 'hidden' : ''}">
+                            <span class="line-clamp-3 sm:line-clamp-4 w-full">${BOARD_SPACES[i].text}</span>
+                        </div>
+                        
+                        <div id="tile-tokens-${i}" class="relative w-full flex flex-wrap justify-center gap-0.5 sm:gap-1 z-20 pointer-events-none mt-auto shrink-0 min-h-[14px] sm:min-h-[20px]"></div>
+                    `;
+                }
+                boardEl.appendChild(tile);
+            }
+        }
+
+        function renderTokens() {
+            for (let i = 0; i < 36; i++) {
+                const container = el(`tile-tokens-${i}`);
+                if (container) container.innerHTML = '';
+            }
+            
+            state.teams.forEach(team => {
+                const container = el(`tile-tokens-${team.position}`);
+                if (container) {
+                    const t = document.createElement('div');
+                    t.className = `player-token ${TEAM_COLORS[team.colorIndex].bg}`;
+                    t.innerText = team.name.charAt(0).toUpperCase();
+                    t.title = team.name;
+                    container.appendChild(t);
+                }
+            });
+            renderScoreboard();
+        }
+
+        // --- CONTROLS LOGIC ---
+        function updateControls() {
+            const player = state.teams[state.currentPlayer];
+            
+            // Turn Badge
+            const badge = el('turn-badge');
+            badge.innerText = player.name;
+            badge.className = `text-[10px] font-bold text-white px-2 py-0.5 rounded-full uppercase shadow-sm truncate max-w-[120px] ${TEAM_COLORS[player.colorIndex].bg}`;
+
+            // Actions Area
+            if (state.showPrompt) {
+                el('action-dice').classList.add('hidden');
+                el('action-prompt').classList.remove('hidden');
+                el('prompt-badge').innerText = state.targetPosition;
+                // Using innerHTML here to render the <b> tags in the prompts correctly
+                el('prompt-text').innerHTML = `"${BOARD_SPACES[state.targetPosition].text}"`;
+                updateTimerDisplay();
+            } else {
+                el('action-dice').classList.remove('hidden');
+                el('action-prompt').classList.add('hidden');
+                el('dice-btn').innerText = state.rolling ? '...' : '?';
+            }
+        }
+
+        function renderScoreboard() {
+            const sb = el('scoreboard');
+            sb.innerHTML = '';
+            state.teams.forEach((team, idx) => {
+                const isCurrent = idx === state.currentPlayer;
+                const bg = isCurrent ? 'bg-slate-100 border-slate-300' : 'bg-white border-transparent hover:bg-slate-50';
+                sb.innerHTML += `
+                    <div class="flex justify-between items-center px-2 py-1.5 rounded-lg border text-xs transition-colors ${bg}">
+                        <div class="flex items-center gap-2 overflow-hidden">
+                            <div class="w-2.5 h-2.5 shrink-0 rounded-full ${TEAM_COLORS[team.colorIndex].bg}"></div>
+                            <span class="font-medium truncate ${isCurrent ? 'text-slate-900' : 'text-slate-600'}">${team.name}</span>
+                        </div>
+                        <span class="text-[10px] font-bold text-slate-400 bg-white shadow-sm border px-1.5 py-0.5 rounded shrink-0 ml-2">Tile ${team.position}</span>
+                    </div>
+                `;
+            });
+        }
+
+        // --- GAME ACTIONS ---
+        function rollDice() {
+            if (state.rolling || state.showPrompt) return;
+            state.rolling = true;
+            updateControls();
+            
+            // Fake animation delay
+            setTimeout(() => {
+                const roll = Math.floor(Math.random() * 6) + 1;
+                el('dice-btn').innerText = roll;
+                
+                setTimeout(() => {
+                    const player = state.teams[state.currentPlayer];
+                    let newPos = player.position + roll;
+                    const maxPos = BOARD_SPACES.length - 1;
+                    
+                    if (newPos >= maxPos) {
+                        newPos = maxPos;
+                    }
+                    
+                    state.targetPosition = newPos;
+                    state.rolling = false;
+                    
+                    // Show target prompt but don't move the player yet
+                    state.showPrompt = true;
+                    state.timeLeft = state.timerSetting;
+                    updateControls();
+                    startTimer(); // Auto start timer when prompt shows
+                }, 500);
+            }, 600);
+        }
+
+        function startTimer() {
+            clearInterval(state.timerInterval);
+            updateTimerDisplay();
+            state.timerInterval = setInterval(() => {
+                if (state.timeLeft > 0) {
+                    state.timeLeft--;
+                    updateTimerDisplay();
+                } else {
+                    clearInterval(state.timerInterval);
+                }
+            }, 1000);
+        }
+
+        function updateTimerDisplay() {
+            const min = Math.floor(state.timeLeft / 60);
+            const sec = String(state.timeLeft % 60).padStart(2, '0');
+            const display = el('timer-display');
+            display.innerText = `${min}:${sec}`;
+            
+            if (state.timeLeft <= 10 && state.timeLeft > 0) {
+                display.classList.add('text-red-500', 'animate-pulse');
+                display.classList.remove('text-slate-800');
+            } else {
+                display.classList.remove('text-red-500', 'animate-pulse');
+                display.classList.add('text-slate-800');
+            }
+        }
+
+        function resolveTurn(userGuess) {
+            clearInterval(state.timerInterval);
+            
+            const player = state.teams[state.currentPlayer];
+            const actualCorrect = BOARD_SPACES[state.targetPosition].isCorrect;
+            const currentPos = state.targetPosition; // Save to replace question
+            
+            if (userGuess === actualCorrect) {
+                // They answered correctly, update their position to the target
+                player.position = state.targetPosition;
+                
+                // Check if they won
+                if (player.position === BOARD_SPACES.length - 1) {
+                    renderTokens(); // Update board visuals before ending
+                    el('winner-name').innerText = player.name;
+                    state.view = 'win';
+                    renderView();
+                    return; // End function early
+                }
+            }
+            
+            // Replace the question on the tile so it doesn't repeat for the next player!
+            if (currentPos > 0 && currentPos < BOARD_SPACES.length - 1) {
+                BOARD_SPACES[currentPos] = drawQuestion();
+                buildBoard(); // Rebuild the HTML grid with the new question
+            }
+
+            renderTokens(); // Update visuals on the new grid
+            
+            // Reset state for the next turn
+            state.showPrompt = false;
+            state.targetPosition = null;
+            state.currentPlayer = (state.currentPlayer + 1) % state.teams.length;
+            updateControls();
+            renderScoreboard();
+        }
+
+        // Run
+        window.onload = init;
+    </script>
+</body>
+</html>

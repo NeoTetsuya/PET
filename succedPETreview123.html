@@ -1,0 +1,867 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Who Wants to Be a Millionaire - Team Edition</title>
+    <script src="https://unpkg.com/react@18/umd/react.production.min.js" crossorigin></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js" crossorigin></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;800&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Montserrat', sans-serif;
+            background-image: linear-gradient(rgba(2, 6, 23, 0.7), rgba(2, 6, 23, 0.9)), url('https://img-eshop.cdn.nintendo.net/i/8e49cfc9c08d4e47dba94a79e429aba0d81f2eba83935d529403bc258a1f4f5c.jpg?w=1000');
+            background-size: cover;
+            background-position: center;
+            background-attachment: fixed;
+            color: white;
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+        
+        .glass-panel {
+            background: rgba(15, 23, 42, 0.75);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(56, 189, 248, 0.4);
+            box-shadow: 0 4px 30px rgba(0, 0, 0, 0.6);
+        }
+
+        .question-box {
+            background: linear-gradient(to bottom, rgba(15, 23, 42, 0.9), rgba(30, 58, 138, 0.9));
+            border: 2px solid #38bdf8;
+            border-radius: 50px;
+            box-shadow: inset 0 0 20px rgba(56, 189, 248, 0.5), 0 0 15px rgba(0,0,0,0.5);
+            position: relative;
+        }
+
+        .question-box::before, .question-box::after {
+            content: '';
+            position: absolute;
+            top: 50%;
+            width: 40px;
+            height: 2px;
+            background: #38bdf8;
+            transform: translateY(-50%);
+        }
+        .question-box::before { left: -40px; }
+        .question-box::after { right: -40px; }
+
+        .answer-btn {
+            background: linear-gradient(to bottom, rgba(15, 23, 42, 0.9), rgba(30, 58, 138, 0.9));
+            border: 2px solid #38bdf8;
+            border-radius: 30px;
+            transition: all 0.2s;
+            position: relative;
+        }
+        
+        .answer-btn::before, .answer-btn::after {
+            content: '';
+            position: absolute;
+            top: 50%;
+            width: 30px;
+            height: 2px;
+            background: #38bdf8;
+            transform: translateY(-50%);
+        }
+        .answer-btn::before { left: -30px; }
+        .answer-btn::after { right: -30px; }
+
+        .answer-btn:hover:not(:disabled) {
+            background: linear-gradient(to bottom, #1e3a8a, #38bdf8);
+            cursor: pointer;
+            box-shadow: 0 0 15px rgba(56, 189, 248, 0.8);
+        }
+
+        .answer-selected {
+            background: linear-gradient(to bottom, #d97706, #fbbf24) !important;
+            border-color: #fcd34d !important;
+            color: black !important;
+        }
+
+        .answer-correct {
+            background: linear-gradient(to bottom, #166534, #22c55e) !important;
+            border-color: #86efac !important;
+            color: white !important;
+            animation: pulse-green 1s infinite;
+        }
+
+        .answer-wrong {
+            background: linear-gradient(to bottom, #7f1d1d, #ef4444) !important;
+            border-color: #fca5a5 !important;
+            color: white !important;
+        }
+
+        @keyframes pulse-green {
+            0% { box-shadow: 0 0 0 0 rgba(34, 197, 94, 0.7); }
+            70% { box-shadow: 0 0 0 15px rgba(34, 197, 94, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(34, 197, 94, 0); }
+        }
+
+        .active-team-glow {
+            animation: team-glow 2s infinite alternate;
+        }
+
+        @keyframes team-glow {
+            from { box-shadow: 0 0 5px #fcd34d, inset 0 0 5px #fcd34d; border-color: #fcd34d; }
+            to { box-shadow: 0 0 20px #f59e0b, inset 0 0 10px #f59e0b; border-color: #f59e0b; }
+        }
+
+        .lifeline-btn {
+            width: 60px;
+            height: 40px;
+            border-radius: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 900;
+            font-size: 1.1rem;
+            transition: all 0.2s;
+            border: 2px solid;
+        }
+        
+        .modal-overlay {
+            background: rgba(0, 0, 0, 0.85);
+            backdrop-filter: blur(5px);
+        }
+    </style>
+</head>
+<body>
+    <div id="root"></div>
+
+    <script type="text/babel">
+        const { useState, useEffect, useRef, useMemo } = React;
+
+        // --- SoundCloud Player Component ---
+        const SoundCloudPlayer = () => (
+            <div className="fixed -top-[2000px] opacity-0 pointer-events-none w-[1px] h-[1px] overflow-hidden">
+                <iframe 
+                    width="100%" 
+                    height="166" 
+                    scrolling="no" 
+                    frameBorder="0" 
+                    allow="autoplay" 
+                    src="https://w.soundcloud.com/player/?url=https%3A//api.soundcloud.com/tracks/soundcloud%253Atracks%253A21796059&color=%2300aabb&auto_play=true&hide_related=false&show_comments=true&show_user=true&show_reposts=false&show_teaser=true"
+                ></iframe>
+            </div>
+        );
+
+        // --- External Audio Setup ---
+        const sounds = {
+            correct: new Audio('https://raw.githubusercontent.com/NeoTetsuya/audio-files/main/correct.mp3'),
+            start: new Audio('https://raw.githubusercontent.com/NeoTetsuya/audio-files/main/start%20game.mp3'),
+            wrong: new Audio('https://raw.githubusercontent.com/NeoTetsuya/audio-files/main/wrong.mp3'),
+            thinking: new Audio('https://raw.githubusercontent.com/NeoTetsuya/audio-files/main/question.mp3')
+        };
+
+        sounds.thinking.loop = true;
+
+        const playSound = (type) => {
+            try {
+                if (type === 'correct' || type === 'wrong' || type === 'gameover') {
+                    sounds.thinking.pause();
+                }
+                
+                if (sounds[type] && type !== 'gameover') {
+                    if (type !== 'thinking') {
+                        sounds[type].currentTime = 0;
+                    }
+                    sounds[type].play().catch(() => {});
+                }
+            } catch (e) {
+                console.warn('Audio playback failed', e);
+            }
+        };
+
+        const stopSound = (type) => {
+            try {
+                if (sounds[type]) {
+                    sounds[type].pause();
+                }
+            } catch (e) {}
+        };
+
+        // --- Game Logic ---
+        const prizeMoney = [100, 500, 1000, 5000, 10000, 50000, 100000, 250000, 500000, 1000000];
+
+        // Extracted & Adapted Question Bank from PET Vocab Docs
+        const questionBank = [
+            // EASY (Levels 1-3)
+            { id: 1, text: "You can always trust Sarah; she tells the truth and is very ___.", options: ["honest", "frightening", "ancient", "sociable"], correctIndex: 0, difficulty: 1 },
+            { id: 2, text: "Next year, I want to travel ___ to learn about new cultures and see the world.", options: ["inside", "abroad", "beneath", "locally"], correctIndex: 1, difficulty: 1 },
+            { id: 3, text: "The train was completely full, and every ___ had a ticket.", options: ["driver", "passenger", "instructor", "assistant"], correctIndex: 1, difficulty: 1 },
+            { id: 4, text: "When we went to Paris, we spent the whole day ___ and taking photos of monuments.", options: ["sleeping", "sightseeing", "working", "cleaning"], correctIndex: 1, difficulty: 1 },
+            { id: 5, text: "The doctor told him to swallow this round ___ with a glass of water.", options: ["pill", "parcel", "straw", "sculpture"], correctIndex: 0, difficulty: 1 },
+            { id: 6, text: "My grandfather is 70 and has stopped working; he is now ___.", options: ["young", "retired", "hardworking", "studying"], correctIndex: 1, difficulty: 1 },
+            { id: 7, text: "They live in a small, beautiful ___ in the countryside.", options: ["skyscraper", "mall", "cottage", "subway"], correctIndex: 2, difficulty: 1 },
+            { id: 8, text: "After running the marathon, I felt completely ___.", options: ["exhausted", "happy", "angry", "hungry"], correctIndex: 0, difficulty: 1 },
+            { id: 9, text: "We visited the ruins of a(n) ___ temple that was built thousands of years ago.", options: ["new", "ancient", "small", "clean"], correctIndex: 1, difficulty: 1 },
+            { id: 10, text: "He was very happy with his new job because his monthly ___ was very high.", options: ["food", "salary", "clothing", "bed"], correctIndex: 1, difficulty: 1 },
+            { id: 11, text: "The horror movie we watched last night was very ___.", options: ["frightening", "honest", "sociable", "ancient"], correctIndex: 0, difficulty: 1 },
+            { id: 12, text: "We need to book our ___ before we travel so we have a place to stay.", options: ["accommodation", "furniture", "travel", "weather"], correctIndex: 0, difficulty: 1 },
+            { id: 13, text: "A dolphin is not a fish; it is actually a ___ that drinks milk from its mother.", options: ["bird", "reptile", "mammal", "insect"], correctIndex: 2, difficulty: 1 },
+            { id: 14, text: "Before you go climbing, make sure you have all the necessary ___ like ropes and clips.", options: ["party clothes", "equipment", "animal food", "school books"], correctIndex: 1, difficulty: 1 },
+            { id: 15, text: "If the soup is cold, you should ___ to the restaurant manager.", options: ["complain", "laugh", "run", "sing"], correctIndex: 0, difficulty: 1 },
+
+            // MEDIUM (Levels 4-7)
+            { id: 16, text: "I can't meet you at 3 PM because I have a(n) ___ with my dentist.", options: ["game", "appointment", "computer", "holiday"], correctIndex: 1, difficulty: 2 },
+            { id: 17, text: "After four years of hard studying, she finally got her university ___.", options: ["degree", "mountain", "car", "journey"], correctIndex: 0, difficulty: 2 },
+            { id: 18, text: "Before buying the book, I read a great ___ about it in the newspaper.", options: ["dance", "review", "tool", "jewellery"], correctIndex: 1, difficulty: 2 },
+            { id: 19, text: "He has been feeling very ___ and miserable since his dog ran away.", options: ["happy", "energetic", "depressed", "wealthy"], correctIndex: 2, difficulty: 2 },
+            { id: 20, text: "Scientists are working hard to find a(n) ___ for this terrible disease.", options: ["cure", "illness", "hospital", "office"], correctIndex: 0, difficulty: 2 },
+            { id: 21, text: "The postman delivered a large brown ___ wrapped in paper this morning.", options: ["letter", "coin", "parcel", "stamp"], correctIndex: 2, difficulty: 2 },
+            { id: 22, text: "The university professor gave a fascinating ___ on ancient history.", options: ["lecture", "concert", "match", "movie"], correctIndex: 0, difficulty: 2 },
+            { id: 23, text: "My sister loves meeting new people and going to parties; she is very ___.", options: ["sociable", "hateful", "shy", "angry"], correctIndex: 0, difficulty: 2 },
+            { id: 24, text: "She practiced her speech many times, so she felt very ___ before going on stage.", options: ["nervous", "confident", "confused", "forgetful"], correctIndex: 1, difficulty: 2 },
+            { id: 25, text: "Factories should not ___ the river with dirty water and chemicals.", options: ["clean", "pollute", "plant", "build"], correctIndex: 1, difficulty: 2 },
+            { id: 26, text: "The baby's ___ crying gave me a headache; it just wouldn't stop.", options: ["constant", "rare", "frequent", "never"], correctIndex: 0, difficulty: 2 },
+            { id: 27, text: "Staying in a five-star hotel with a private pool is a real ___.", options: ["cheapness", "luxury", "necessity", "brokenness"], correctIndex: 1, difficulty: 2 },
+            { id: 28, text: "We stopped the car to take amazing photos of the beautiful mountain ___.", options: ["scenery", "buildings", "cars", "people"], correctIndex: 0, difficulty: 2 },
+            { id: 29, text: "When the lights went out, the little boy was ___ of the dark.", options: ["annoyed", "brave", "terrified", "bored"], correctIndex: 2, difficulty: 2 },
+            { id: 30, text: "Drinking plenty of water is absolutely ___ for human survival.", options: ["useless", "essential", "optional", "dangerous"], correctIndex: 1, difficulty: 2 },
+
+            // HARD (Levels 8-10)
+            { id: 31, text: "I love most types of fruit, but I am ___ fond of strawberries.", options: ["generally", "particularly", "never", "sometimes"], correctIndex: 1, difficulty: 3 },
+            { id: 32, text: "With hard work and patience, you can ___ any difficult problem in your life.", options: ["create", "ignore", "overcome", "cry"], correctIndex: 2, difficulty: 3 },
+            { id: 33, text: "Her greatest ___ is to become a famous novelist and write bestsellers.", options: ["memory", "ambition", "fear", "sadness"], correctIndex: 1, difficulty: 3 },
+            { id: 34, text: "I tried to ___ him to come to the party, but he decided to stay home.", options: ["persuade", "force", "ignore", "insult"], correctIndex: 0, difficulty: 3 },
+            { id: 35, text: "My library card expires next month, so I need to ___ it soon.", options: ["destroy", "renew", "hide", "forget"], correctIndex: 1, difficulty: 3 },
+            { id: 36, text: "The view from the top of the snow-covered mountain was absolutely ___.", options: ["breathtaking", "boring", "ugly", "ordinary"], correctIndex: 0, difficulty: 3 },
+            { id: 37, text: "She was absolutely ___ when she found out she had won the first prize.", options: ["disappointed", "thrilled", "sleepy", "calm"], correctIndex: 1, difficulty: 3 },
+            { id: 38, text: "Be careful when getting off the train; mind the ___ between the train and the platform.", options: ["wall", "gap", "weight", "noise"], correctIndex: 1, difficulty: 3 },
+            { id: 39, text: "The massive fireworks show on New Year's Eve was truly ___.", options: ["spectacular", "forgotten", "ugly", "unimportant"], correctIndex: 0, difficulty: 3 },
+            { id: 40, text: "I really ___ my grandfather because he has achieved so much in his life.", options: ["dislike", "ignore", "admire", "anger"], correctIndex: 2, difficulty: 3 },
+            { id: 41, text: "Despite failing many times, his ___ to succeed kept him trying.", options: ["quitting", "determination", "failing", "resting"], correctIndex: 1, difficulty: 3 },
+            { id: 42, text: "The two sisters look exactly the same; they are ___ twins.", options: ["different", "similar", "identical", "opposite"], correctIndex: 2, difficulty: 3 },
+            { id: 43, text: "Even though they both speak English, the man from Scotland used a different ___.", options: ["instrument", "dialect", "dance", "cooking"], correctIndex: 1, difficulty: 3 },
+            { id: 44, text: "Every year, workers have to pay a percentage of their income as ___ to the government.", options: ["tax", "gift", "loan", "prize"], correctIndex: 0, difficulty: 3 },
+            { id: 45, text: "The factory workers went on strike because they wanted higher weekly ___.", options: ["rewards", "wages", "fines", "discounts"], correctIndex: 1, difficulty: 3 }
+        ];
+
+        function App() {
+            const [gameState, setGameState] = useState('setup'); // 'setup', 'playing', 'result'
+            
+            // Teams track their individual level (0 to 10)
+            const [teams, setTeams] = useState([
+                { id: 1, name: 'Team Alpha', score: 0, level: 0, lifelines: { fiftyFifty: true, phoneFriend: true, askAudience: true } },
+                { id: 2, name: 'Team Bravo', score: 0, level: 0, lifelines: { fiftyFifty: true, phoneFriend: true, askAudience: true } }
+            ]);
+            
+            // globalRound tracks game turns to ensure everyone gets equal 10 turns
+            const [globalRound, setGlobalRound] = useState(0); 
+            const [currentTeamTurn, setCurrentTeamTurn] = useState(0);
+            const [currentQuestion, setCurrentQuestion] = useState(null);
+            
+            // Interaction states
+            const [selectedAnswer, setSelectedAnswer] = useState(null);
+            const [isAnswerRevealed, setIsAnswerRevealed] = useState(false);
+            const [hiddenAnswers, setHiddenAnswers] = useState([]);
+            const [turnMessage, setTurnMessage] = useState("");
+
+            // Lifeline Active States
+            const [audienceResults, setAudienceResults] = useState(null);
+            const [phoneFriendAdvice, setPhoneFriendAdvice] = useState(null);
+
+            // Refs to prevent stale closures within timeouts
+            const globalRoundRef = useRef(0);
+            const teamTurnRef = useRef(0);
+            const usedQuestionsRef = useRef(new Set());
+            const teamsRef = useRef(teams);
+
+            // Sync teamsRef with state
+            useEffect(() => {
+                teamsRef.current = teams;
+            }, [teams]);
+
+            const addTeam = () => {
+                if (teams.length < 4) {
+                    setTeams([...teams, { id: Date.now(), name: `Team ${teams.length + 1}`, score: 0, level: 0, lifelines: { fiftyFifty: true, phoneFriend: true, askAudience: true } }]);
+                }
+            };
+
+            const removeTeam = (id) => {
+                if (teams.length > 2) {
+                    setTeams(teams.filter(t => t.id !== id));
+                }
+            };
+
+            const updateTeamName = (id, newName) => {
+                setTeams(teams.map(t => t.id === id ? { ...t, name: newName } : t));
+            };
+
+            const startGame = () => {
+                playSound('start');
+                setGameState('playing');
+                
+                // Reset state and refs
+                setGlobalRound(0);
+                globalRoundRef.current = 0;
+                
+                setCurrentTeamTurn(0);
+                teamTurnRef.current = 0;
+                
+                usedQuestionsRef.current = new Set();
+                
+                // Reset team levels and scores on restart
+                const resetTeams = teams.map(t => ({ ...t, score: 0, level: 0, lifelines: { fiftyFifty: true, phoneFriend: true, askAudience: true } }));
+                setTeams(resetTeams);
+                teamsRef.current = resetTeams;
+                
+                loadNextQuestion();
+            };
+
+            const loadNextQuestion = () => {
+                const activeTeam = teamsRef.current[teamTurnRef.current];
+                const teamLevel = activeTeam.level;
+                
+                let diff = 1;
+                if (teamLevel >= 3 && teamLevel <= 6) diff = 2;
+                if (teamLevel >= 7) diff = 3;
+
+                let available = questionBank.filter(q => q.difficulty === diff && !usedQuestionsRef.current.has(q.id));
+                
+                if (available.length === 0) {
+                    available = questionBank.filter(q => !usedQuestionsRef.current.has(q.id));
+                }
+                
+                if (available.length > 0) {
+                    const randomIndex = Math.floor(Math.random() * available.length);
+                    const selectedQ = available[randomIndex];
+                    setCurrentQuestion(selectedQ);
+                    usedQuestionsRef.current.add(selectedQ.id); // Immediately track the used question
+                } else {
+                    playSound('gameover');
+                    setGameState('result');
+                    return;
+                }
+
+                // Reset interaction states
+                setSelectedAnswer(null);
+                setIsAnswerRevealed(false);
+                setHiddenAnswers([]);
+                setTurnMessage("");
+                setAudienceResults(null);
+                setPhoneFriendAdvice(null);
+
+                // Play thinking sound
+                if (globalRoundRef.current === 0 && teamTurnRef.current === 0) {
+                    setTimeout(() => playSound('thinking'), 3000);
+                } else {
+                    playSound('thinking');
+                }
+            };
+
+            const handleAnswerClick = (index) => {
+                if (selectedAnswer !== null || isAnswerRevealed) return; 
+                
+                stopSound('thinking');
+                setSelectedAnswer(index);
+                
+                setTimeout(() => {
+                    setIsAnswerRevealed(true);
+                    
+                    const activeTeam = teamsRef.current[teamTurnRef.current];
+                    const isCorrect = index === currentQuestion.correctIndex;
+                    
+                    if (isCorrect) {
+                        playSound('correct');
+                        const wonAmount = prizeMoney[activeTeam.level]; // Value of current round's question
+                        const newLevel = activeTeam.level + 1;
+                        
+                        setTurnMessage(`Correct! ${activeTeam.name} reaches $${wonAmount.toLocaleString()}!`);
+                        
+                        setTeams(prev => prev.map((t, i) => 
+                            i === teamTurnRef.current ? { ...t, score: wonAmount, level: Math.min(newLevel, 10) } : t
+                        ));
+                    } else {
+                        playSound('wrong');
+                        setTurnMessage(`Incorrect! The right answer was ${currentQuestion.options[currentQuestion.correctIndex]}.`);
+                        // They stay at the same level if they get it wrong.
+                    }
+
+                    setTimeout(() => {
+                        advanceTurn();
+                    }, 3500);
+
+                }, 2000);
+            };
+
+            // ---- LIFELINE FUNCTIONS ----
+
+            const use5050 = () => {
+                const team = teams[currentTeamTurn];
+                if (!team.lifelines.fiftyFifty || selectedAnswer !== null) return;
+                
+                setTeams(prev => prev.map((t, i) => 
+                    i === currentTeamTurn ? { ...t, lifelines: { ...t.lifelines, fiftyFifty: false } } : t
+                ));
+
+                const incorrectIndices = [0, 1, 2, 3].filter(i => i !== currentQuestion.correctIndex);
+                incorrectIndices.sort(() => Math.random() - 0.5);
+                setHiddenAnswers([incorrectIndices[0], incorrectIndices[1]]);
+            };
+
+            const usePhoneFriend = () => {
+                const team = teams[currentTeamTurn];
+                if (!team.lifelines.phoneFriend || selectedAnswer !== null) return;
+                
+                setTeams(prev => prev.map((t, i) => 
+                    i === currentTeamTurn ? { ...t, lifelines: { ...t.lifelines, phoneFriend: false } } : t
+                ));
+
+                const correctLetter = ['A', 'B', 'C', 'D'][currentQuestion.correctIndex];
+                const availableWrongIndices = [0, 1, 2, 3].filter(i => i !== currentQuestion.correctIndex && !hiddenAnswers.includes(i));
+                const randomWrongIdx = availableWrongIndices[Math.floor(Math.random() * availableWrongIndices.length)];
+                const wrongLetter = ['A', 'B', 'C', 'D'][randomWrongIdx];
+                
+                const scenario = Math.random();
+                let advice = "";
+                
+                if (scenario > 0.7) {
+                    advice = `Hi there! I'm pretty sure the answer is ${correctLetter}. Go for it!`;
+                } else if (scenario > 0.4) {
+                    advice = `Hello! I've read about this recently. I'm almost positive it's ${wrongLetter}!`;
+                } else if (scenario > 0.15) {
+                    advice = `Oh wow, this is tough. I'm torn between ${correctLetter} and ${wrongLetter}. If I had to guess, maybe ${wrongLetter}?`;
+                } else {
+                    advice = `I honestly have no idea. Could it be ${wrongLetter}? You might be on your own here, sorry!`;
+                }
+
+                setPhoneFriendAdvice(advice);
+            };
+
+            const useAskAudience = () => {
+                const team = teams[currentTeamTurn];
+                if (!team.lifelines.askAudience || selectedAnswer !== null) return;
+
+                setTeams(prev => prev.map((t, i) => 
+                    i === currentTeamTurn ? { ...t, lifelines: { ...t.lifelines, askAudience: false } } : t
+                ));
+
+                let percentages = [0, 0, 0, 0];
+                let availableIndices = [0, 1, 2, 3].filter(i => !hiddenAnswers.includes(i));
+                
+                const isAudienceCorrect = Math.random() > 0.4; 
+                let favoredIndex;
+                
+                if (isAudienceCorrect) {
+                    favoredIndex = currentQuestion.correctIndex;
+                } else {
+                    const wrongOptions = availableIndices.filter(i => i !== currentQuestion.correctIndex);
+                    favoredIndex = wrongOptions[Math.floor(Math.random() * wrongOptions.length)];
+                }
+
+                let favoredPct = Math.floor(Math.random() * 21) + 35; 
+                if (availableIndices.length === 2) {
+                    favoredPct = Math.floor(Math.random() * 21) + 55; 
+                }
+                
+                percentages[favoredIndex] = favoredPct;
+                let remaining = 100 - favoredPct;
+                
+                let remainingIndices = availableIndices.filter(i => i !== favoredIndex);
+                
+                remainingIndices.forEach((idx, i) => {
+                    if (i === remainingIndices.length - 1) {
+                        percentages[idx] = remaining; 
+                    } else {
+                        let max = Math.min(remaining, favoredPct - 5);
+                        if (max < 0) max = remaining; 
+                        let p = Math.floor(Math.random() * (max + 1));
+                        percentages[idx] = p;
+                        remaining -= p;
+                    }
+                });
+
+                setAudienceResults(percentages);
+            };
+
+            // ---- END LIFELINES ----
+
+            const advanceTurn = () => {
+                let nextTeam = teamTurnRef.current + 1;
+                let nextGlobalRound = globalRoundRef.current;
+
+                if (nextTeam >= teamsRef.current.length) {
+                    nextTeam = 0;
+                    nextGlobalRound++;
+                }
+
+                if (nextGlobalRound >= prizeMoney.length) {
+                    playSound('gameover');
+                    setGameState('result');
+                } else {
+                    teamTurnRef.current = nextTeam;
+                    globalRoundRef.current = nextGlobalRound;
+                    
+                    setCurrentTeamTurn(nextTeam);
+                    setGlobalRound(nextGlobalRound);
+                    
+                    loadNextQuestion();
+                }
+            };
+
+            const formatMoney = (amount) => {
+                return "$" + amount.toLocaleString();
+            };
+
+            // --- RENDER MODALS ---
+            const renderModals = () => {
+                if (audienceResults) {
+                    return (
+                        <div className="absolute inset-0 z-50 flex items-center justify-center modal-overlay p-4">
+                            <div className="bg-slate-900 border border-blue-400 rounded-xl p-8 max-w-lg w-full text-center shadow-[0_0_30px_rgba(56,189,248,0.3)]">
+                                <h3 className="text-2xl font-black text-yellow-400 mb-6 uppercase">Audience Results</h3>
+                                <div className="flex items-end justify-center gap-4 h-48 mb-8">
+                                    {audienceResults.map((pct, idx) => (
+                                        <div key={idx} className="flex flex-col items-center flex-1 h-full">
+                                            <span className="mb-2 font-bold">{pct}%</span>
+                                            <div className="w-full flex-1 flex items-end">
+                                                <div 
+                                                    className={`w-full rounded-t-md transition-all duration-1000 ${idx === currentQuestion.correctIndex ? 'bg-green-500' : 'bg-blue-500'}`}
+                                                    style={{ height: `${pct}%`, minHeight: '5px' }}
+                                                ></div>
+                                            </div>
+                                            <span className="mt-2 font-black text-xl text-yellow-400">
+                                                {['A', 'B', 'C', 'D'][idx]}
+                                            </span>
+                                        </div>
+                                    ))}
+                                </div>
+                                <button 
+                                    onClick={() => setAudienceResults(null)}
+                                    className="px-8 py-3 bg-blue-900 hover:bg-blue-800 border border-blue-400 rounded-full font-bold transition-colors"
+                                >
+                                    Close & Resume
+                                </button>
+                            </div>
+                        </div>
+                    );
+                }
+
+                if (phoneFriendAdvice) {
+                    return (
+                        <div className="absolute inset-0 z-50 flex items-center justify-center modal-overlay p-4">
+                            <div className="bg-slate-900 border border-blue-400 rounded-xl p-8 max-w-lg w-full text-center shadow-[0_0_30px_rgba(56,189,248,0.3)]">
+                                <div className="text-5xl mb-4 animate-bounce">📞</div>
+                                <h3 className="text-2xl font-black text-yellow-400 mb-6 uppercase">Phone a Friend</h3>
+                                <div className="bg-slate-800 p-6 rounded-lg border border-slate-600 mb-8 relative">
+                                    <span className="absolute top-2 left-4 text-4xl text-slate-500 font-serif">"</span>
+                                    <p className="text-xl italic relative z-10 px-4">{phoneFriendAdvice}</p>
+                                    <span className="absolute bottom-[-10px] right-4 text-4xl text-slate-500 font-serif">"</span>
+                                </div>
+                                <button 
+                                    onClick={() => setPhoneFriendAdvice(null)}
+                                    className="px-8 py-3 bg-blue-900 hover:bg-blue-800 border border-blue-400 rounded-full font-bold transition-colors"
+                                >
+                                    Hang Up & Resume
+                                </button>
+                            </div>
+                        </div>
+                    );
+                }
+                return null;
+            };
+
+            // --- SCREENS ---
+
+            if (gameState === 'setup') {
+                return (
+                    <div className="flex flex-col items-center justify-center min-h-screen p-6">
+                        <div className="text-center mb-10 mt-8">
+                            <h1 className="text-5xl font-extrabold text-blue-400 mb-2 drop-shadow-lg uppercase tracking-wider">Who Wants to Be a</h1>
+                            <h2 className="text-7xl font-black text-yellow-400 drop-shadow-[0_0_15px_rgba(250,204,21,0.8)] uppercase">Millionaire</h2>
+                            <p className="text-xl mt-4 text-blue-200 tracking-widest">TEAM EDITION</p>
+                        </div>
+
+                        <div className="glass-panel p-8 rounded-2xl w-full max-w-2xl">
+                            <h3 className="text-2xl font-bold mb-6 text-center text-white">Setup Teams</h3>
+                            
+                            <div className="space-y-4 mb-8">
+                                {teams.map((team, index) => (
+                                    <div key={team.id} className="flex items-center gap-4">
+                                        <div className="bg-blue-900 text-yellow-400 font-bold px-4 py-3 rounded-lg border border-blue-500">
+                                            Team {index + 1}
+                                        </div>
+                                        <input 
+                                            type="text" 
+                                            value={team.name}
+                                            onChange={(e) => updateTeamName(team.id, e.target.value)}
+                                            className="flex-1 bg-slate-800 border border-slate-600 rounded-lg px-4 py-3 text-white focus:outline-none focus:border-blue-400"
+                                            placeholder="Enter team name..."
+                                        />
+                                        {teams.length > 2 && (
+                                            <button 
+                                                onClick={() => removeTeam(team.id)}
+                                                className="bg-red-900 hover:bg-red-700 text-white p-3 rounded-lg border border-red-500 transition-colors"
+                                            >
+                                                ✕
+                                            </button>
+                                        )}
+                                    </div>
+                                ))}
+                            </div>
+
+                            <div className="flex justify-between items-center">
+                                <button 
+                                    onClick={addTeam}
+                                    disabled={teams.length >= 4}
+                                    className={`px-6 py-3 rounded-lg font-bold border transition-colors ${teams.length >= 4 ? 'bg-slate-700 border-slate-600 text-slate-400 cursor-not-allowed' : 'bg-slate-800 border-blue-500 text-blue-400 hover:bg-blue-900'}`}
+                                >
+                                    + Add Team
+                                </button>
+
+                                <button 
+                                    onClick={startGame}
+                                    className="px-10 py-4 bg-gradient-to-r from-yellow-600 to-yellow-400 text-black font-extrabold rounded-full text-xl shadow-[0_0_20px_rgba(250,204,21,0.5)] hover:scale-105 transition-transform"
+                                >
+                                    START GAME
+                                </button>
+                            </div>
+                        </div>
+
+                        {/* Custom SoundCloud Theme Audio Mounts Here */}
+                        <SoundCloudPlayer />
+                    </div>
+                );
+            }
+
+            if (gameState === 'result') {
+                const sortedTeams = [...teams].sort((a, b) => b.score - a.score);
+                const winner = sortedTeams[0];
+
+                return (
+                    <div className="flex flex-col items-center justify-center min-h-screen p-6">
+                        <h1 className="text-6xl font-black text-yellow-400 mb-8 mt-8 drop-shadow-[0_0_15px_rgba(250,204,21,0.8)] uppercase">Game Over!</h1>
+                        
+                        <div className="glass-panel p-10 rounded-2xl w-full max-w-4xl flex flex-col items-center">
+                            <h2 className="text-4xl font-bold text-white mb-2">The Winners:</h2>
+                            <h3 className="text-5xl font-black text-blue-400 mb-8">{winner.name}</h3>
+                            <div className="text-3xl font-bold text-green-400 mb-12">Total Banked: {formatMoney(winner.score)}</div>
+
+                            <div className="w-full grid grid-cols-1 md:grid-cols-2 gap-6 mb-10">
+                                {sortedTeams.map((team, idx) => (
+                                    <div key={team.id} className={`p-6 rounded-xl border flex justify-between items-center ${idx === 0 ? 'bg-blue-900 border-yellow-400 shadow-[0_0_15px_rgba(250,204,21,0.4)]' : 'bg-slate-800 border-slate-600'}`}>
+                                        <div className="flex items-center gap-4">
+                                            <span className="text-2xl font-black text-slate-400">#{idx + 1}</span>
+                                            <span className="text-xl font-bold text-white">{team.name}</span>
+                                        </div>
+                                        <span className="text-xl font-bold text-green-400">{formatMoney(team.score)}</span>
+                                    </div>
+                                ))}
+                            </div>
+
+                            <button 
+                                onClick={() => setGameState('setup')}
+                                className="px-8 py-4 bg-slate-800 border border-blue-400 text-blue-400 font-bold rounded-full hover:bg-blue-900 transition-colors"
+                            >
+                                Play Again
+                            </button>
+                        </div>
+
+                        {/* Custom SoundCloud Theme Audio Mounts Here */}
+                        <SoundCloudPlayer />
+                    </div>
+                );
+            }
+
+            const activeTeam = teams[currentTeamTurn];
+            // Don't ask them to play for an index beyond the max length
+            const currentPrizeIndex = Math.min(activeTeam.level, prizeMoney.length - 1);
+            const currentPrize = prizeMoney[currentPrizeIndex];
+
+            return (
+                <div className="flex h-screen overflow-hidden p-4 gap-6 relative">
+                    {renderModals()}
+
+                    {/* Left Sidebar: Teams */}
+                    <div className="w-[22%] min-w-[250px] flex flex-col gap-4">
+                        <div className="glass-panel rounded-xl p-4 flex-1 overflow-y-auto">
+                            <h2 className="text-center text-xl font-black text-yellow-400 tracking-widest uppercase border-b border-slate-600 pb-3 mb-4">Teams</h2>
+                            <div className="space-y-4">
+                                {teams.map((team, idx) => {
+                                    const isActive = idx === currentTeamTurn;
+                                    return (
+                                        <div key={team.id} className={`p-4 rounded-xl border transition-all duration-300 ${isActive ? 'bg-blue-900 border-yellow-400 active-team-glow' : 'bg-slate-800/50 border-slate-700 opacity-70'}`}>
+                                            <div className="flex justify-between items-start mb-2">
+                                                <div className="font-bold text-lg">{team.name}</div>
+                                                {isActive && <div className="text-xs bg-yellow-500 text-black px-2 py-1 rounded font-bold uppercase animate-pulse">Playing</div>}
+                                            </div>
+                                            <div className="text-green-400 font-black text-xl mb-3">{formatMoney(team.score)}</div>
+                                            
+                                            {/* Lifeline Indicators */}
+                                            <div className="flex items-center gap-1 mt-2">
+                                                <span className={`text-[10px] px-2 py-1 rounded border font-bold ${team.lifelines.fiftyFifty ? 'bg-blue-800 border-blue-400 text-white' : 'bg-slate-800 border-slate-600 text-slate-500 line-through'}`}>
+                                                    50:50
+                                                </span>
+                                                <span className={`text-[10px] px-2 py-1 rounded border font-bold ${team.lifelines.phoneFriend ? 'bg-blue-800 border-blue-400 text-white' : 'bg-slate-800 border-slate-600 text-slate-500 line-through'}`}>
+                                                    📞 Call
+                                                </span>
+                                                <span className={`text-[10px] px-2 py-1 rounded border font-bold ${team.lifelines.askAudience ? 'bg-blue-800 border-blue-400 text-white' : 'bg-slate-800 border-slate-600 text-slate-500 line-through'}`}>
+                                                    👥 Ask
+                                                </span>
+                                            </div>
+                                        </div>
+                                    );
+                                })}
+                            </div>
+                        </div>
+
+                        {/* Lifeline Controls for active team */}
+                        <div className="glass-panel rounded-xl p-4 flex flex-col items-center justify-center">
+                            <h3 className="text-sm font-bold text-slate-400 uppercase mb-4 tracking-wider">Use Lifeline</h3>
+                            <div className="flex gap-4">
+                                <button 
+                                    onClick={use5050}
+                                    disabled={!activeTeam.lifelines.fiftyFifty || selectedAnswer !== null}
+                                    className={`lifeline-btn ${!activeTeam.lifelines.fiftyFifty || selectedAnswer !== null ? 'bg-slate-800 border-slate-600 text-slate-600 cursor-not-allowed' : 'bg-blue-900 border-blue-400 text-yellow-400 hover:bg-blue-800 hover:scale-110 shadow-[0_0_10px_rgba(56,189,248,0.5)]'}`}
+                                    title="50:50 - Remove 2 wrong answers"
+                                >
+                                    50:50
+                                </button>
+                                <button 
+                                    onClick={usePhoneFriend}
+                                    disabled={!activeTeam.lifelines.phoneFriend || selectedAnswer !== null}
+                                    className={`lifeline-btn ${!activeTeam.lifelines.phoneFriend || selectedAnswer !== null ? 'bg-slate-800 border-slate-600 text-slate-600 cursor-not-allowed' : 'bg-blue-900 border-blue-400 text-yellow-400 hover:bg-blue-800 hover:scale-110 shadow-[0_0_10px_rgba(56,189,248,0.5)]'}`}
+                                    title="Phone a Friend"
+                                >
+                                    📞
+                                </button>
+                                <button 
+                                    onClick={useAskAudience}
+                                    disabled={!activeTeam.lifelines.askAudience || selectedAnswer !== null}
+                                    className={`lifeline-btn ${!activeTeam.lifelines.askAudience || selectedAnswer !== null ? 'bg-slate-800 border-slate-600 text-slate-600 cursor-not-allowed' : 'bg-blue-900 border-blue-400 text-yellow-400 hover:bg-blue-800 hover:scale-110 shadow-[0_0_10px_rgba(56,189,248,0.5)]'}`}
+                                    title="Ask the Audience"
+                                >
+                                    👥
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* Center: Main Game Area */}
+                    <div className="flex-1 flex flex-col justify-center items-center relative px-2">
+                        {/* Status Message Overlay */}
+                        {turnMessage && (
+                            <div className="absolute top-10 left-0 right-0 text-center z-10 animate-bounce">
+                                <div className={`inline-block px-8 py-4 rounded-full border-2 font-black text-2xl shadow-2xl ${turnMessage.includes('Correct') ? 'bg-green-900 border-green-400 text-green-300' : 'bg-red-900 border-red-400 text-red-300'}`}>
+                                    {turnMessage}
+                                </div>
+                            </div>
+                        )}
+
+                        <div className="w-full text-center mb-8">
+                            <div className="text-yellow-400 font-bold tracking-widest uppercase mb-1">{activeTeam.name}'s Turn</div>
+                            <div className="text-3xl font-black text-green-400 drop-shadow-[0_0_10px_rgba(74,222,128,0.5)]">Playing for {formatMoney(currentPrize)}</div>
+                        </div>
+
+                        {/* Question Box */}
+                        <div className="w-full question-box px-8 py-8 mb-8 z-10 mx-4 max-w-4xl">
+                            <h2 className="text-xl md:text-2xl lg:text-3xl font-bold text-center leading-relaxed">
+                                {currentQuestion?.text}
+                            </h2>
+                        </div>
+
+                        {/* Answer Grid */}
+                        <div className="w-full max-w-4xl grid grid-cols-2 gap-x-8 gap-y-6 px-4">
+                            {currentQuestion?.options.map((option, index) => {
+                                const letters = ['A', 'B', 'C', 'D'];
+                                const isHidden = hiddenAnswers.includes(index);
+                                
+                                let stateClass = '';
+                                if (selectedAnswer === index && !isAnswerRevealed) {
+                                    stateClass = 'answer-selected';
+                                } else if (isAnswerRevealed) {
+                                    if (index === currentQuestion.correctIndex) {
+                                        stateClass = 'answer-correct';
+                                    } else if (selectedAnswer === index) {
+                                        stateClass = 'answer-wrong';
+                                    }
+                                }
+
+                                return (
+                                    <button
+                                        key={index}
+                                        onClick={() => handleAnswerClick(index)}
+                                        disabled={selectedAnswer !== null || isHidden}
+                                        className={`answer-btn w-full px-6 py-4 flex items-center text-left ${stateClass} ${isHidden ? 'opacity-0 cursor-default' : 'opacity-100'}`}
+                                    >
+                                        <span className="text-yellow-400 font-black text-xl mr-4 w-6">{letters[index]}:</span>
+                                        <span className="text-lg lg:text-xl font-semibold flex-1">{option}</span>
+                                    </button>
+                                );
+                            })}
+                        </div>
+                    </div>
+
+                    {/* Right Sidebar: Multi-Team Money Tree Race */}
+                    <div className="w-[30%] min-w-[300px] glass-panel rounded-xl p-4 flex flex-col">
+                        <h2 className="text-center text-xl font-black text-blue-400 tracking-widest uppercase border-b border-slate-600 pb-3 mb-4">Money Tree Race</h2>
+                        
+                        {/* Column Headers for Teams */}
+                        <div className="flex items-end mb-2 pr-2">
+                            <div className="w-[85px]"></div>
+                            <div className="flex-1 flex gap-1">
+                                {teams.map((t, i) => (
+                                    <div key={t.id} className={`flex-1 text-center font-bold text-[10px] md:text-xs truncate px-1 pb-1 border-b-2 ${i === currentTeamTurn ? 'text-yellow-400 border-yellow-400' : 'text-slate-400 border-slate-700'}`}>
+                                        {t.name.split(' ')[0]}
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+
+                        {/* Money Tree Rows */}
+                        <div className="flex-1 flex flex-col justify-end space-y-1">
+                            {[...prizeMoney].reverse().map((amount, idx) => {
+                                const levelIndex = prizeMoney.length - 1 - idx;
+                                
+                                return (
+                                    <div key={amount} className="flex items-center my-[2px] group">
+                                        {/* Amount Display */}
+                                        <div className="w-[85px] text-right font-bold text-slate-300 pr-3 tracking-wider text-xs md:text-sm">
+                                            {formatMoney(amount)}
+                                        </div>
+                                        
+                                        {/* Dynamic Team Markers */}
+                                        <div className="flex-1 flex gap-1 h-7 lg:h-8">
+                                            {teams.map((t, i) => {
+                                                const displayLevel = Math.min(t.level, 9);
+                                                const isCurrent = levelIndex === displayLevel;
+                                                const isPassed = levelIndex < displayLevel;
+                                                const isActiveTeam = i === currentTeamTurn;
+                                                
+                                                let bgClass = 'bg-slate-800/30 border-slate-700/50 border';
+                                                
+                                                if (isCurrent) {
+                                                    if (isActiveTeam) {
+                                                        bgClass = 'bg-yellow-400 border-yellow-200 shadow-[0_0_12px_rgba(250,204,21,0.8)] scale-110 z-10 border-2';
+                                                    } else {
+                                                        bgClass = 'bg-blue-600 border-blue-400 border shadow-inner opacity-90';
+                                                    }
+                                                } else if (isPassed) {
+                                                    bgClass = 'bg-green-600/30 border-green-500/30 border';
+                                                }
+
+                                                return (
+                                                    <div key={t.id} className={`flex-1 rounded flex items-center justify-center transition-all duration-300 ${bgClass}`}>
+                                                        {isCurrent && <span className={`text-[10px] md:text-xs font-black ${isActiveTeam ? 'text-black' : 'text-white'}`}>♦</span>}
+                                                        {isPassed && !isCurrent && <span className="text-green-400 text-[10px]">✓</span>}
+                                                    </div>
+                                                );
+                                            })}
+                                        </div>
+                                    </div>
+                                );
+                            })}
+                        </div>
+                    </div>
+                </div>
+            );
+        }
+
+        const root = ReactDOM.createRoot(document.getElementById('root'));
+        root.render(<App />);
+    </script>
+</body>
+</html>
