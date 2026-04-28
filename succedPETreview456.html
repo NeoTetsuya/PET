@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>PET Vocabulary Advice Game</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
     <style>
         /* Custom styles for precise and responsive tile scaling */
         #board-grid {
@@ -23,7 +24,6 @@
         }
 
         .player-token {
-            /* Fluid sizing for tokens so they don't break on small screens */
             width: clamp(12px, 2.5vw, 20px);
             height: clamp(12px, 2.5vw, 20px);
             border-radius: 50%;
@@ -33,68 +33,138 @@
             display: flex;
             align-items: center;
             justify-content: center;
-            border: 2px solid rgba(255,255,255,0.8);
-            box-shadow: 0 2px 4px rgba(0,0,0,0.2);
-            transition: all 0.3s ease;
+            border: 2px solid rgba(255,255,255,0.9);
+            box-shadow: 0 2px 4px rgba(0,0,0,0.3);
+            transition: transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275), opacity 0.3s ease;
         }
 
-        /* Aspect ratio utility for the board container */
         .aspect-square-board {
             aspect-ratio: 1 / 1;
             max-width: 100%;
             max-height: 100%;
         }
 
-        /* Highlight styles for the vocabulary words */
         b {
-            background-color: #fef08a; /* Tailwind yellow-200 */
-            color: #713f12; /* Tailwind yellow-900 */
+            background-color: #fef08a;
+            color: #713f12;
             padding: 0.1em 0.3em;
             border-radius: 0.2rem;
             font-weight: 800;
+            box-shadow: 0 1px 2px rgba(0,0,0,0.1);
+        }
+
+        /* Animations */
+        @keyframes shake {
+            0%, 100% { transform: rotate(0deg); }
+            25% { transform: rotate(-12deg) scale(1.1); }
+            75% { transform: rotate(12deg) scale(1.1); }
+        }
+        .animate-shake {
+            animation: shake 0.25s ease-in-out infinite;
+        }
+
+        .pulse-active {
+            animation: pulse-ring 1.5s cubic-bezier(0.215, 0.61, 0.355, 1) infinite;
+            z-index: 30;
+            transform: scale(1.15);
+        }
+
+        @keyframes pulse-ring {
+            0% { box-shadow: 0 0 0 0 rgba(255, 255, 255, 0.7); }
+            70% { box-shadow: 0 0 0 8px rgba(255, 255, 255, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(255, 255, 255, 0); }
+        }
+        
+        @keyframes popIn {
+            0% { opacity: 0; transform: scale(0.8); }
+            100% { opacity: 1; transform: scale(1); }
+        }
+        .tile-enter {
+            animation: popIn 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275) backwards;
+        }
+
+        .bg-pattern {
+            background-image: radial-gradient(#cbd5e1 1px, transparent 1px);
+            background-size: 20px 20px;
+        }
+
+        .scale-in { transform: scale(1) translateY(0); opacity: 1; }
+        .scale-out { transform: scale(0.5) translateY(20px); opacity: 0; }
+
+        /* Dice Dots Grid */
+        .dice-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            grid-template-rows: repeat(3, 1fr);
+            gap: 4px;
+            padding: 12px;
+            width: 100%;
+            height: 100%;
+        }
+        .dice-dot {
+            background-color: white;
+            border-radius: 50%;
+            width: 100%;
+            height: 100%;
+            box-shadow: inset 0 2px 4px rgba(0,0,0,0.2);
         }
     </style>
 </head>
-<body class="min-h-screen w-screen overflow-x-hidden md:h-screen md:overflow-hidden bg-slate-100 text-slate-800 font-sans select-none flex flex-col">
+<body class="min-h-screen w-screen overflow-x-hidden md:h-screen md:overflow-hidden bg-slate-100 bg-pattern text-slate-800 font-sans select-none flex flex-col relative">
+
+    <!-- GLOBAL CONTROLS (Mute Button) -->
+    <button id="mute-btn" onclick="toggleMute()" class="fixed top-4 right-4 z-50 bg-white border border-slate-200 text-slate-600 p-3 rounded-full shadow-lg hover:bg-slate-50 transition-all focus:outline-none hidden md:flex items-center justify-center group">
+        <svg id="icon-unmuted" class="w-5 h-5 group-hover:scale-110 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.536 8.464a5 5 0 010 7.072m2.828-9.9a9 9 0 010 12.728M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z"></path></svg>
+        <svg id="icon-muted" class="w-5 h-5 hidden" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15zM17 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2"></path></svg>
+    </button>
 
     <!-- SETUP VIEW -->
     <div id="view-setup" class="min-h-screen md:min-h-0 md:h-full w-full flex items-center justify-center p-4">
-        <div class="max-w-4xl w-full bg-white rounded-2xl shadow-xl overflow-hidden flex flex-col md:flex-row h-auto md:h-[90%] md:max-h-[600px]">
+        <div class="max-w-4xl w-full bg-white rounded-3xl shadow-2xl overflow-hidden flex flex-col md:flex-row h-auto md:h-[90%] md:max-h-[600px] border border-slate-200">
             <!-- Instructions Panel -->
-            <div class="bg-indigo-600 text-white p-6 md:p-10 md:w-2/5 flex flex-col justify-center">
-                <h1 class="text-2xl md:text-3xl font-black mb-4 flex items-center gap-2">
-                    <svg class="w-7 h-7 md:w-8 md:h-8 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+            <div class="bg-gradient-to-br from-indigo-600 to-indigo-900 text-white p-6 md:p-10 md:w-2/5 flex flex-col justify-center relative overflow-hidden">
+                <div class="absolute top-0 right-0 -mt-10 -mr-10 w-40 h-40 bg-white opacity-10 rounded-full blur-2xl"></div>
+                <div class="absolute bottom-0 left-0 -mb-10 -ml-10 w-40 h-40 bg-indigo-400 opacity-20 rounded-full blur-2xl"></div>
+                
+                <h1 class="text-3xl md:text-4xl font-black mb-4 flex flex-col gap-2 relative z-10">
+                    <span class="text-indigo-200 text-sm uppercase tracking-widest font-bold">Interactive</span>
                     PET Vocab Game
                 </h1>
-                <p class="text-indigo-100 mb-6 leading-relaxed text-sm">
-                    A board game to practice PET vocabulary. Roll the dice, read the sentence, and decide if the highlighted words are used CORRECTLY or INCORRECTLY before the timer runs out. Guess right to move!
+                <p class="text-indigo-50 mb-6 leading-relaxed text-sm relative z-10">
+                    Roll the dice, read the sentence, and decide if the highlighted words are used <span class="text-green-300 font-bold bg-green-900/30 px-1 rounded">CORRECTLY</span> or <span class="text-red-300 font-bold bg-red-900/30 px-1 rounded">INCORRECTLY</span> before the timer runs out.
                 </p>
+                <div class="bg-indigo-800/50 rounded-xl p-4 relative z-10 border border-indigo-500/30 shadow-inner">
+                    <p class="text-xs text-indigo-200 flex items-center gap-2">
+                        <svg class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.536 8.464a5 5 0 010 7.072m2.828-9.9a9 9 0 010 12.728M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z"></path></svg>
+                        Ensure your volume is turned up!
+                    </p>
+                </div>
             </div>
 
             <!-- Form Panel -->
-            <div class="p-6 md:p-10 md:w-3/5 flex flex-col">
+            <div class="p-6 md:p-10 md:w-3/5 flex flex-col bg-slate-50">
                 <h2 class="text-xl md:text-2xl font-bold text-slate-800 mb-4 md:mb-6 shrink-0">Game Setup</h2>
                 
                 <div class="flex-1 overflow-y-auto mb-4 pr-2">
-                    <label class="block text-sm font-semibold text-slate-600 mb-3">
-                        Teams / Players (Clear to remove)
+                    <label class="block text-sm font-bold text-slate-600 mb-3">
+                        Teams / Players <span class="text-slate-400 font-normal">(Clear to remove)</span>
                     </label>
                     <div class="grid grid-cols-1 sm:grid-cols-2 gap-3" id="setup-team-inputs">
-                        <input type="text" id="t0" class="team-input w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none" value="Team Alpha" oninput="checkSetup()">
-                        <input type="text" id="t1" class="team-input w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none" value="Team Beta" oninput="checkSetup()">
-                        <input type="text" id="t2" class="team-input w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none" value="Team Gamma" oninput="checkSetup()">
-                        <input type="text" id="t3" class="team-input w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none" value="Team Delta" oninput="checkSetup()">
-                        <input type="text" id="t4" class="team-input w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none" placeholder="Team 5 (Optional)" oninput="checkSetup()">
-                        <input type="text" id="t5" class="team-input w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none" placeholder="Team 6 (Optional)" oninput="checkSetup()">
+                        <input type="text" id="t0" class="team-input w-full px-4 py-2.5 border border-slate-300 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition-shadow bg-white shadow-sm" value="Team Alpha" oninput="checkSetup()">
+                        <input type="text" id="t1" class="team-input w-full px-4 py-2.5 border border-slate-300 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition-shadow bg-white shadow-sm" value="Team Beta" oninput="checkSetup()">
+                        <input type="text" id="t2" class="team-input w-full px-4 py-2.5 border border-slate-300 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition-shadow bg-white shadow-sm" value="" placeholder="Team 3 (Optional)" oninput="checkSetup()">
+                        <input type="text" id="t3" class="team-input w-full px-4 py-2.5 border border-slate-300 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition-shadow bg-white shadow-sm" value="" placeholder="Team 4 (Optional)" oninput="checkSetup()">
+                        <input type="text" id="t4" class="team-input w-full px-4 py-2.5 border border-slate-300 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition-shadow bg-white shadow-sm" placeholder="Team 5 (Optional)" oninput="checkSetup()">
+                        <input type="text" id="t5" class="team-input w-full px-4 py-2.5 border border-slate-300 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition-shadow bg-white shadow-sm" placeholder="Team 6 (Optional)" oninput="checkSetup()">
                     </div>
 
-                    <label class="block text-sm font-semibold text-slate-600 mt-6 mb-2">
+                    <label class="block text-sm font-bold text-slate-600 mt-6 mb-2">
                         Time per turn (Seconds)
                     </label>
-                    <input type="number" id="timer-setting" min="10" max="300" value="60" class="w-full sm:w-1/2 px-4 py-2 border rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none">
+                    <input type="number" id="timer-setting" min="10" max="300" value="60" class="w-full sm:w-1/2 px-4 py-2.5 border border-slate-300 rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none bg-white shadow-sm">
                 </div>
 
-                <button id="start-btn" onclick="startGame()" class="shrink-0 w-full bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 disabled:from-slate-400 disabled:to-slate-400 text-white font-bold py-3 md:py-4 rounded-xl shadow-lg transition-all text-lg focus:outline-none">
+                <button id="start-btn" onclick="startGame()" class="shrink-0 w-full bg-gradient-to-r from-indigo-600 to-indigo-700 hover:from-indigo-500 hover:to-indigo-600 disabled:from-slate-300 disabled:to-slate-400 disabled:text-slate-500 text-white font-bold py-3 md:py-4 rounded-xl shadow-[0_4px_14px_0_rgba(79,70,229,0.39)] hover:shadow-[0_6px_20px_rgba(79,70,229,0.23)] disabled:shadow-none transition-all text-lg focus:outline-none">
                     Start Game
                 </button>
             </div>
@@ -105,50 +175,60 @@
     <div id="view-playing" class="hidden min-h-screen md:min-h-0 md:h-full w-full p-2 md:p-4 flex flex-col md:flex-row gap-2 md:gap-4 box-border">
         
         <!-- Left: Board Grid -->
-        <div class="flex-[2] bg-white rounded-xl shadow border p-2 flex items-center justify-center min-w-0 relative min-h-[50vh] md:min-h-0">
-            <!-- Ensure this container always stays square and doesn't exceed bounds -->
-            <div class="w-full aspect-square-board max-w-[85vh] bg-indigo-950 rounded-lg p-1.5 md:p-3 relative flex items-center justify-center box-border mx-auto shadow-inner">
+        <div class="flex-[2] bg-white rounded-2xl shadow-xl border border-slate-200 p-2 flex items-center justify-center min-w-0 relative min-h-[50vh] md:min-h-0 overflow-hidden">
+            <div class="w-full aspect-square-board max-w-[85vh] bg-slate-800 rounded-xl p-1.5 md:p-3 relative flex items-center justify-center box-border mx-auto shadow-inner border-4 border-slate-700">
                 <div id="board-grid"></div>
             </div>
         </div>
 
         <!-- Right: Controls & Info -->
-        <div class="w-full md:w-80 lg:w-96 shrink-0 flex flex-col gap-2 md:gap-3 md:h-full pb-4 md:pb-0 min-h-0">
+        <div class="w-full md:w-80 lg:w-[400px] shrink-0 flex flex-col gap-2 md:gap-4 md:h-full pb-4 md:pb-0 min-h-0">
             
             <!-- Current Turn & Dice/Prompt Box -->
-            <div class="bg-white rounded-xl shadow border p-3 flex flex-col items-center min-h-[260px] md:flex-[1.5]">
-                <div class="w-full flex justify-between items-center mb-2 shrink-0">
-                    <span class="text-[10px] lg:text-xs font-bold text-slate-400 uppercase tracking-wider">Current Turn</span>
-                    <span id="turn-badge" class="text-[10px] font-bold text-white px-2 py-0.5 rounded-full uppercase shadow-sm truncate max-w-[120px]"></span>
+            <div class="bg-white rounded-2xl shadow-xl border border-slate-200 p-4 md:p-5 flex flex-col items-center min-h-[300px] md:flex-[1.5] relative overflow-hidden">
+                <div class="absolute top-0 left-0 w-full h-1.5 bg-slate-100" id="turn-progress-bar"></div>
+                
+                <div class="w-full flex justify-between items-center mb-4 shrink-0 mt-1">
+                    <span class="text-[10px] lg:text-xs font-black text-slate-400 uppercase tracking-widest">Current Turn</span>
+                    <span id="turn-badge" class="text-xs font-bold text-white px-3 py-1 rounded-full uppercase shadow-md truncate max-w-[150px] transition-colors duration-300"></span>
                 </div>
                 
                 <!-- Dice State -->
                 <div id="action-dice" class="flex-1 flex flex-col items-center justify-center w-full">
-                    <button id="dice-btn" onclick="rollDice()" class="w-20 h-20 bg-indigo-600 text-white rounded-2xl shadow-lg flex items-center justify-center text-4xl font-black hover:bg-indigo-700 hover:scale-105 active:scale-95 transition-all focus:outline-none">
-                        ?
+                    <button id="dice-btn" onclick="rollDice()" class="w-24 h-24 text-white rounded-3xl shadow-[0_10px_25px_rgba(0,0,0,0.2)] flex items-center justify-center text-5xl font-black hover:scale-105 active:scale-95 transition-all focus:outline-none border-2 border-white/30 bg-gradient-to-br">
+                        <!-- Dice dots injected here by JS -->
+                        <span class="opacity-80">?</span>
                     </button>
-                    <p class="text-[10px] text-slate-400 mt-3 font-medium uppercase tracking-wider">Click to roll!</p>
+                    <p class="text-[11px] text-slate-400 mt-5 font-bold uppercase tracking-widest bg-slate-100 px-4 py-1.5 rounded-full shadow-inner">Click to roll!</p>
                 </div>
 
                 <!-- Prompt & Timer State -->
                 <div id="action-prompt" class="hidden flex-1 flex flex-col w-full h-full">
-                    <div class="bg-amber-50 rounded-lg p-3 text-sm lg:text-base font-medium text-slate-800 shadow-inner flex-1 border border-amber-200 flex items-center justify-center text-center relative overflow-y-auto min-h-0">
-                        <span class="absolute top-2 left-2 w-auto px-2 h-5 bg-amber-400 text-amber-900 rounded-full flex items-center justify-center text-[10px] font-bold shadow-sm shrink-0">Target Tile <span id="prompt-badge" class="ml-1"></span></span>
-                        <span id="prompt-text" class="pt-4 md:pt-0 leading-snug"></span>
+                    <div class="bg-amber-50/80 rounded-xl p-4 text-sm lg:text-base font-medium text-slate-800 shadow-inner flex-1 border border-amber-200 flex items-center justify-center text-center relative overflow-y-auto min-h-0 backdrop-blur-sm">
+                        <span class="absolute top-2 left-2 w-auto px-2 h-5 bg-gradient-to-r from-amber-400 to-orange-400 text-white rounded-full flex items-center justify-center text-[10px] font-black shadow shrink-0">Tile <span id="prompt-badge" class="ml-1"></span></span>
+                        <span id="prompt-text" class="pt-5 md:pt-0 leading-relaxed text-lg"></span>
                     </div>
                     
-                    <div class="mt-3 shrink-0 flex flex-col items-center w-full">
-                        <div id="timer-display" class="text-4xl font-black text-slate-800 tabular-nums leading-none mb-3 transition-colors duration-300">
-                            00:00
+                    <div class="mt-4 shrink-0 flex flex-col items-center w-full">
+                        <!-- Timer display -->
+                        <div class="w-full flex flex-col items-center mb-4">
+                            <div id="timer-display" class="text-5xl font-black text-slate-800 tabular-nums leading-none mb-2 transition-colors duration-300 drop-shadow-sm">
+                                00:00
+                            </div>
+                            <!-- Visual Progress Bar -->
+                            <div class="w-3/4 h-2 bg-slate-200 rounded-full overflow-hidden shadow-inner">
+                                <div id="timer-bar" class="h-full bg-green-500 w-full transition-all duration-1000 ease-linear"></div>
+                            </div>
                         </div>
-                        <div class="flex w-full gap-2">
-                            <button onclick="resolveTurn(true)" class="flex-1 bg-green-600 hover:bg-green-700 text-white font-bold py-2.5 rounded-lg transition-colors flex items-center justify-center gap-1.5 text-xs focus:outline-none shadow">
-                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
-                                Correct Usage
+
+                        <div class="flex w-full gap-3">
+                            <button onclick="resolveTurn(true)" class="flex-1 bg-gradient-to-b from-green-500 to-green-600 hover:from-green-400 hover:to-green-500 text-white font-bold py-3 rounded-xl transition-all shadow-[0_4px_0_rgb(22,163,74)] hover:shadow-[0_2px_0_rgb(22,163,74)] hover:translate-y-[2px] active:shadow-none active:translate-y-[4px] flex flex-col items-center justify-center gap-0.5 text-sm focus:outline-none">
+                                <svg class="w-5 h-5 mb-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="3"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"></path></svg>
+                                Correct
                             </button>
-                            <button onclick="resolveTurn(false)" class="flex-1 bg-red-500 hover:bg-red-600 text-white font-bold py-2.5 rounded-lg transition-colors flex items-center justify-center gap-1.5 text-xs focus:outline-none shadow">
-                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
-                                Incorrect Usage
+                            <button onclick="resolveTurn(false)" class="flex-1 bg-gradient-to-b from-red-500 to-red-600 hover:from-red-400 hover:to-red-500 text-white font-bold py-3 rounded-xl transition-all shadow-[0_4px_0_rgb(220,38,38)] hover:shadow-[0_2px_0_rgb(220,38,38)] hover:translate-y-[2px] active:shadow-none active:translate-y-[4px] flex flex-col items-center justify-center gap-0.5 text-sm focus:outline-none">
+                                <svg class="w-5 h-5 mb-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="3"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"></path></svg>
+                                Incorrect
                             </button>
                         </div>
                     </div>
@@ -156,9 +236,14 @@
             </div>
 
             <!-- Scoreboard Box -->
-            <div class="bg-white rounded-xl shadow border p-3 flex flex-col min-h-[140px] md:flex-1 shrink-0">
-                <h3 class="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-2 shrink-0">Scoreboard</h3>
-                <div id="scoreboard" class="flex-1 overflow-y-auto flex flex-col gap-1 pr-1">
+            <div class="bg-white rounded-2xl shadow-xl border border-slate-200 p-4 flex flex-col min-h-[140px] md:flex-1 shrink-0">
+                <h3 class="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-3 shrink-0 flex items-center justify-between">
+                    Scoreboard
+                    <button onclick="toggleMute()" class="md:hidden text-slate-400 hover:text-slate-600 p-1 bg-slate-100 rounded">
+                        <svg class="w-4 h-4 mute-icon-mobile" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.536 8.464a5 5 0 010 7.072m2.828-9.9a9 9 0 010 12.728M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z"></path></svg>
+                    </button>
+                </h3>
+                <div id="scoreboard" class="flex-1 overflow-y-auto flex flex-col gap-2 pr-1">
                     <!-- Filled by JS -->
                 </div>
             </div>
@@ -166,27 +251,113 @@
     </div>
 
     <!-- WIN VIEW -->
-    <div id="view-win" class="hidden h-full min-h-screen w-full flex items-center justify-center p-4 bg-slate-900">
-        <div class="bg-white p-8 md:p-12 rounded-2xl shadow-2xl text-center max-w-lg w-full">
-            <div class="text-6xl mb-6">🎉</div>
-            <h1 class="text-3xl md:text-4xl font-black text-slate-800 mb-2">Congratulations!</h1>
-            <p class="text-lg md:text-xl text-slate-600 mb-8">
-                <span id="winner-name" class="font-bold text-indigo-600"></span> has reached HOME and won the game!
+    <div id="view-win" class="hidden fixed inset-0 z-[100] w-full h-full flex items-center justify-center p-4 bg-slate-900/95 backdrop-blur-md">
+        <div class="bg-white p-8 md:p-12 rounded-3xl shadow-[0_0_80px_rgba(79,70,229,0.5)] text-center max-w-lg w-full relative overflow-hidden transform transition-all">
+            <div class="absolute top-0 left-0 w-full h-3 bg-gradient-to-r from-yellow-400 via-yellow-200 to-yellow-400"></div>
+            <div class="text-7xl mb-6 animate-bounce drop-shadow-xl">🏆</div>
+            <h1 class="text-4xl md:text-5xl font-black text-slate-800 mb-2">Victory!</h1>
+            <p class="text-lg md:text-xl text-slate-600 mb-8 mt-4 leading-relaxed">
+                <span id="winner-name" class="font-black text-indigo-600 text-3xl block mt-2 drop-shadow-sm"></span><br>has reached HOME!
             </p>
-            <button onclick="resetGame()" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3 px-6 rounded-xl transition-all flex items-center justify-center gap-2 focus:outline-none">
-                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path></svg>
+            <button onclick="resetGame()" class="w-full bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 text-white font-bold py-4 px-6 rounded-2xl shadow-lg hover:shadow-xl transition-all flex items-center justify-center gap-2 focus:outline-none text-lg border border-indigo-400">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path></svg>
                 Play Again
             </button>
         </div>
     </div>
 
-    <script>
-        let BOARD_SPACES = []; // Will be populated dynamically on start
-        let drawDeck = []; // Holds unasked questions
+    <!-- OVERLAY FOR FEEDBACK (Correct/Incorrect) -->
+    <div id="feedback-overlay" class="fixed inset-0 z-50 flex items-center justify-center hidden bg-slate-900/80 backdrop-blur-sm transition-opacity duration-300 opacity-0 pointer-events-none">
+        <div id="feedback-content" class="scale-out transition-all duration-500 ease-out flex flex-col items-center p-10 rounded-3xl">
+            <div id="feedback-icon" class="text-9xl drop-shadow-2xl mb-6"></div>
+            <h2 id="feedback-text" class="text-5xl md:text-7xl font-black text-white drop-shadow-[0_4px_4px_rgba(0,0,0,0.5)] text-center tracking-tight"></h2>
+        </div>
+    </div>
 
-        // Balanced bank of 40 unique questions (20 Correct, 20 Incorrect)
+    <script>
+        // --- AUDIO SYSTEM (Web Audio API for zero dependencies) ---
+        let audioCtx;
+        let isMuted = false;
+        
+        function initAudio() {
+            if (!audioCtx) {
+                audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+            }
+            if (audioCtx.state === 'suspended') {
+                audioCtx.resume();
+            }
+            // Show mute button globally once playing
+            document.getElementById('mute-btn').classList.remove('hidden');
+        }
+
+        function toggleMute() {
+            isMuted = !isMuted;
+            
+            // Update desktop icons
+            document.getElementById('icon-unmuted').classList.toggle('hidden', isMuted);
+            document.getElementById('icon-muted').classList.toggle('hidden', !isMuted);
+            
+            // Update mobile icon logic
+            const mobileIcons = document.querySelectorAll('.mute-icon-mobile');
+            mobileIcons.forEach(icon => {
+                if(isMuted) {
+                    icon.innerHTML = '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15zM17 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2"></path>';
+                } else {
+                    icon.innerHTML = '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.536 8.464a5 5 0 010 7.072m2.828-9.9a9 9 0 010 12.728M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z"></path>';
+                }
+            });
+        }
+
+        function playTone(freq, type, duration, vol=0.1, delay=0) {
+            if(!audioCtx || isMuted) return;
+            const osc = audioCtx.createOscillator();
+            const gain = audioCtx.createGain();
+            osc.type = type;
+            osc.frequency.setValueAtTime(freq, audioCtx.currentTime + delay);
+            
+            gain.gain.setValueAtTime(0, audioCtx.currentTime + delay);
+            gain.gain.linearRampToValueAtTime(vol, audioCtx.currentTime + delay + 0.02);
+            gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + delay + duration);
+            
+            osc.connect(gain);
+            gain.connect(audioCtx.destination);
+            osc.start(audioCtx.currentTime + delay);
+            osc.stop(audioCtx.currentTime + delay + duration);
+        }
+
+        const sfx = {
+            roll: () => {
+                for(let i=0; i<5; i++) {
+                    playTone(300 + Math.random()*200, 'square', 0.05, 0.02, i*0.08);
+                }
+            },
+            correct: () => {
+                playTone(523.25, 'sine', 0.15, 0.1, 0);
+                playTone(659.25, 'sine', 0.15, 0.1, 0.1);
+                playTone(783.99, 'sine', 0.2, 0.1, 0.2);
+                playTone(1046.50, 'sine', 0.4, 0.1, 0.3);
+            },
+            incorrect: () => {
+                playTone(250, 'sawtooth', 0.2, 0.08, 0);
+                playTone(200, 'sawtooth', 0.4, 0.1, 0.15);
+            },
+            win: () => {
+                [523.25, 523.25, 523.25, 659.25, 783.99, 1046.50].forEach((f, i) => {
+                    const delay = i < 3 ? i * 0.15 : 0.45 + (i-3)*0.25;
+                    playTone(f, 'square', 0.2, 0.05, delay);
+                });
+                playTone(1046.50, 'square', 0.8, 0.08, 1.2);
+            },
+            move: () => playTone(300, 'sine', 0.1, 0.05),
+            tick: () => playTone(800, 'square', 0.05, 0.03)
+        };
+
+        // --- GAME STATE ---
+        let BOARD_SPACES = []; 
+        let drawDeck = []; 
+
         const QUESTION_BANK = [
-            // 20 CORRECT USAGES
+            // CORRECT USAGES
             { text: "My car tends to <b>break down</b> on my way to work.", isCorrect: true },
             { text: "I want to <b>graduate</b> with top marks, but I can't <b>concentrate</b>.", isCorrect: true },
             { text: "I am currently <b>unemployed</b> and facing some serious <b>financial</b> problems.", isCorrect: true },
@@ -208,7 +379,7 @@
             { text: "After graduating, he will <b>set off</b> on a journey across the <b>continent</b>.", isCorrect: true },
             { text: "Reading the <b>chapter</b> will give you a good <b>clue</b> to solve the puzzle.", isCorrect: true },
 
-            // 20 INCORRECT USAGES
+            // INCORRECT USAGES
             { text: "I feel very <b>predictable</b> after running the 10km marathon.", isCorrect: false },
             { text: "We should <b>pollute</b> the river to keep the fish healthy and safe.", isCorrect: false },
             { text: "A toaster is a very useful kitchen <b>property</b>.", isCorrect: false },
@@ -232,24 +403,25 @@
         ];
 
         const TEAM_COLORS = [
-            { bg: "bg-red-500", text: "text-red-500", border: "border-red-500" },
-            { bg: "bg-blue-500", text: "text-blue-500", border: "border-blue-500" },
-            { bg: "bg-green-500", text: "text-green-500", border: "border-green-500" },
-            { bg: "bg-yellow-500", text: "text-yellow-500", border: "border-yellow-500" },
-            { bg: "bg-purple-500", text: "text-purple-500", border: "border-purple-500" },
-            { bg: "bg-pink-500", text: "text-pink-500", border: "border-pink-500" },
+            { bg: "bg-red-500", grad: "from-red-500 to-red-600", border: "border-red-500" },
+            { bg: "bg-blue-500", grad: "from-blue-500 to-blue-600", border: "border-blue-500" },
+            { bg: "bg-green-500", grad: "from-green-500 to-green-600", border: "border-green-500" },
+            { bg: "bg-amber-500", grad: "from-amber-400 to-amber-500", border: "border-amber-500" },
+            { bg: "bg-purple-500", grad: "from-purple-500 to-purple-600", border: "border-purple-500" },
+            { bg: "bg-pink-500", grad: "from-pink-500 to-pink-600", border: "border-pink-500" },
         ];
 
         let state = {
-            view: 'setup', // setup, playing, win
+            view: 'setup',
             teams: [],
             timerSetting: 60,
             currentPlayer: 0,
             rolling: false,
             showPrompt: false,
-            targetPosition: null, // Track where they are trying to move
+            targetPosition: null,
             timeLeft: 0,
-            timerInterval: null
+            timerInterval: null,
+            isResolving: false
         };
 
         const el = id => document.getElementById(id);
@@ -267,11 +439,8 @@
 
         function drawQuestion() {
             if (drawDeck.length === 0) {
-                // Get texts currently visible on the board to avoid immediate duplicates
                 const onBoardTexts = BOARD_SPACES.map(space => space ? space.text : "");
                 let available = QUESTION_BANK.filter(q => !onBoardTexts.includes(q.text));
-                
-                // Fallback in case of unexpected empty state
                 if (available.length === 0) available = [...QUESTION_BANK];
                 drawDeck = shuffleArray(available);
             }
@@ -290,6 +459,8 @@
         }
 
         function startGame() {
+            initAudio(); 
+            
             const inputs = document.querySelectorAll('.team-input');
             const validTeams = Array.from(inputs).map(i => i.value.trim()).filter(v => v !== '');
             
@@ -307,11 +478,10 @@
             state.currentPlayer = 0;
             state.showPrompt = false;
             state.targetPosition = null;
+            state.isResolving = false;
             
-            // Generate randomized board of 34 unique questions for this round
-            drawDeck = []; // Reset deck
+            drawDeck = []; 
             BOARD_SPACES = [{ text: "START", isCorrect: null }];
-            
             for (let i = 0; i < 34; i++) {
                 BOARD_SPACES.push(drawQuestion());
             }
@@ -321,15 +491,17 @@
             buildBoard();
             renderTokens();
             updateControls();
+            
+            sfx.move(); 
         }
 
         function resetGame() {
             state.view = 'setup';
             clearInterval(state.timerInterval);
+            document.getElementById('mute-btn').classList.add('hidden');
             renderView();
         }
 
-        // --- RENDER VIEWS ---
         function renderView() {
             el('view-setup').classList.add('hidden');
             el('view-playing').classList.add('hidden');
@@ -349,7 +521,6 @@
             const boardEl = el('board-grid');
             boardEl.innerHTML = '';
 
-            // Using 36 to perfectly fill the 6x6 grid
             for (let i = 0; i < 36; i++) {
                 const isValid = i < BOARD_SPACES.length;
                 const isStart = i === 0;
@@ -359,24 +530,29 @@
                 let bgClass = 'bg-transparent border-transparent';
                 
                 if (isValid) {
-                    bgClass = isStart ? 'bg-green-100 border-green-400' : isHome ? 'bg-purple-100 border-purple-400' : 'bg-slate-50 border-slate-200';
+                    bgClass = isStart ? 'bg-emerald-100 border-emerald-400 tile-enter' : 
+                              isHome ? 'bg-amber-100 border-amber-400 shadow-[inset_0_0_15px_rgba(251,191,36,0.5)] tile-enter' : 
+                              'bg-slate-50 border-slate-300 tile-enter';
                 }
 
                 const tile = document.createElement('div');
-                tile.className = `border flex flex-col items-center justify-between p-1 md:p-1.5 relative overflow-hidden rounded shadow-sm ${bgClass}`;
+                // Stagger animations based on index
+                const delay = i * 0.015; 
+                tile.className = `border flex flex-col items-center justify-between p-1 md:p-1.5 relative overflow-hidden rounded shadow-sm transition-colors ${bgClass}`;
                 tile.style.gridRow = pos.r;
                 tile.style.gridColumn = pos.c;
+                tile.style.animationDelay = `${delay}s`;
+                tile.id = `tile-${i}`;
 
                 if (isValid) {
-                    // Flex column layout for tile guarantees text and tokens don't overlap wildly
                     tile.innerHTML = `
-                        <div class="absolute inset-0 opacity-[0.15] pointer-events-none text-center flex items-center justify-center font-black text-xl sm:text-3xl lg:text-4xl text-slate-900 select-none">${isStart ? 'START' : isHome ? 'HOME' : i}</div>
+                        <div class="absolute inset-0 opacity-[0.10] pointer-events-none text-center flex items-center justify-center font-black text-2xl sm:text-4xl lg:text-5xl text-slate-900 select-none">${isStart ? 'START' : isHome ? 'HOME' : i}</div>
                         
-                        <div class="relative z-10 text-[6px] sm:text-[8px] lg:text-[10px] text-slate-800 text-center leading-[1.1] font-medium px-0.5 flex-1 flex items-center overflow-hidden w-full ${isStart || isHome ? 'hidden' : ''}">
+                        <div class="relative z-10 text-[6.5px] sm:text-[8px] lg:text-[10px] text-slate-800 text-center leading-[1.2] font-medium px-0.5 flex-1 flex items-center overflow-hidden w-full ${isStart || isHome ? 'hidden' : ''}">
                             <span class="line-clamp-3 sm:line-clamp-4 w-full">${BOARD_SPACES[i].text}</span>
                         </div>
                         
-                        <div id="tile-tokens-${i}" class="relative w-full flex flex-wrap justify-center gap-0.5 sm:gap-1 z-20 pointer-events-none mt-auto shrink-0 min-h-[14px] sm:min-h-[20px]"></div>
+                        <div id="tile-tokens-${i}" class="relative w-full flex flex-wrap justify-center gap-0.5 sm:gap-1 z-20 pointer-events-none mt-auto shrink-0 min-h-[14px] sm:min-h-[20px] pb-0.5"></div>
                     `;
                 }
                 boardEl.appendChild(tile);
@@ -389,11 +565,13 @@
                 if (container) container.innerHTML = '';
             }
             
-            state.teams.forEach(team => {
+            state.teams.forEach((team, idx) => {
                 const container = el(`tile-tokens-${team.position}`);
                 if (container) {
                     const t = document.createElement('div');
-                    t.className = `player-token ${TEAM_COLORS[team.colorIndex].bg}`;
+                    const isCurrent = idx === state.currentPlayer && !state.isResolving;
+                    const pulseClass = isCurrent ? 'pulse-active' : '';
+                    t.className = `player-token ${TEAM_COLORS[team.colorIndex].bg} ${pulseClass}`;
                     t.innerText = team.name.charAt(0).toUpperCase();
                     t.title = team.name;
                     container.appendChild(t);
@@ -402,27 +580,69 @@
             renderScoreboard();
         }
 
+        // Generate dots for dice visually
+        function getDiceFaceHTML(number) {
+            const dots = {
+                1: [4],
+                2: [0, 8],
+                3: [0, 4, 8],
+                4: [0, 2, 6, 8],
+                5: [0, 2, 4, 6, 8],
+                6: [0, 2, 3, 5, 6, 8]
+            }[number] || [];
+
+            let html = '<div class="dice-grid">';
+            for(let i=0; i<9; i++) {
+                if(dots.includes(i)) {
+                    html += '<div class="dice-dot"></div>';
+                } else {
+                    html += '<div></div>';
+                }
+            }
+            html += '</div>';
+            return html;
+        }
+
         // --- CONTROLS LOGIC ---
         function updateControls() {
             const player = state.teams[state.currentPlayer];
+            const pColor = TEAM_COLORS[player.colorIndex];
             
-            // Turn Badge
+            // Turn Badge & Progress Bar
             const badge = el('turn-badge');
             badge.innerText = player.name;
-            badge.className = `text-[10px] font-bold text-white px-2 py-0.5 rounded-full uppercase shadow-sm truncate max-w-[120px] ${TEAM_COLORS[player.colorIndex].bg}`;
+            badge.className = `text-xs font-bold text-white px-3 py-1 rounded-full uppercase shadow-md truncate max-w-[150px] ${pColor.bg}`;
+            el('turn-progress-bar').className = `absolute top-0 left-0 h-1.5 transition-all duration-500 w-full ${pColor.bg}`;
+
+            // Style the Dice to match the player
+            const diceBtn = el('dice-btn');
+            diceBtn.className = `w-24 h-24 text-white rounded-3xl shadow-[0_10px_25px_rgba(0,0,0,0.2)] flex items-center justify-center text-5xl font-black hover:scale-105 active:scale-95 transition-all focus:outline-none border-2 border-white/40 bg-gradient-to-br ${pColor.grad}`;
+
+            if (!state.rolling && !state.showPrompt) {
+                diceBtn.innerHTML = '<span class="opacity-80">?</span>';
+            }
 
             // Actions Area
             if (state.showPrompt) {
                 el('action-dice').classList.add('hidden');
                 el('action-prompt').classList.remove('hidden');
                 el('prompt-badge').innerText = state.targetPosition;
-                // Using innerHTML here to render the <b> tags in the prompts correctly
                 el('prompt-text').innerHTML = `"${BOARD_SPACES[state.targetPosition].text}"`;
+                
+                // Highlight target tile visually
+                const allTiles = document.querySelectorAll('[id^="tile-"]');
+                allTiles.forEach(t => t.classList.remove('ring-4', 'ring-indigo-500', 'ring-inset', 'bg-indigo-50'));
+                const tTile = el(`tile-${state.targetPosition}`);
+                if(tTile) tTile.classList.add('ring-4', 'ring-indigo-500', 'ring-inset', 'bg-indigo-50');
+                
                 updateTimerDisplay();
             } else {
                 el('action-dice').classList.remove('hidden');
                 el('action-prompt').classList.add('hidden');
-                el('dice-btn').innerText = state.rolling ? '...' : '?';
+                
+                // Remove tile highlights
+                const allTiles = document.querySelectorAll('[id^="tile-"]');
+                allTiles.forEach(t => t.classList.remove('ring-4', 'ring-indigo-500', 'ring-inset', 'bg-indigo-50'));
             }
         }
 
@@ -431,14 +651,14 @@
             sb.innerHTML = '';
             state.teams.forEach((team, idx) => {
                 const isCurrent = idx === state.currentPlayer;
-                const bg = isCurrent ? 'bg-slate-100 border-slate-300' : 'bg-white border-transparent hover:bg-slate-50';
+                const bg = isCurrent ? 'bg-slate-50 border-slate-300 shadow-sm' : 'bg-white border-transparent hover:bg-slate-50';
                 sb.innerHTML += `
-                    <div class="flex justify-between items-center px-2 py-1.5 rounded-lg border text-xs transition-colors ${bg}">
-                        <div class="flex items-center gap-2 overflow-hidden">
-                            <div class="w-2.5 h-2.5 shrink-0 rounded-full ${TEAM_COLORS[team.colorIndex].bg}"></div>
-                            <span class="font-medium truncate ${isCurrent ? 'text-slate-900' : 'text-slate-600'}">${team.name}</span>
+                    <div class="flex justify-between items-center px-3 py-2 rounded-xl border text-sm transition-all ${bg}">
+                        <div class="flex items-center gap-3 overflow-hidden">
+                            <div class="w-3.5 h-3.5 shrink-0 rounded-full shadow-sm border border-white/50 ${TEAM_COLORS[team.colorIndex].bg} ${isCurrent ? 'animate-pulse' : ''}"></div>
+                            <span class="font-bold truncate ${isCurrent ? 'text-slate-900' : 'text-slate-500'}">${team.name}</span>
                         </div>
-                        <span class="text-[10px] font-bold text-slate-400 bg-white shadow-sm border px-1.5 py-0.5 rounded shrink-0 ml-2">Tile ${team.position}</span>
+                        <span class="text-[11px] font-black text-slate-400 bg-white shadow-sm border px-2 py-0.5 rounded-md shrink-0 ml-2">Tile ${team.position}</span>
                     </div>
                 `;
             });
@@ -446,34 +666,48 @@
 
         // --- GAME ACTIONS ---
         function rollDice() {
-            if (state.rolling || state.showPrompt) return;
+            if (state.rolling || state.showPrompt || state.isResolving) return;
             state.rolling = true;
             updateControls();
             
-            // Fake animation delay
+            const diceBtn = el('dice-btn');
+            diceBtn.classList.add('animate-shake');
+            sfx.roll();
+
+            let rollCount = 0;
+            const rollInterval = setInterval(() => {
+                const rand = Math.floor(Math.random() * 6) + 1;
+                diceBtn.innerHTML = getDiceFaceHTML(rand);
+                rollCount++;
+                if(rollCount > 8) {
+                    clearInterval(rollInterval);
+                    finishRoll();
+                }
+            }, 80);
+        }
+        
+        function finishRoll() {
+            const diceBtn = el('dice-btn');
+            diceBtn.classList.remove('animate-shake');
+            
+            const roll = Math.floor(Math.random() * 6) + 1;
+            diceBtn.innerHTML = getDiceFaceHTML(roll);
+            
             setTimeout(() => {
-                const roll = Math.floor(Math.random() * 6) + 1;
-                el('dice-btn').innerText = roll;
+                const player = state.teams[state.currentPlayer];
+                let newPos = player.position + roll;
+                const maxPos = BOARD_SPACES.length - 1;
                 
-                setTimeout(() => {
-                    const player = state.teams[state.currentPlayer];
-                    let newPos = player.position + roll;
-                    const maxPos = BOARD_SPACES.length - 1;
-                    
-                    if (newPos >= maxPos) {
-                        newPos = maxPos;
-                    }
-                    
-                    state.targetPosition = newPos;
-                    state.rolling = false;
-                    
-                    // Show target prompt but don't move the player yet
-                    state.showPrompt = true;
-                    state.timeLeft = state.timerSetting;
-                    updateControls();
-                    startTimer(); // Auto start timer when prompt shows
-                }, 500);
-            }, 600);
+                if (newPos >= maxPos) newPos = maxPos;
+                
+                state.targetPosition = newPos;
+                state.rolling = false;
+                state.showPrompt = true;
+                state.timeLeft = state.timerSetting;
+                
+                updateControls();
+                startTimer(); 
+            }, 700);
         }
 
         function startTimer() {
@@ -485,6 +719,7 @@
                     updateTimerDisplay();
                 } else {
                     clearInterval(state.timerInterval);
+                    resolveTurn(null); // Timeout equals fail
                 }
             }, 1000);
         }
@@ -493,52 +728,140 @@
             const min = Math.floor(state.timeLeft / 60);
             const sec = String(state.timeLeft % 60).padStart(2, '0');
             const display = el('timer-display');
+            const bar = el('timer-bar');
+            
             display.innerText = `${min}:${sec}`;
             
-            if (state.timeLeft <= 10 && state.timeLeft > 0) {
-                display.classList.add('text-red-500', 'animate-pulse');
-                display.classList.remove('text-slate-800');
+            // Calculate percentage
+            const pct = (state.timeLeft / state.timerSetting) * 100;
+            bar.style.width = `${pct}%`;
+            
+            // Color changing logic
+            if (pct > 50) {
+                bar.className = "h-full bg-green-500 w-full transition-all duration-1000 ease-linear";
+            } else if (pct > 20) {
+                bar.className = "h-full bg-yellow-400 w-full transition-all duration-1000 ease-linear";
             } else {
-                display.classList.remove('text-red-500', 'animate-pulse');
+                bar.className = "h-full bg-red-500 w-full transition-all duration-1000 ease-linear";
+            }
+            
+            if (state.timeLeft <= 10 && state.timeLeft > 0) {
+                display.classList.add('text-red-500', 'scale-110');
+                display.classList.remove('text-slate-800');
+                if(state.timeLeft <= 3) sfx.tick();
+            } else {
+                display.classList.remove('text-red-500', 'scale-110');
                 display.classList.add('text-slate-800');
             }
         }
 
+        function triggerConfetti() {
+            var duration = 4000;
+            var end = Date.now() + duration;
+
+            (function frame() {
+                confetti({
+                    particleCount: 6,
+                    angle: 60,
+                    spread: 55,
+                    origin: { x: 0 },
+                    colors: ['#4f46e5', '#10b981', '#f59e0b', '#ec4899', '#3b82f6']
+                });
+                confetti({
+                    particleCount: 6,
+                    angle: 120,
+                    spread: 55,
+                    origin: { x: 1 },
+                    colors: ['#4f46e5', '#10b981', '#f59e0b', '#ec4899', '#3b82f6']
+                });
+
+                if (Date.now() < end) requestAnimationFrame(frame);
+            }());
+        }
+
+        function showFeedbackOverlay(isCorrect) {
+            const overlay = el('feedback-overlay');
+            const content = el('feedback-content');
+            const icon = el('feedback-icon');
+            const text = el('feedback-text');
+
+            overlay.classList.remove('hidden');
+            setTimeout(() => {
+                overlay.classList.remove('opacity-0');
+                overlay.classList.add('opacity-100');
+                content.classList.remove('scale-out');
+                content.classList.add('scale-in');
+
+                if (isCorrect) {
+                    content.className = "scale-in transition-all duration-500 ease-out flex flex-col items-center p-12 rounded-3xl bg-green-500/95 shadow-[0_0_100px_rgba(34,197,94,0.6)] border-4 border-green-400";
+                    icon.innerText = "🎉";
+                    text.innerText = "CORRECT!";
+                    sfx.correct();
+                } else {
+                    content.className = "scale-in transition-all duration-500 ease-out flex flex-col items-center p-12 rounded-3xl bg-red-500/95 shadow-[0_0_100px_rgba(239,68,68,0.6)] border-4 border-red-400";
+                    icon.innerText = "❌";
+                    text.innerText = "INCORRECT!";
+                    sfx.incorrect();
+                }
+            }, 10);
+
+            setTimeout(() => {
+                overlay.classList.remove('opacity-100');
+                overlay.classList.add('opacity-0');
+                content.classList.remove('scale-in');
+                content.classList.add('scale-out');
+                setTimeout(() => { overlay.classList.add('hidden'); }, 300);
+            }, 1600);
+        }
+
         function resolveTurn(userGuess) {
+            if (state.isResolving) return;
+            state.isResolving = true;
             clearInterval(state.timerInterval);
             
             const player = state.teams[state.currentPlayer];
             const actualCorrect = BOARD_SPACES[state.targetPosition].isCorrect;
-            const currentPos = state.targetPosition; // Save to replace question
+            const currentPos = state.targetPosition; 
             
-            if (userGuess === actualCorrect) {
-                // They answered correctly, update their position to the target
-                player.position = state.targetPosition;
-                
-                // Check if they won
-                if (player.position === BOARD_SPACES.length - 1) {
-                    renderTokens(); // Update board visuals before ending
-                    el('winner-name').innerText = player.name;
-                    state.view = 'win';
-                    renderView();
-                    return; // End function early
-                }
-            }
-            
-            // Replace the question on the tile so it doesn't repeat for the next player!
-            if (currentPos > 0 && currentPos < BOARD_SPACES.length - 1) {
-                BOARD_SPACES[currentPos] = drawQuestion();
-                buildBoard(); // Rebuild the HTML grid with the new question
-            }
+            const isWin = (userGuess !== null && userGuess === actualCorrect);
+            showFeedbackOverlay(isWin);
 
-            renderTokens(); // Update visuals on the new grid
-            
-            // Reset state for the next turn
-            state.showPrompt = false;
-            state.targetPosition = null;
-            state.currentPlayer = (state.currentPlayer + 1) % state.teams.length;
-            updateControls();
-            renderScoreboard();
+            setTimeout(() => {
+                if (isWin) {
+                    player.position = state.targetPosition;
+                    sfx.move();
+                    
+                    if (player.position === BOARD_SPACES.length - 1) {
+                        renderTokens(); 
+                        el('winner-name').innerText = player.name;
+                        state.view = 'win';
+                        renderView();
+                        sfx.win();
+                        triggerConfetti();
+                        return; 
+                    }
+                }
+                
+                // Replace the question
+                if (currentPos > 0 && currentPos < BOARD_SPACES.length - 1) {
+                    BOARD_SPACES[currentPos] = drawQuestion();
+                    // Just update inner text instead of whole board to prevent tile-enter animations again
+                    const t = el(`tile-${currentPos}`);
+                    if(t) {
+                        const span = t.querySelector('span');
+                        if(span) span.innerHTML = BOARD_SPACES[currentPos].text;
+                    }
+                }
+
+                state.showPrompt = false;
+                state.targetPosition = null;
+                state.currentPlayer = (state.currentPlayer + 1) % state.teams.length;
+                state.isResolving = false;
+                
+                renderTokens(); 
+                updateControls();
+                renderScoreboard();
+            }, 1700); 
         }
 
         // Run
