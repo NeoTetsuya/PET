@@ -1,0 +1,955 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Battleship Vocabulary Review</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- React & ReactDOM -->
+    <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <!-- Babel for JSX -->
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <!-- Font Awesome for Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800;900&family=Orbitron:wght@700;900&display=swap" rel="stylesheet">
+    
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                        digital: ['Orbitron', 'sans-serif'],
+                    },
+                    colors: {
+                        tactical: {
+                            900: '#0B132B',
+                            800: '#1C2541',
+                            700: '#3A506B',
+                            light: '#5BC0BE',
+                            accent: '#6FFFE9'
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+
+    <style>
+        body {
+            background-color: #0B132B;
+            color: #e2e8f0;
+            overflow-x: hidden;
+        }
+        .ocean-bg {
+            background-color: #0B132B;
+            background-image: 
+                linear-gradient(to bottom, rgba(11, 19, 43, 0.75), rgba(11, 19, 43, 0.95)),
+                url('https://images.unsplash.com/photo-1599839619722-39751411ea63?q=80&w=2500&auto=format&fit=crop');
+            background-size: cover;
+            background-attachment: fixed;
+            animation: slowPan 60s ease-in-out infinite alternate;
+        }
+        @keyframes slowPan {
+            0% { background-position: 0% 50%; }
+            100% { background-position: 100% 50%; }
+        }
+        .grid-button {
+            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        .grid-button:hover:not(:disabled) {
+            transform: scale(1.08) translateY(-4px);
+            box-shadow: 0 10px 25px -5px rgba(111, 255, 233, 0.4);
+            z-index: 10;
+        }
+        .grid-button:active:not(:disabled) {
+            transform: scale(0.95);
+        }
+        .reveal-animation {
+            animation: popIn 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+        }
+        @keyframes popIn {
+            0% { transform: scale(0.3) rotate(-10deg); opacity: 0; }
+            70% { transform: scale(1.1) rotate(5deg); }
+            100% { transform: scale(1) rotate(0); opacity: 1; }
+        }
+        .pulse-red {
+            animation: pulseRed 1s infinite alternate;
+        }
+        @keyframes pulseRed {
+            0% { color: #ef4444; text-shadow: 0 0 10px rgba(239, 68, 68, 0.5); }
+            100% { color: #fca5a5; text-shadow: 0 0 20px rgba(239, 68, 68, 1); }
+        }
+    </style>
+</head>
+<body class="ocean-bg min-h-screen">
+    <div id="root"></div>
+
+    <script type="text/babel">
+        const { useState, useEffect, useRef } = React;
+
+        // --- WEB AUDIO API SOUND CONTROLLER ---
+        const AudioController = {
+            ctx: null,
+            muted: false,
+            init: function() {
+                if (!this.ctx) {
+                    this.ctx = new (window.AudioContext || window.webkitAudioContext)();
+                }
+                if (this.ctx.state === 'suspended') {
+                    this.ctx.resume();
+                }
+            },
+            toggleMute: function() {
+                this.muted = !this.muted;
+                return this.muted;
+            },
+            playTone: function(freq, type, duration, vol = 0.1) {
+                if (this.muted || !this.ctx) return;
+                const osc = this.ctx.createOscillator();
+                const gain = this.ctx.createGain();
+                osc.type = type;
+                osc.frequency.setValueAtTime(freq, this.ctx.currentTime);
+                gain.gain.setValueAtTime(vol, this.ctx.currentTime);
+                gain.gain.exponentialRampToValueAtTime(0.001, this.ctx.currentTime + duration);
+                osc.connect(gain);
+                gain.connect(this.ctx.destination);
+                osc.start();
+                osc.stop(this.ctx.currentTime + duration);
+            },
+            playNoise: function(duration, vol = 0.5, isExplosion = false) {
+                if (this.muted || !this.ctx) return;
+                const bufferSize = this.ctx.sampleRate * duration;
+                const buffer = this.ctx.createBuffer(1, bufferSize, this.ctx.sampleRate);
+                const data = buffer.getChannelData(0);
+                for (let i = 0; i < bufferSize; i++) {
+                    data[i] = Math.random() * 2 - 1; // White noise
+                }
+                const noise = this.ctx.createBufferSource();
+                noise.buffer = buffer;
+                
+                const filter = this.ctx.createBiquadFilter();
+                filter.type = isExplosion ? 'lowpass' : 'bandpass';
+                filter.frequency.setValueAtTime(isExplosion ? 800 : 2000, this.ctx.currentTime);
+                if (isExplosion) {
+                    filter.frequency.exponentialRampToValueAtTime(100, this.ctx.currentTime + duration);
+                }
+                
+                const gain = this.ctx.createGain();
+                gain.gain.setValueAtTime(vol, this.ctx.currentTime);
+                gain.gain.exponentialRampToValueAtTime(0.001, this.ctx.currentTime + duration);
+
+                noise.connect(filter);
+                filter.connect(gain);
+                gain.connect(this.ctx.destination);
+                noise.start();
+            },
+            sfx: {
+                click: () => AudioController.playTone(600, 'sine', 0.1, 0.1),
+                start: () => {
+                    AudioController.playTone(440, 'square', 0.15, 0.05);
+                    setTimeout(() => AudioController.playTone(554, 'square', 0.15, 0.05), 100);
+                    setTimeout(() => AudioController.playTone(659, 'square', 0.3, 0.05), 200);
+                },
+                correct: () => {
+                    AudioController.playTone(523.25, 'sine', 0.15, 0.1);
+                    setTimeout(() => AudioController.playTone(659.25, 'sine', 0.3, 0.15), 100);
+                },
+                incorrect: () => AudioController.playTone(150, 'sawtooth', 0.4, 0.1),
+                hit: () => AudioController.playNoise(1.5, 0.8, true),
+                miss: () => AudioController.playNoise(0.5, 0.3, false),
+                victory: () => {
+                    const notes = [523.25, 523.25, 523.25, 659.25, 783.99, 659.25, 783.99];
+                    notes.forEach((f, i) => {
+                        setTimeout(() => AudioController.playTone(f, 'square', 0.2, 0.1), i * 150);
+                    });
+                }
+            }
+        };
+
+        // --- VOCABULARY QUESTIONS BANK ---
+        const VOCABULARY_QUESTIONS = [
+            { prompt: "The chef decided to _____ the potatoes before boiling them.", options: ["peel", "defend", "survive", "violate"], answer: "peel" },
+            { prompt: "I left the meat in the freezer overnight, so it is still _____.", options: ["wealthy", "frozen", "guilty", "tiny"], answer: "frozen" },
+            { prompt: "The village is located just _____ the bridge.", options: ["within", "beyond", "surrounded", "handy"], answer: "beyond" },
+            { prompt: "Please show your _____ to the security guard at the entrance.", options: ["documentary", "bill", "identity card", "custom"], answer: "identity card" },
+            { prompt: "You must ask for _____ before leaving the examination room.", options: ["permission", "supervision", "opportunity", "attitude"], answer: "permission" },
+            { prompt: "She was absolutely _____ by the ancient artifacts in the museum.", options: ["fascinated", "overtired", "violent", "independent"], answer: "fascinated" },
+            { prompt: "It is hard to _____ his situation because I've never experienced anything like it.", options: ["relate to", "concentrate", "misbehave", "blame"], answer: "relate to" },
+            { prompt: "In the desert, you need to find water quickly to _____.", options: ["reveal", "improve", "survive", "divide"], answer: "survive" },
+            { prompt: "The sun began to set, slowly disappearing below the _____.", options: ["landscape", "horizon", "ground", "driveway"], answer: "horizon" },
+            { prompt: "We watched a fascinating _____ about the lives of Emperor penguins.", options: ["documentary", "reality show", "excursion", "procedure"], answer: "documentary" },
+            { prompt: "The magician refused to _____ how he performed the amazing trick.", options: ["reveal", "transform", "inspire", "motivate"], answer: "reveal" },
+            { prompt: "The businessman was very _____ and owned several luxury mansions.", options: ["fit", "wealthy", "slim", "guilty"], answer: "wealthy" },
+            { prompt: "The new paint will completely _____ the look of this dark room.", options: ["transform", "abuse", "irritate", "decline"], answer: "transform" },
+            { prompt: "The judge handed down a severe _____ for the serious crime.", options: ["punishment", "justice", "permission", "supervision"], answer: "punishment" },
+            { prompt: "Loud chewing noises really _____ me when I'm trying to work.", options: ["motivate", "irritate", "accompany", "defend"], answer: "irritate" },
+            { prompt: "Don't _____ me for the mistake; I wasn't even in the office yesterday!", options: ["face", "blame", "avoid", "run"], answer: "blame" },
+            { prompt: "I am very _____ of chocolate cake; it's my favorite dessert.", options: ["fond", "tired", "jealous", "capable"], answer: "fond" },
+            { prompt: "He felt extremely _____ after lying to his best friend.", options: ["guilty", "wealthy", "refreshed", "valid"], answer: "guilty" },
+            { prompt: "It is too noisy in this cafe for me to _____ on my homework.", options: ["concentrate", "survive", "misbehave", "improve"], answer: "concentrate" },
+            { prompt: "If the children _____ during the trip, they will lose their playtime.", options: ["misbehave", "concentrate", "cater for", "tend"], answer: "misbehave" },
+            { prompt: "If you don't study, you might _____ failing the final exam.", options: ["end up", "relate to", "make up one's mind", "at times"], answer: "end up" },
+            { prompt: "After a good night's sleep, I woke up feeling completely _____.", options: ["overtired", "refreshed", "guilty", "selfish"], answer: "refreshed" },
+            { prompt: "We _____ go out for dinner, but mostly we cook meals at home.", options: ["occasionally", "emotionally", "to a great extent", "within"], answer: "occasionally" },
+            { prompt: "The printer stopped working because there was a terrible paper _____.", options: ["jam", "toner", "bill", "habit"], answer: "jam" },
+            { prompt: "My car got _____ in the thick mud and wouldn't move an inch.", options: ["stuck", "frozen", "involved", "lost"], answer: "stuck" },
+            { prompt: "Please park your car in the _____ in front of the house.", options: ["driveway", "horizon", "landscape", "board"], answer: "driveway" },
+            { prompt: "Your passport must be _____ for at least six months to travel abroad.", options: ["valid", "tiny", "vital", "tough"], answer: "valid" },
+            { prompt: "Our class went on an educational _____ to the natural history museum.", options: ["excursion", "opportunity", "occupation", "exploration"], answer: "excursion" },
+            { prompt: "The meal was absolutely _____; I ate every single bite!", options: ["delicious", "suitable", "challenging", "violent"], answer: "delicious" },
+            { prompt: "Young children should not swim without adult _____.", options: ["supervision", "permission", "manners", "attitude"], answer: "supervision" },
+            { prompt: "Having a multi-tool in your pocket is very _____ for quick fixes.", options: ["handy", "wealthy", "slim", "independent"], answer: "handy" },
+            { prompt: "The old castle was entirely _____ by a deep water moat.", options: ["surrounded", "fascinated", "involved", "refreshed"], answer: "surrounded" },
+            { prompt: "If you practice playing the piano every day, your skills will definitely _____.", options: ["improve", "decline", "irritate", "blame"], answer: "improve" },
+            { prompt: "He runs five miles a day to stay healthy and _____.", options: ["fit", "overtired", "guilty", "selfish"], answer: "fit" },
+            { prompt: "It takes a lot of _____ to stick to a strict exercise routine.", options: ["willpower", "opportunity", "faith", "attitude"], answer: "willpower" },
+            { prompt: "Sales began to _____ rapidly after the busy holiday season ended.", options: ["decline", "improve", "transform", "survive"], answer: "decline" },
+            { prompt: "I couldn't resist the _____ to eat the last slice of pepperoni pizza.", options: ["temptation", "habit", "custom", "procedure"], answer: "temptation" },
+            { prompt: "The coach gave a great speech to _____ the players before the big game.", options: ["motivate", "irritate", "blame", "abuse"], answer: "motivate" },
+            { prompt: "Water is absolutely _____ for all living things to survive.", options: ["vital", "wealthy", "tiny", "valid"], answer: "vital" },
+            { prompt: "You should _____ eating too much sugar if you want to be healthy.", options: ["avoid", "accompany", "reveal", "peel"], answer: "avoid" },
+            { prompt: "The baby is crying because she missed her nap and is now _____.", options: ["overtired", "refreshed", "fit", "independent"], answer: "overtired" },
+            { prompt: "The insect was so _____ that I could barely see it with my own eyes.", options: ["tiny", "tough", "wealthy", "valid"], answer: "tiny" },
+            { prompt: "The _____ of this fabric is excellent; it will last for many years.", options: ["quality", "amount", "substance", "habit"], answer: "quality" },
+            { prompt: "A good teacher can _____ students to achieve their greatest dreams.", options: ["inspire", "irritate", "divide", "blame"], answer: "inspire" },
+            { prompt: "Biting your nails is a bad _____ that is very hard to break.", options: ["habit", "custom", "procedure", "manners"], answer: "habit" },
+            { prompt: "It is considered good _____ to say 'please' and 'thank you'.", options: ["manners", "opportunity", "justice", "faith"], answer: "manners" },
+            { prompt: "You must follow the safety _____ exactly as written in the manual.", options: ["procedure", "excursion", "case", "exploration"], answer: "procedure" },
+            { prompt: "Studying abroad is a great _____ to learn a new language and culture.", options: ["opportunity", "aspect", "priority", "heartbreak"], answer: "opportunity" },
+            { prompt: "She likes to do things by herself because she is very _____.", options: ["independent", "selfish", "guilty", "fond"], answer: "independent" },
+            { prompt: "You need a special password to gain _____ to this computer system.", options: ["access", "permission", "supervision", "justice"], answer: "access" },
+            { prompt: "The hotel staff prepared a special welcome basket for the VIP _____.", options: ["guest", "aspect", "case", "judge"], answer: "guest" },
+            { prompt: "Basil is a common _____ used to flavor Italian pasta dishes.", options: ["herb", "lettuce", "toner", "substance"], answer: "herb" },
+            { prompt: "She prefers reading _____ books to learn about real historical events.", options: ["non-fiction", "military", "challenging", "previous"], answer: "non-fiction" },
+            { prompt: "Both of his grandfathers served in the _____ during the war.", options: ["military", "society", "occupation", "justice"], answer: "military" },
+            { prompt: "The castle walls were built high to _____ the city from attackers.", options: ["defend", "irritate", "abuse", "violate"], answer: "defend" },
+            { prompt: "The lucky _____ won a million dollars on the television game show.", options: ["contestant", "traffic warden", "interior designer", "judge"], answer: "contestant" },
+            { prompt: "Despite the difficult times, she kept her _____ that things would get better.", options: ["faith", "heartbreak", "suffering", "attitude"], answer: "faith" },
+            { prompt: "The company will _____ a repair technician to your house immediately.", options: ["dispatch", "face", "divide", "accompany"], answer: "dispatch" },
+            { prompt: "We must protect animals from neglect and cruel _____.", options: ["abuse", "priority", "justice", "habit"], answer: "abuse" },
+            { prompt: "He finally had to _____ his fear of public speaking during the presentation.", options: ["face", "run", "tend", "avoid"], answer: "face" },
+            { prompt: "Climbing Mount Everest is a highly _____ task for any mountaineer.", options: ["challenging", "suitable", "relevant", "whole"], answer: "challenging" },
+            { prompt: "The work can be stressful _____, but I mostly enjoy it.", options: ["at times", "long term", "emotionally", "to a great extent"], answer: "at times" },
+            { prompt: "The movie was so sad that I felt completely drained _____.", options: ["emotionally", "occasionally", "physically", "previous"], answer: "emotionally" },
+            { prompt: "Look at the menu and _____; the waiter is waiting!", options: ["make up one's mind", "end up", "cater for", "run"], answer: "make up one's mind" },
+            { prompt: "Please state your name, age, and current _____ on the application form.", options: ["occupation", "aspect", "society", "facility"], answer: "occupation" },
+            { prompt: "My top _____ right now is passing my university final exams.", options: ["priority", "custom", "approach", "supplement"], answer: "priority" },
+            { prompt: "He earns less money now, but his _____ is much higher at this new company.", options: ["job satisfaction", "work placement", "nature reserve", "exploration"], answer: "job satisfaction" },
+            { prompt: "After eating dinner, we asked the waiter to bring us the _____.", options: ["bill", "board", "toner", "identity card"], answer: "bill" },
+            { prompt: "My _____ boss was much stricter than my current manager.", options: ["previous", "tiny", "fit", "selfish"], answer: "previous" },
+            { prompt: "The printer is printing faint lines because it is out of _____.", options: ["toner", "jam", "substance", "lettuce"], answer: "toner" },
+            { prompt: "The new sports _____ has an Olympic-sized swimming pool.", options: ["facility", "ground", "landscape", "nature reserve"], answer: "facility" },
+            { prompt: "It takes a lot of hard work and dedication to _____ a successful restaurant.", options: ["run", "dispatch", "divide", "inspire"], answer: "run" },
+            { prompt: "The hotel can _____ guests with special dietary allergies.", options: ["cater for", "relate to", "accompany", "face"], answer: "cater for" },
+            { prompt: "He goes to the gym and eats healthy food to stay athletic and _____.", options: ["slim", "overtired", "wealthy", "violent"], answer: "slim" },
+            { prompt: "People _____ to eat more comfort food during the cold winter months.", options: ["tend", "survive", "improve", "decline"], answer: "tend" },
+            { prompt: "It was very _____ of him to eat all the cookies without sharing with his sister.", options: ["selfish", "fit", "independent", "tough"], answer: "selfish" },
+            { prompt: "The treaty brought a peace that proved to be truly _____ for generations.", options: ["lasting", "relevant", "previous", "suitable"], answer: "lasting" },
+            { prompt: "Honey is a sticky, sweet _____ produced by bees.", options: ["substance", "amount", "quality", "supplement"], answer: "substance" },
+            { prompt: "She takes a daily vitamin C _____ to boost her immune system.", options: ["supplement", "custom", "habit", "approach"], answer: "supplement" },
+            { prompt: "If you want to succeed in life, you need to keep a positive _____.", options: ["attitude", "manners", "faith", "willpower"], answer: "attitude" }
+        ];
+
+        const ROWS = ['A', 'B', 'C', 'D'];
+        const COLS = [1, 2, 3, 4, 5, 6, 7, 8];
+        const TOTAL_SHIPS = 11; // 4 + 3 + 2 + 1 + 1 ship parts
+
+        const shuffleArray = (array) => {
+            const newArr = [...array];
+            for (let i = newArr.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [newArr[i], newArr[j]] = [newArr[j], newArr[i]];
+            }
+            return newArr;
+        };
+
+        const generateRandomShips = () => {
+            const ships = [4, 3, 2, 1, 1];
+            const layout = [];
+            const grid = Array(4).fill(null).map(() => Array(8).fill(false));
+
+            ships.forEach(shipSize => {
+                let placed = false;
+                while (!placed) {
+                    const isHorizontal = Math.random() > 0.5;
+                    const row = Math.floor(Math.random() * 4);
+                    const col = Math.floor(Math.random() * 8);
+
+                    if (isHorizontal) {
+                        if (col + shipSize <= 8) {
+                            let canPlace = true;
+                            for (let i = 0; i < shipSize; i++) {
+                                if (grid[row][col + i]) canPlace = false;
+                            }
+                            if (canPlace) {
+                                for (let i = 0; i < shipSize; i++) {
+                                    grid[row][col + i] = true;
+                                    layout.push(`${ROWS[row]}${col + i + 1}`);
+                                }
+                                placed = true;
+                            }
+                        }
+                    } else {
+                        if (row + shipSize <= 4) {
+                            let canPlace = true;
+                            for (let i = 0; i < shipSize; i++) {
+                                if (grid[row + i][col]) canPlace = false;
+                            }
+                            if (canPlace) {
+                                for (let i = 0; i < shipSize; i++) {
+                                    grid[row + i][col] = true;
+                                    layout.push(`${ROWS[row + i]}${col + 1}`);
+                                }
+                                placed = true;
+                            }
+                        }
+                    }
+                }
+            });
+            return layout;
+        };
+
+        const App = () => {
+            const [view, setView] = useState('intro'); 
+            const [grid, setGrid] = useState({});
+            const [scores, setScores] = useState({ team1: 0, team2: 0 });
+            const [activeCell, setActiveCell] = useState(null);
+            const [currentTurn, setCurrentTurn] = useState('team1');
+            const [isMuted, setIsMuted] = useState(false);
+            
+            // Interaction states for Multiple Choice
+            const [answeringState, setAnsweringState] = useState('waiting');
+            const [selectedOption, setSelectedOption] = useState(null);
+            const [isAnswerCorrect, setIsAnswerCorrect] = useState(null);
+
+            // Settings & Data
+            const [globalTimeLimit, setGlobalTimeLimit] = useState(30);
+            const [cellQuestions, setCellQuestions] = useState({});
+
+            // Timer State
+            const [timeLeft, setTimeLeft] = useState(30);
+            const [timerRunning, setTimerRunning] = useState(false);
+
+            // Audio Mute Toggle Function
+            const toggleMute = () => {
+                AudioController.init();
+                setIsMuted(AudioController.toggleMute());
+            };
+
+            useEffect(() => {
+                let interval = null;
+                if (timerRunning && timeLeft > 0) {
+                    interval = setInterval(() => {
+                        setTimeLeft((prev) => prev - 1);
+                    }, 1000);
+                } else if (timeLeft === 0 && timerRunning) {
+                    setTimerRunning(false);
+                    if (view === 'target' && answeringState === 'waiting') {
+                        setAnsweringState('revealing_answer');
+                        setIsAnswerCorrect(false);
+                        setSelectedOption("TIME_UP");
+                        AudioController.sfx.incorrect();
+                        
+                        setTimeout(() => {
+                            setAnsweringState('revealing_ship');
+                            handleAnswer(false);
+                        }, 2500);
+                    }
+                }
+                return () => clearInterval(interval);
+            }, [timerRunning, timeLeft, view, answeringState]);
+
+            const startGame = () => {
+                AudioController.init();
+                AudioController.sfx.start();
+                
+                const newGrid = {};
+                const chosenLayout = generateRandomShips();
+                const shuffledQuestions = shuffleArray(VOCABULARY_QUESTIONS).slice(0, 32).map(q => ({
+                    ...q,
+                    options: shuffleArray(q.options)
+                }));
+                const initialQuestionsState = {};
+                
+                let qIndex = 0;
+                ROWS.forEach(r => {
+                    COLS.forEach(c => {
+                        const id = `${r}${c}`;
+                        newGrid[id] = { 
+                            id, 
+                            isShip: chosenLayout.includes(id), 
+                            revealed: false 
+                        };
+                        initialQuestionsState[id] = shuffledQuestions[qIndex];
+                        qIndex++;
+                    });
+                });
+                
+                setGrid(newGrid);
+                setCellQuestions(initialQuestionsState);
+                setScores({ team1: 0, team2: 0 });
+                setCurrentTurn('team1');
+                setView('board');
+            };
+
+            const handleCellClick = (id) => {
+                AudioController.sfx.click();
+                setActiveCell(id);
+                setTimeLeft(globalTimeLimit);
+                setAnsweringState('waiting');
+                setSelectedOption(null);
+                setIsAnswerCorrect(null);
+                setTimerRunning(true);
+                setView('target');
+            };
+
+            const handleOptionClick = (option) => {
+                if (answeringState !== 'waiting') return;
+                AudioController.sfx.click();
+                setTimerRunning(false);
+                
+                const questionData = cellQuestions[activeCell];
+                const correct = option === questionData.answer;
+                
+                setSelectedOption(option);
+                setIsAnswerCorrect(correct);
+                setAnsweringState('revealing_answer');
+
+                // Play correct/incorrect sound
+                if (correct) {
+                    AudioController.sfx.correct();
+                } else {
+                    AudioController.sfx.incorrect();
+                }
+
+                setTimeout(() => {
+                    setAnsweringState('revealing_ship');
+                    handleAnswer(correct);
+                }, 2500);
+            };
+
+            const handleAnswer = (isCorrect) => {
+                const cell = grid[activeCell];
+                let pointsToAdd = 0;
+                
+                if (isCorrect) {
+                    pointsToAdd += 10;
+                    if (cell.isShip) {
+                        pointsToAdd += 5; 
+                    }
+                }
+                
+                if (pointsToAdd > 0) {
+                    adjustScore(currentTurn, pointsToAdd);
+                }
+                
+                setGrid(prev => ({
+                    ...prev,
+                    [activeCell]: { ...prev[activeCell], revealed: true, wasCorrect: isCorrect }
+                }));
+
+                // Play Hit / Miss Sound
+                if (cell.isShip) {
+                    AudioController.sfx.hit();
+                } else {
+                    AudioController.sfx.miss();
+                }
+            };
+
+            const handleReturnToBoard = () => {
+                AudioController.sfx.click();
+                
+                const updatedGrid = {
+                    ...grid,
+                    [activeCell]: { ...grid[activeCell], revealed: true, wasCorrect: isAnswerCorrect }
+                };
+                
+                const hitShipsCount = Object.values(updatedGrid).filter(c => c.revealed && c.isShip).length;
+
+                if (hitShipsCount >= TOTAL_SHIPS) {
+                    AudioController.sfx.victory();
+                    setView('victory');
+                } else {
+                    setView('board');
+                    setCurrentTurn(prev => prev === 'team1' ? 'team2' : 'team1');
+                }
+                
+                setActiveCell(null);
+                setAnsweringState('waiting');
+                setSelectedOption(null);
+                setIsAnswerCorrect(null);
+                setTimerRunning(false);
+            };
+
+            const adjustScore = (team, amount) => {
+                setScores(prev => ({
+                    ...prev,
+                    [team]: Math.max(0, prev[team] + amount)
+                }));
+            };
+
+            const toggleTimerPlayback = () => {
+                if(answeringState === 'waiting') {
+                    AudioController.sfx.click();
+                    setTimerRunning(!timerRunning);
+                }
+            };
+            
+            const resetTimer = () => {
+                if(answeringState === 'waiting') {
+                    AudioController.sfx.click();
+                    setTimerRunning(false);
+                    setTimeLeft(globalTimeLimit);
+                }
+            };
+
+            // Global Audio Control Button
+            const renderAudioToggle = () => (
+                <button 
+                    onClick={toggleMute}
+                    className="absolute top-4 right-4 z-50 bg-tactical-900 border border-tactical-700 text-tactical-light hover:text-white p-3 rounded-full shadow-lg transition-all focus:outline-none"
+                    title={isMuted ? "Unmute Sound" : "Mute Sound"}
+                >
+                    <i className={`fa-solid ${isMuted ? 'fa-volume-xmark' : 'fa-volume-high'} w-5 h-5 flex items-center justify-center`}></i>
+                </button>
+            );
+
+            // --- RENDERERS ---
+
+            const renderIntro = () => (
+                <div className="min-h-screen flex items-center justify-center p-6 relative">
+                    {renderAudioToggle()}
+                    <div className="max-w-2xl w-full bg-tactical-800 border border-tactical-700 rounded-3xl shadow-[0_0_50px_-12px_rgba(111,255,233,0.3)] overflow-hidden p-10 relative">
+                        <div className="absolute top-0 right-0 w-32 h-32 bg-tactical-light opacity-10 rounded-full blur-3xl"></div>
+                        <div className="absolute bottom-0 left-0 w-40 h-40 bg-blue-500 opacity-10 rounded-full blur-3xl"></div>
+
+                        <div className="flex flex-col items-center mb-8 relative z-10">
+                            <i className="fa-solid fa-anchor text-tactical-accent text-5xl mb-4"></i>
+                            <h1 className="text-5xl md:text-6xl font-digital text-transparent bg-clip-text bg-gradient-to-r from-tactical-accent to-blue-400 tracking-wider text-center drop-shadow-lg">
+                                BATTLESHIP
+                            </h1>
+                            <div className="h-1 w-32 bg-gradient-to-r from-transparent via-tactical-accent to-transparent mt-4"></div>
+                            <h2 className="text-xl font-semibold text-slate-300 mt-4 tracking-widest uppercase text-center">Vocabulary Review Edition</h2>
+                            <p className="text-sm text-tactical-light mt-2 bg-tactical-900 border border-tactical-700 px-3 py-1 rounded-full"><i className="fa-solid fa-database mr-2"></i>{VOCABULARY_QUESTIONS.length} Questions Loaded</p>
+                        </div>
+                        
+                        <div className="bg-tactical-900 bg-opacity-50 border border-tactical-700 rounded-xl p-6 mb-8 text-slate-300 space-y-4 shadow-inner relative z-10">
+                            <h3 className="text-tactical-accent font-bold uppercase tracking-widest text-sm mb-4 border-b border-tactical-700 pb-2"><i className="fa-solid fa-clipboard-list mr-2"></i> Mission Briefing</h3>
+                            <p className="flex items-start"><i className="fa-solid fa-users text-blue-400 mt-1 w-6"></i> <span>Divide into two teams. Teams select target coordinates to attack.</span></p>
+                            <p className="flex items-start"><i className="fa-solid fa-list-check text-purple-400 mt-1 w-6"></i> <span>Complete the sentence with the correct vocabulary word.</span></p>
+                            <p className="flex items-start"><i className="fa-solid fa-check-circle text-green-400 mt-1 w-6"></i> <span>Correct answer = <strong className="text-white bg-green-500/20 px-2 py-0.5 rounded ml-1">10 PTS</strong></span></p>
+                            <p className="flex items-start"><i className="fa-solid fa-burst text-red-400 mt-1 w-6"></i> <span>If the target hits a ship, earn a <strong className="text-white bg-red-500/20 px-2 py-0.5 rounded ml-1">+5 PT BONUS</strong></span></p>
+                            <p className="flex items-start"><i className="fa-solid fa-trophy text-amber-400 mt-1 w-6"></i> <span>The mission ends when all 11 enemy ship sectors are destroyed!</span></p>
+                        </div>
+
+                        <div className="flex flex-col md:flex-row gap-4 items-center justify-between relative z-10">
+                            <div className="flex items-center bg-tactical-900 border border-tactical-700 rounded-lg px-4 py-3">
+                                <i className="fa-solid fa-stopwatch text-tactical-accent mr-3"></i>
+                                <div className="flex flex-col">
+                                    <label className="text-xs text-slate-400 uppercase tracking-wider font-semibold">Time Per Question</label>
+                                    <div className="flex items-center mt-1">
+                                        <input 
+                                            type="number" 
+                                            min="10" 
+                                            max="120" 
+                                            value={globalTimeLimit}
+                                            onChange={(e) => setGlobalTimeLimit(Number(e.target.value))}
+                                            className="bg-transparent text-white font-digital text-xl w-16 focus:outline-none focus:border-b border-tactical-accent text-center"
+                                        />
+                                        <span className="text-slate-400 ml-1">sec</span>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <button 
+                                onClick={startGame}
+                                className="w-full md:w-auto bg-gradient-to-r from-blue-600 to-blue-800 hover:from-blue-500 hover:to-blue-700 border border-blue-400 text-white font-bold py-4 px-10 rounded-xl text-xl shadow-[0_0_20px_rgba(59,130,246,0.5)] transition-all transform hover:scale-105 flex items-center justify-center uppercase tracking-widest"
+                            >
+                                <i className="fa-solid fa-power-off mr-3"></i> Initialize
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            );
+
+            const renderScoreboard = () => (
+                <div className="flex justify-between items-center bg-tactical-800/80 backdrop-blur-md p-4 rounded-2xl border border-tactical-700 shadow-xl mb-8">
+                    <div className={`flex items-center space-x-4 p-2 rounded-xl transition-all ${currentTurn === 'team1' && view !== 'victory' ? 'bg-blue-900/40 border border-blue-500 shadow-[0_0_15px_rgba(59,130,246,0.3)]' : 'opacity-60'}`}>
+                        <div className="text-xl md:text-2xl font-black text-blue-400 tracking-wider">TEAM 1 {currentTurn === 'team1' && view !== 'victory' && <span className="text-xs bg-blue-500 text-white px-2 py-1 rounded ml-2 animate-pulse">TURN</span>}</div>
+                        <div className="flex items-center bg-tactical-900 border border-blue-500/30 rounded-lg px-2 py-1 shadow-inner">
+                            <button onClick={() => adjustScore('team1', -5)} className="text-slate-500 hover:text-red-400 px-3 py-1 font-bold transition-colors"><i className="fa-solid fa-minus"></i></button>
+                            <span className="text-3xl font-digital text-white w-16 text-center">{scores.team1}</span>
+                            <button onClick={() => adjustScore('team1', 5)} className="text-slate-500 hover:text-green-400 px-3 py-1 font-bold transition-colors"><i className="fa-solid fa-plus"></i></button>
+                        </div>
+                    </div>
+                    
+                    <div className="hidden md:flex flex-col items-center justify-center opacity-50">
+                        <i className="fa-solid fa-satellite-dish text-tactical-accent text-2xl mb-1"></i>
+                        <div className="text-xs font-digital tracking-[0.3em] text-tactical-accent uppercase">Command</div>
+                    </div>
+                    
+                    <div className={`flex items-center space-x-4 p-2 rounded-xl transition-all ${currentTurn === 'team2' && view !== 'victory' ? 'bg-red-900/40 border border-red-500 shadow-[0_0_15px_rgba(239,68,68,0.3)]' : 'opacity-60'}`}>
+                        <div className="flex items-center bg-tactical-900 border border-red-500/30 rounded-lg px-2 py-1 shadow-inner">
+                            <button onClick={() => adjustScore('team2', -5)} className="text-slate-500 hover:text-red-400 px-3 py-1 font-bold transition-colors"><i className="fa-solid fa-minus"></i></button>
+                            <span className="text-3xl font-digital text-white w-16 text-center">{scores.team2}</span>
+                            <button onClick={() => adjustScore('team2', 5)} className="text-slate-500 hover:text-green-400 px-3 py-1 font-bold transition-colors"><i className="fa-solid fa-plus"></i></button>
+                        </div>
+                        <div className="text-xl md:text-2xl font-black text-red-400 tracking-wider">TEAM 2 {currentTurn === 'team2' && view !== 'victory' && <span className="text-xs bg-red-500 text-white px-2 py-1 rounded ml-2 animate-pulse">TURN</span>}</div>
+                    </div>
+                </div>
+            );
+
+            const renderBoard = () => {
+                const hitCount = Object.values(grid).filter(c => c.revealed && c.isShip).length;
+
+                return (
+                    <div className="min-h-screen p-4 md:p-8 flex flex-col max-w-6xl mx-auto relative">
+                        {renderAudioToggle()}
+                        {renderScoreboard()}
+                        
+                        <div className="flex-grow flex flex-col items-center justify-center">
+                            
+                            <div className="w-full flex justify-between items-end mb-4 px-4">
+                                <h2 className="font-digital text-tactical-light tracking-widest uppercase">Tactical Map</h2>
+                                <div className="bg-tactical-900 border border-tactical-700 px-4 py-2 rounded-lg font-digital tracking-widest flex items-center">
+                                    <span className="text-slate-400 text-sm mr-3">ENEMY FLEET:</span>
+                                    <span className={hitCount === TOTAL_SHIPS ? "text-green-400" : "text-red-400"}>{hitCount} / {TOTAL_SHIPS} DESTROYED</span>
+                                </div>
+                            </div>
+
+                            <div className="bg-tactical-800/90 p-6 md:p-8 rounded-3xl border border-tactical-700 shadow-[0_0_40px_rgba(0,0,0,0.5)] backdrop-blur-sm w-full">
+                                
+                                <div className="grid grid-cols-[auto_repeat(8,minmax(0,1fr))] gap-2 md:gap-3 mb-2 md:mb-3">
+                                    <div className="w-8 md:w-12"></div>
+                                    {COLS.map(c => (
+                                        <div key={`col-${c}`} className="text-center font-digital font-bold text-lg md:text-2xl text-tactical-light/70 py-2">
+                                            {c}
+                                        </div>
+                                    ))}
+                                </div>
+                                
+                                {ROWS.map(r => (
+                                    <div key={`row-${r}`} className="grid grid-cols-[auto_repeat(8,minmax(0,1fr))] gap-2 md:gap-3 mb-2 md:mb-3">
+                                        <div className="flex items-center justify-center font-digital font-bold text-lg md:text-2xl text-tactical-light/70 w-8 md:w-12">
+                                            {r}
+                                        </div>
+                                        
+                                        {COLS.map(c => {
+                                            const id = `${r}${c}`;
+                                            const cell = grid[id];
+                                            
+                                            let btnClass = "grid-button aspect-square md:aspect-auto md:h-20 rounded-xl font-digital font-bold text-xl md:text-2xl flex items-center justify-center focus:outline-none transition-all relative overflow-hidden ";
+                                            let content = id;
+
+                                            if (!cell.revealed) {
+                                                btnClass += "bg-tactical-700 text-slate-300 border-b-4 border-tactical-900 shadow-[inset_0_1px_rgba(255,255,255,0.1)] hover:bg-tactical-light hover:text-tactical-900";
+                                            } else if (cell.isShip) {
+                                                btnClass += "bg-red-900/80 border-2 border-red-500 text-red-400 cursor-default reveal-animation shadow-[0_0_15px_rgba(239,68,68,0.5)]";
+                                                content = <i className="fa-solid fa-crosshairs text-3xl md:text-4xl text-red-500 animate-pulse drop-shadow-[0_0_8px_rgba(239,68,68,0.8)]"></i>;
+                                            } else {
+                                                btnClass += "bg-blue-900/50 border border-blue-700/50 text-blue-500 cursor-default reveal-animation opacity-60";
+                                                content = <i className="fa-solid fa-water text-2xl md:text-3xl opacity-50"></i>;
+                                            }
+
+                                            return (
+                                                <button 
+                                                    key={id}
+                                                    onClick={() => !cell.revealed && handleCellClick(id)}
+                                                    disabled={cell.revealed}
+                                                    className={btnClass}
+                                                >
+                                                    {!cell.revealed && (
+                                                        <div className="absolute inset-0 bg-gradient-to-b from-transparent via-white/5 to-transparent h-[200%] -translate-y-full hover:animate-[scan_1.5s_linear_infinite]"></div>
+                                                    )}
+                                                    <span className="relative z-10">{content}</span>
+                                                </button>
+                                            );
+                                        })}
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+                        
+                        <div className="mt-8 flex justify-center">
+                            <button 
+                                onClick={() => setView('intro')} 
+                                className="flex items-center text-tactical-light/60 hover:text-tactical-accent font-digital tracking-widest text-sm transition-colors border border-transparent hover:border-tactical-700 rounded-full px-6 py-2"
+                            >
+                                <i className="fa-solid fa-rotate-left mr-2"></i> ABORT MISSION (RESTART)
+                            </button>
+                        </div>
+                    </div>
+                );
+            };
+
+            const renderTarget = () => {
+                if (!activeCell) return null;
+                const cell = grid[activeCell];
+                const questionData = cellQuestions[activeCell];
+                
+                const mins = Math.floor(timeLeft / 60).toString().padStart(2, '0');
+                const secs = (timeLeft % 60).toString().padStart(2, '0');
+                const isTimeLow = timeLeft <= 10 && timeLeft > 0;
+                
+                return (
+                    <div className="min-h-screen p-4 md:p-8 flex flex-col max-w-6xl mx-auto relative">
+                        {renderAudioToggle()}
+                        {renderScoreboard()}
+
+                        <div className="flex-grow flex items-center justify-center w-full">
+                            <div className="bg-tactical-800 w-full rounded-3xl shadow-2xl p-6 md:p-10 border border-tactical-700 flex flex-col relative overflow-hidden">
+                                
+                                <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full h-1 bg-gradient-to-r from-transparent via-tactical-accent to-transparent"></div>
+
+                                {/* Header */}
+                                <div className="flex justify-between items-center border-b border-tactical-700 pb-6 mb-8 relative z-10">
+                                    <div className="flex items-center">
+                                        <div className="bg-tactical-900 p-4 rounded-xl border border-tactical-600 mr-4 shadow-inner">
+                                            <i className="fa-solid fa-crosshairs text-tactical-accent text-3xl md:text-4xl"></i>
+                                        </div>
+                                        <div>
+                                            <h2 className="text-sm font-digital text-tactical-light uppercase tracking-[0.3em]">Engaging Target</h2>
+                                            <div className="text-5xl md:text-6xl font-black font-digital text-white tracking-wider">{activeCell}</div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div className="flex flex-col lg:flex-row gap-8 mb-8 flex-grow relative z-10">
+                                    
+                                    {/* Left Column: Question & Timer */}
+                                    <div className="flex-1 flex flex-col gap-6">
+                                        <div className="flex-grow flex flex-col bg-tactical-900 border border-tactical-700 rounded-2xl overflow-hidden shadow-inner relative group">
+                                            <div className="bg-tactical-800 px-6 py-3 border-b border-tactical-700 flex justify-between items-center">
+                                                <h3 className="font-bold text-tactical-light uppercase text-xs tracking-widest"><i className="fa-solid fa-comment-dots mr-2"></i> Mission Query</h3>
+                                            </div>
+                                            
+                                            <div className="w-full flex-grow p-6 md:p-8 flex flex-col justify-center transition-colors relative">
+                                                <div className="mb-6">
+                                                    <span className="inline-block bg-tactical-800/80 text-tactical-accent px-4 py-2 rounded-lg text-sm md:text-base font-bold uppercase tracking-widest border border-tactical-500 shadow-[0_0_15px_rgba(111,255,233,0.15)]">
+                                                        <i className="fa-solid fa-pen-nib mr-2"></i>FILL IN THE BLANK
+                                                    </span>
+                                                </div>
+                                                <div className="text-2xl md:text-4xl text-white font-semibold leading-snug drop-shadow-lg">
+                                                    {questionData.prompt}
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        <div className="bg-tactical-900 border border-tactical-700 rounded-2xl p-6 flex items-center justify-between shadow-inner">
+                                            <div className="flex items-center gap-4">
+                                                <button 
+                                                    onClick={toggleTimerPlayback}
+                                                    disabled={answeringState !== 'waiting'}
+                                                    className={`w-14 h-14 rounded-full flex items-center justify-center text-xl transition-all ${answeringState !== 'waiting' ? 'opacity-50 cursor-not-allowed bg-slate-800 border-slate-700' : timerRunning ? 'bg-amber-500/20 text-amber-400 border border-amber-500/50 hover:bg-amber-500/30' : 'bg-green-500/20 text-green-400 border border-green-500/50 hover:bg-green-500/30'}`}
+                                                >
+                                                    <i className={`fa-solid ${timerRunning ? 'fa-pause' : 'fa-play'} ml-1`}></i>
+                                                </button>
+                                                <button 
+                                                    onClick={resetTimer}
+                                                    disabled={answeringState !== 'waiting'}
+                                                    className={`w-14 h-14 rounded-full bg-slate-800 text-slate-400 hover:text-white border border-slate-700 transition-all flex items-center justify-center ${answeringState !== 'waiting' ? 'opacity-50 cursor-not-allowed' : 'hover:bg-slate-700'}`}
+                                                    title="Reset Timer"
+                                                >
+                                                    <i className="fa-solid fa-rotate-left"></i>
+                                                </button>
+                                            </div>
+                                            
+                                            <div className={`font-digital text-5xl md:text-6xl tracking-widest ${isTimeLow && answeringState === 'waiting' ? 'pulse-red' : 'text-tactical-accent'}`}>
+                                                {mins}:{secs}
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    {/* Right Column: Interaction / Reveal */}
+                                    <div className="flex-[0.8] flex flex-col gap-6">
+                                        <div className="flex-grow flex flex-col items-center justify-center bg-tactical-900 rounded-2xl border border-tactical-700 p-6 md:p-8 shadow-inner overflow-hidden relative">
+                                            
+                                            {/* Phase 1 & 2: Multiple Choice Selection */}
+                                            {answeringState !== 'revealing_ship' ? (
+                                                <div className="w-full h-full flex flex-col z-10">
+                                                    <h3 className="text-tactical-light font-digital tracking-[0.2em] uppercase mb-6 text-center text-lg">
+                                                        Select Transmission
+                                                    </h3>
+                                                    
+                                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 h-full">
+                                                        {questionData.options.map((opt, idx) => {
+                                                            let btnStyle = "bg-tactical-800 hover:bg-tactical-700 border-2 border-tactical-600 text-slate-200 hover:text-white shadow-md";
+                                                            let icon = <i className="fa-regular fa-circle mr-3 opacity-50"></i>;
+                                                            
+                                                            if (answeringState === 'revealing_answer') {
+                                                                if (opt === questionData.answer) {
+                                                                    // Correct Answer Styling
+                                                                    btnStyle = "bg-green-600/20 border-2 border-green-500 text-green-300 shadow-[0_0_15px_rgba(34,197,94,0.4)] transform scale-105 z-10";
+                                                                    icon = <i className="fa-solid fa-check mr-3 text-green-400"></i>;
+                                                                } else if (opt === selectedOption) {
+                                                                    // Incorrect selected option
+                                                                    btnStyle = "bg-red-900/40 border-2 border-red-600 text-red-300 opacity-80";
+                                                                    icon = <i className="fa-solid fa-xmark mr-3 text-red-400"></i>;
+                                                                } else {
+                                                                    // Unselected incorrect options
+                                                                    btnStyle = "bg-tactical-900 border-2 border-tactical-800 text-slate-600 opacity-40";
+                                                                }
+                                                            }
+
+                                                            return (
+                                                                <button 
+                                                                    key={idx}
+                                                                    onClick={() => handleOptionClick(opt)}
+                                                                    disabled={answeringState !== 'waiting'}
+                                                                    className={`flex items-center p-4 rounded-xl font-bold text-lg md:text-xl transition-all duration-300 ${btnStyle}`}
+                                                                >
+                                                                    {icon} {opt}
+                                                                </button>
+                                                            );
+                                                        })}
+                                                    </div>
+                                                    
+                                                    {answeringState === 'revealing_answer' && selectedOption === "TIME_UP" && (
+                                                        <div className="absolute inset-0 flex items-center justify-center bg-tactical-900/80 backdrop-blur-sm z-20 rounded-2xl">
+                                                            <div className="text-center">
+                                                                <i className="fa-solid fa-stopwatch text-6xl text-red-500 mb-4 pulse-red"></i>
+                                                                <h2 className="text-4xl font-digital font-bold text-white tracking-widest">TIME UP</h2>
+                                                            </div>
+                                                        </div>
+                                                    )}
+                                                </div>
+                                            ) : (
+                                                /* Phase 3: Ship Reveal */
+                                                <div className="text-center w-full reveal-animation flex flex-col items-center justify-center h-full z-10">
+                                                    {cell.isShip ? (
+                                                        <div className="flex flex-col items-center">
+                                                            <div className="relative mb-6">
+                                                                <div className="absolute inset-0 bg-red-600 blur-3xl opacity-40 rounded-full"></div>
+                                                                <i className="fa-solid fa-explosion text-8xl text-red-500 drop-shadow-[0_0_15px_rgba(239,68,68,0.8)] relative z-10"></i>
+                                                            </div>
+                                                            <h3 className="text-4xl md:text-5xl font-black font-digital text-white uppercase tracking-[0.2em] text-shadow-sm mb-2">TARGET HIT</h3>
+                                                            
+                                                            {isAnswerCorrect ? (
+                                                                <div className="inline-block bg-red-900/50 border border-red-500/50 px-6 py-2 rounded-full mt-2 shadow-[0_0_15px_rgba(239,68,68,0.3)]">
+                                                                    <p className="text-lg md:text-xl font-bold text-red-400 tracking-wider"><i className="fa-solid fa-star mr-2"></i>+5 BONUS POINTS APPLIED!</p>
+                                                                </div>
+                                                            ) : (
+                                                                <div className="inline-block bg-slate-900/80 border border-slate-600 px-6 py-2 rounded-full mt-2">
+                                                                    <p className="text-lg md:text-xl font-bold text-slate-400 tracking-wider"><i className="fa-solid fa-xmark mr-2"></i>NO POINTS (INCORRECT)</p>
+                                                                </div>
+                                                            )}
+                                                        </div>
+                                                    ) : (
+                                                        <div className="flex flex-col items-center">
+                                                            <div className="relative mb-6">
+                                                                <div className="absolute inset-0 bg-blue-500 blur-3xl opacity-20 rounded-full"></div>
+                                                                <i className="fa-solid fa-water text-8xl text-blue-500/70 drop-shadow-md relative z-10"></i>
+                                                            </div>
+                                                            <h3 className="text-3xl md:text-4xl font-black font-digital text-blue-400/80 uppercase tracking-widest mb-2">CLEAR WATER</h3>
+                                                            <p className="text-lg font-semibold text-slate-500 tracking-wide">No ship detected.</p>
+                                                            {!isAnswerCorrect && (
+                                                                <div className="inline-block bg-slate-900/80 border border-slate-600 px-6 py-1 rounded-full mt-4">
+                                                                    <p className="text-sm font-bold text-slate-400 tracking-wider"><i className="fa-solid fa-xmark mr-2"></i>INCORRECT ANSWER</p>
+                                                                </div>
+                                                            )}
+                                                        </div>
+                                                    )}
+                                                    
+                                                    <button 
+                                                        onClick={handleReturnToBoard}
+                                                        className="mt-8 bg-tactical-800 hover:bg-tactical-700 border border-tactical-500 text-tactical-light font-digital tracking-widest py-3 px-8 rounded-xl transition-all shadow-md uppercase"
+                                                    >
+                                                        <i className="fa-solid fa-arrow-left mr-2"></i> Continue
+                                                    </button>
+                                                </div>
+                                            )}
+                                            
+                                            <div className="absolute inset-0 opacity-10 pointer-events-none" style={{ backgroundImage: 'linear-gradient(#6FFFE9 1px, transparent 1px), linear-gradient(90deg, #6FFFE9 1px, transparent 1px)', backgroundSize: '20px 20px' }}></div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                );
+            };
+
+            const renderVictory = () => {
+                const winner = scores.team1 > scores.team2 ? "TEAM 1" : scores.team2 > scores.team1 ? "TEAM 2" : "DRAW";
+                const isDraw = winner === "DRAW";
+
+                return (
+                    <div className="min-h-screen flex items-center justify-center p-6 relative overflow-hidden">
+                        {renderAudioToggle()}
+                        
+                        {/* Confetti or victory lights effect background */}
+                        <div className="absolute inset-0 z-0 opacity-30 flex justify-around items-center">
+                            <div className="w-64 h-64 bg-tactical-accent rounded-full blur-[100px] animate-pulse"></div>
+                            <div className="w-64 h-64 bg-blue-500 rounded-full blur-[100px] animate-pulse" style={{ animationDelay: '1s' }}></div>
+                        </div>
+
+                        <div className="max-w-4xl w-full bg-tactical-800 border-2 border-tactical-light rounded-3xl shadow-[0_0_80px_rgba(91,192,190,0.4)] overflow-hidden p-10 relative z-10 flex flex-col items-center">
+                            
+                            <h2 className="text-2xl font-digital text-tactical-light tracking-[0.4em] uppercase mb-4 text-center">Mission Accomplished</h2>
+                            <h1 className="text-5xl md:text-7xl font-black font-digital text-white tracking-widest mb-12 drop-shadow-lg text-center">
+                                ENEMY FLEET DESTROYED
+                            </h1>
+
+                            <div className="flex flex-col md:flex-row w-full justify-center items-center gap-8 md:gap-16 mb-12">
+                                
+                                {/* Team 1 Final Score */}
+                                <div className={`flex flex-col items-center p-6 rounded-2xl w-full md:w-1/3 transition-transform ${winner === 'TEAM 1' ? 'bg-blue-900/60 border-2 border-blue-400 scale-110 shadow-[0_0_30px_rgba(59,130,246,0.6)]' : 'bg-tactical-900 border border-tactical-700 opacity-80'}`}>
+                                    {winner === 'TEAM 1' && <i className="fa-solid fa-crown text-4xl text-amber-400 mb-4 drop-shadow-[0_0_10px_rgba(251,191,36,0.8)]"></i>}
+                                    <h3 className="text-3xl font-black text-blue-400 tracking-wider mb-2">TEAM 1</h3>
+                                    <div className="text-6xl font-digital text-white font-bold">{scores.team1}</div>
+                                    <p className="text-slate-400 font-bold tracking-widest mt-2 uppercase">Points</p>
+                                </div>
+
+                                <div className="text-5xl font-black text-tactical-700 font-digital">VS</div>
+
+                                {/* Team 2 Final Score */}
+                                <div className={`flex flex-col items-center p-6 rounded-2xl w-full md:w-1/3 transition-transform ${winner === 'TEAM 2' ? 'bg-red-900/60 border-2 border-red-400 scale-110 shadow-[0_0_30px_rgba(239,68,68,0.6)]' : 'bg-tactical-900 border border-tactical-700 opacity-80'}`}>
+                                    {winner === 'TEAM 2' && <i className="fa-solid fa-crown text-4xl text-amber-400 mb-4 drop-shadow-[0_0_10px_rgba(251,191,36,0.8)]"></i>}
+                                    <h3 className="text-3xl font-black text-red-400 tracking-wider mb-2">TEAM 2</h3>
+                                    <div className="text-6xl font-digital text-white font-bold">{scores.team2}</div>
+                                    <p className="text-slate-400 font-bold tracking-widest mt-2 uppercase">Points</p>
+                                </div>
+
+                            </div>
+
+                            <div className="text-center mb-10">
+                                {isDraw ? (
+                                    <h3 className="text-4xl text-tactical-light font-bold uppercase tracking-widest">It's a Tactical Draw!</h3>
+                                ) : (
+                                    <h3 className="text-4xl text-white font-bold uppercase tracking-widest">
+                                        <span className={winner === 'TEAM 1' ? 'text-blue-400' : 'text-red-400'}>{winner}</span> Claims Victory!
+                                    </h3>
+                                )}
+                            </div>
+
+                            <button 
+                                onClick={() => { AudioController.sfx.click(); startGame(); }}
+                                className="bg-gradient-to-r from-tactical-light to-blue-500 hover:from-blue-400 hover:to-blue-600 text-tactical-900 hover:text-white font-black py-4 px-12 rounded-full text-2xl shadow-[0_0_20px_rgba(91,192,190,0.6)] transition-all transform hover:scale-105 flex items-center justify-center uppercase tracking-widest border-2 border-tactical-light"
+                            >
+                                <i className="fa-solid fa-rotate-right mr-3"></i> Play Again
+                            </button>
+
+                        </div>
+                    </div>
+                );
+            };
+
+            return (
+                <div className="font-sans selection:bg-tactical-accent selection:text-tactical-900">
+                    {view === 'intro' && renderIntro()}
+                    {view === 'board' && renderBoard()}
+                    {view === 'target' && renderTarget()}
+                    {view === 'victory' && renderVictory()}
+                </div>
+            );
+        };
+
+        const root = ReactDOM.createRoot(document.getElementById('root'));
+        root.render(<App />);
+    </script>
+</body>
+</html>
