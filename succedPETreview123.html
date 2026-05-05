@@ -150,6 +150,32 @@
             0% { transform: translateY(-10vh) rotate(0deg); opacity: 1; }
             100% { transform: translateY(110vh) rotate(720deg); opacity: 0; }
         }
+
+        /* Added: Chart Animation */
+        @keyframes bar-grow {
+            from { height: 0%; opacity: 0; }
+            to { opacity: 1; }
+        }
+        .animate-bar {
+            animation: bar-grow 1s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+        }
+        
+        /* Added: Custom Scrollbar for mobile layout */
+        ::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+        ::-webkit-scrollbar-track {
+            background: rgba(15, 23, 42, 0.5); 
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: rgba(56, 189, 248, 0.5); 
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: rgba(56, 189, 248, 0.8); 
+        }
     </style>
 </head>
 <body>
@@ -242,12 +268,12 @@
 
 
         // --- Game Logic ---
-        const prizeMoney = [100, 500, 1000, 5000, 10000, 50000, 100000, 250000, 500000, 1000000];
-        const QUESTION_TIME_LIMIT = 30; // Seconds
+        // Updated to classic 15-level format
+        const prizeMoney = [100, 200, 300, 500, 1000, 2000, 4000, 8000, 16000, 32000, 64000, 125000, 250000, 500000, 1000000];
 
         // Extracted & Adapted Question Bank from PET Vocab Docs
         const questionBank = [
-            // EASY (Levels 1-3)
+            // EASY (Levels 1-5)
             { id: 1, text: "You can always trust Sarah; she tells the truth and is very ___.", options: ["honest", "frightening", "ancient", "sociable"], correctIndex: 0, difficulty: 1 },
             { id: 2, text: "Next year, I want to travel ___ to learn about new cultures and see the world.", options: ["inside", "abroad", "beneath", "locally"], correctIndex: 1, difficulty: 1 },
             { id: 3, text: "The train was completely full, and every ___ had a ticket.", options: ["driver", "passenger", "instructor", "assistant"], correctIndex: 1, difficulty: 1 },
@@ -264,7 +290,7 @@
             { id: 14, text: "Before you go climbing, make sure you have all the necessary ___ like ropes and clips.", options: ["party clothes", "equipment", "animal food", "school books"], correctIndex: 1, difficulty: 1 },
             { id: 15, text: "If the soup is cold, you should ___ to the restaurant manager.", options: ["complain", "laugh", "run", "sing"], correctIndex: 0, difficulty: 1 },
 
-            // MEDIUM (Levels 4-7)
+            // MEDIUM (Levels 6-10)
             { id: 16, text: "I can't meet you at 3 PM because I have a(n) ___ with my dentist.", options: ["game", "appointment", "computer", "holiday"], correctIndex: 1, difficulty: 2 },
             { id: 17, text: "After four years of hard studying, she finally got her university ___.", options: ["degree", "mountain", "car", "journey"], correctIndex: 0, difficulty: 2 },
             { id: 18, text: "Before buying the book, I read a great ___ about it in the newspaper.", options: ["dance", "review", "tool", "jewellery"], correctIndex: 1, difficulty: 2 },
@@ -281,7 +307,7 @@
             { id: 29, text: "When the lights went out, the little boy was ___ of the dark.", options: ["annoyed", "brave", "terrified", "bored"], correctIndex: 2, difficulty: 2 },
             { id: 30, text: "Drinking plenty of water is absolutely ___ for human survival.", options: ["useless", "essential", "optional", "dangerous"], correctIndex: 1, difficulty: 2 },
 
-            // HARD (Levels 8-10)
+            // HARD (Levels 11-15)
             { id: 31, text: "I love most types of fruit, but I am ___ fond of strawberries.", options: ["generally", "particularly", "never", "sometimes"], correctIndex: 1, difficulty: 3 },
             { id: 32, text: "With hard work and patience, you can ___ any difficult problem in your life.", options: ["create", "ignore", "overcome", "cry"], correctIndex: 2, difficulty: 3 },
             { id: 33, text: "Her greatest ___ is to become a famous novelist and write bestsellers.", options: ["memory", "ambition", "fear", "sadness"], correctIndex: 1, difficulty: 3 },
@@ -302,14 +328,15 @@
         function App() {
             const [gameState, setGameState] = useState('setup'); // 'setup', 'intro', 'playing', 'result'
             const [isMuted, setIsMuted] = useState(false);
+            const [timeLimit, setTimeLimit] = useState(30); // Dynamic timer setting
             
-            // Teams track their individual level (0 to 10)
+            // Teams track their individual level (0 to 15)
             const [teams, setTeams] = useState([
                 { id: 1, name: 'Team Alpha', score: 0, level: 0, lifelines: { fiftyFifty: true, phoneFriend: true, askAudience: true } },
                 { id: 2, name: 'Team Bravo', score: 0, level: 0, lifelines: { fiftyFifty: true, phoneFriend: true, askAudience: true } }
             ]);
             
-            // globalRound tracks game turns to ensure everyone gets equal 10 turns
+            // globalRound tracks game turns to ensure everyone gets equal 15 turns
             const [globalRound, setGlobalRound] = useState(0); 
             const [currentTeamTurn, setCurrentTeamTurn] = useState(0);
             const [currentQuestion, setCurrentQuestion] = useState(null);
@@ -321,7 +348,7 @@
             const [turnMessage, setTurnMessage] = useState("");
             
             // Timer State
-            const [timeLeft, setTimeLeft] = useState(QUESTION_TIME_LIMIT);
+            const [timeLeft, setTimeLeft] = useState(30);
 
             // Lifeline Active States
             const [audienceResults, setAudienceResults] = useState(null);
@@ -421,9 +448,10 @@
                 const activeTeam = teamsRef.current[teamTurnRef.current];
                 const teamLevel = activeTeam.level;
                 
-                let diff = 1;
-                if (teamLevel >= 3 && teamLevel <= 6) diff = 2;
-                if (teamLevel >= 7) diff = 3;
+                // Adjust difficulty based on 15 levels
+                let diff = 1; // 100 to 1,000
+                if (teamLevel >= 5 && teamLevel <= 9) diff = 2; // 2,000 to 32,000
+                if (teamLevel >= 10) diff = 3; // 64,000 to 1,000,000
 
                 let available = questionBank.filter(q => q.difficulty === diff && !usedQuestionsRef.current.has(q.id));
                 
@@ -449,7 +477,7 @@
                 setTurnMessage("");
                 setAudienceResults(null);
                 setPhoneFriendAdvice(null);
-                setTimeLeft(QUESTION_TIME_LIMIT);
+                setTimeLeft(timeLimit);
 
                 // Play thinking sound
                 if (globalRoundRef.current === 0 && teamTurnRef.current === 0) {
@@ -479,7 +507,7 @@
                         setTurnMessage(`Correct! ${activeTeam.name} reaches $${wonAmount.toLocaleString()}!`);
                         
                         setTeams(prev => prev.map((t, i) => 
-                            i === teamTurnRef.current ? { ...t, score: wonAmount, level: Math.min(newLevel, 10) } : t
+                            i === teamTurnRef.current ? { ...t, score: wonAmount, level: Math.min(newLevel, prizeMoney.length) } : t
                         ));
                     } else {
                         playSound('wrong');
@@ -625,7 +653,7 @@
                                             <span className="mb-2 font-bold">{pct}%</span>
                                             <div className="w-full flex-1 flex items-end">
                                                 <div 
-                                                    className={`w-full rounded-t-md transition-all duration-1000 ${idx === currentQuestion.correctIndex ? 'bg-green-500' : 'bg-blue-500'}`}
+                                                    className={`w-full rounded-t-md animate-bar transition-colors duration-1000 ${idx === currentQuestion.correctIndex ? 'bg-green-500' : 'bg-blue-500'}`}
                                                     style={{ height: `${pct}%`, minHeight: '5px' }}
                                                 ></div>
                                             </div>
@@ -763,6 +791,21 @@
                                 ))}
                             </div>
 
+                            <div className="flex flex-col sm:flex-row items-center gap-4 mb-8 bg-slate-800/50 p-4 rounded-lg border border-slate-600">
+                                <label className="text-yellow-400 font-bold whitespace-nowrap">Time per Question:</label>
+                                <select 
+                                    value={timeLimit}
+                                    onChange={(e) => setTimeLimit(Number(e.target.value))}
+                                    className="bg-slate-900 border border-blue-500 rounded-lg px-4 py-2 text-white focus:outline-none focus:border-yellow-400 font-bold cursor-pointer"
+                                >
+                                    <option value={15}>15 Seconds</option>
+                                    <option value={30}>30 Seconds</option>
+                                    <option value={45}>45 Seconds</option>
+                                    <option value={60}>60 Seconds</option>
+                                    <option value={90}>90 Seconds</option>
+                                </select>
+                            </div>
+
                             <div className="flex justify-between items-center">
                                 <button 
                                     onClick={addTeam}
@@ -833,19 +876,19 @@
             const currentPrize = prizeMoney[currentPrizeIndex];
 
             // Determine Timer styling
-            const timerPercentage = (timeLeft / QUESTION_TIME_LIMIT) * 100;
+            const timerPercentage = (timeLeft / timeLimit) * 100;
             let timerColorClass = 'bg-green-500';
             if (timeLeft <= 10 && timeLeft > 5) timerColorClass = 'bg-yellow-500';
             if (timeLeft <= 5) timerColorClass = 'bg-red-500';
 
             return (
-                <div className="flex h-screen overflow-hidden p-4 gap-6 relative">
+                <div className="flex flex-col xl:flex-row h-screen overflow-y-auto xl:overflow-hidden p-2 sm:p-4 gap-4 xl:gap-6 relative">
                     {renderMuteToggle()}
                     {renderModals()}
 
                     {/* Left Sidebar: Teams */}
-                    <div className="w-[22%] min-w-[250px] flex flex-col gap-4">
-                        <div className="glass-panel rounded-xl p-4 flex-1 overflow-y-auto">
+                    <div className="w-full xl:w-[22%] min-w-[250px] flex flex-col gap-4 order-2 xl:order-1">
+                        <div className="glass-panel rounded-xl p-4 flex-1 overflow-y-auto max-h-[40vh] xl:max-h-full">
                             <h2 className="text-center text-xl font-black text-yellow-400 tracking-widest uppercase border-b border-slate-600 pb-3 mb-4">Teams</h2>
                             <div className="space-y-4">
                                 {teams.map((team, idx) => {
@@ -909,7 +952,7 @@
                     </div>
 
                     {/* Center: Main Game Area */}
-                    <div className="flex-1 flex flex-col justify-center items-center relative px-2">
+                    <div className="flex-1 flex flex-col justify-center items-center relative px-2 order-1 xl:order-2 min-h-[60vh] xl:min-h-0">
                         {/* Status Message Overlay */}
                         {turnMessage && (
                             <div className="absolute top-[20%] left-0 right-0 text-center z-20 animate-bounce">
@@ -977,7 +1020,7 @@
                     </div>
 
                     {/* Right Sidebar: Multi-Team Money Tree Race */}
-                    <div className="w-[30%] min-w-[300px] glass-panel rounded-xl p-4 flex flex-col z-10 relative">
+                    <div className="w-full xl:w-[30%] min-w-[300px] glass-panel rounded-xl p-4 flex flex-col z-10 relative order-3 max-h-[50vh] xl:max-h-full overflow-y-auto xl:overflow-hidden">
                         <h2 className="text-center text-xl font-black text-blue-400 tracking-widest uppercase border-b border-slate-600 pb-3 mb-4">Money Tree Race</h2>
                         
                         {/* Column Headers for Teams */}
@@ -998,16 +1041,16 @@
                                 const levelIndex = prizeMoney.length - 1 - idx;
                                 
                                 return (
-                                    <div key={amount} className="flex items-center my-[2px] group">
+                                    <div key={amount} className="flex items-center my-[1px] group">
                                         {/* Amount Display */}
                                         <div className="w-[85px] text-right font-bold text-slate-300 pr-3 tracking-wider text-xs md:text-sm">
                                             {formatMoney(amount)}
                                         </div>
                                         
                                         {/* Dynamic Team Markers */}
-                                        <div className="flex-1 flex gap-1 h-7 lg:h-8">
+                                        <div className="flex-1 flex gap-1 h-5 lg:h-6">
                                             {teams.map((t, i) => {
-                                                const displayLevel = Math.min(t.level, 9);
+                                                const displayLevel = Math.min(t.level, prizeMoney.length - 1);
                                                 const isCurrent = levelIndex === displayLevel;
                                                 const isPassed = levelIndex < displayLevel;
                                                 const isActiveTeam = i === currentTeamTurn;
